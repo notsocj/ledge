@@ -21,7 +21,7 @@ enum Banner: Equatable {
 @Observable @MainActor
 final class NotchModel {
     static let width: CGFloat = 560
-    static let maxHeight: CGFloat = 280
+    static let maxHeight: CGFloat = 300
     /// Space above and below a tab's content inside the open island.
     static let contentInsets = (top: CGFloat(8), bottom: CGFloat(14))
 
@@ -30,14 +30,19 @@ final class NotchModel {
     var tab: Tool = .home { didSet { onResize?() } }
     /// Each tab's measured content height, so the island fits what it shows and reopening doesn't resize again.
     var contentHeights: [Tool: CGFloat] = [:] { didSet { onResize?() } }
+    /// Set while first-run setup runs inside the island; the island stays open until it's done.
+    var onboarding: Onboarding? { didSet { onResize?() } }
+    var onboardingHeight: CGFloat = 200 { didSet { onResize?() } }
     @ObservationIgnored var onResize: (() -> Void)?
 
     var expandedSize: CGSize {
-        let content = contentHeights[tab] ?? 120
+        let content = onboarding != nil ? onboardingHeight : contentHeights[tab] ?? 120
         return CGSize(width: Self.width, height: min(Self.maxHeight, notchSize.height + Self.contentInsets.top + content + Self.contentInsets.bottom))
     }
     private(set) var banner: Banner?
     @ObservationIgnored private var bannerTask: Task<Void, Never>?
+
+    func tabs(in preferences: Preferences) -> [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
 
     func show(_ banner: Banner, seconds: Double = 2) {
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -113,6 +118,50 @@ final class NotchController {
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
         waitForAccessibility()
+
+        NotificationCenter.default.addObserver(forName: .startOnboarding, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.startOnboarding() }
+        }
+        if !preferences.onboarded {
+            // First launch: let the menu bar settle, then grow the island out of the notch to say hello.
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(1))
+                self?.startOnboarding()
+            }
+        }
+    }
+
+    // MARK: Setup
+
+    func startOnboarding() {
+        let flow = Onboarding()
+        flow.personas = preferences.personas
+        flow.tools = Set(Tool.allCases.filter(preferences.isOn))
+        withAnimation(Motion.snappy) { model.onboarding = flow }
+        if !model.expanded { setExpanded(true) }
+    }
+
+    /// Applies the picked personas and tools, so services start (and ask for permissions) before the permissions step.
+    func applyOnboardingChoices() {
+        guard let flow = model.onboarding else { return }
+        preferences.choose(flow.personas)
+        for tool in Tool.allCases where tool != .home && preferences.isOn(tool) != flow.tools.contains(tool) {
+            preferences.set(tool, on: flow.tools.contains(tool))
+        }
+        if !model.tabs(in: preferences).contains(model.tab) { model.tab = .home }
+    }
+
+    func finishOnboarding() {
+        preferences.onboarded = true
+        setExpanded(false)
+        model.onboarding = nil
+        model.show(.message(symbol: "widget-5-bold", text: "Hover here"), seconds: 3) // where to find it from now on
+    }
+
+    func measuredOnboarding(_ height: CGFloat) {
+        guard abs(model.onboardingHeight - height) > 0.5 else { return }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        withAnimation(reduceMotion ? nil : Motion.snappy) { model.onboardingHeight = height }
     }
 
     func quit() {
@@ -232,7 +281,7 @@ final class NotchController {
             break
         }
         if model.expanded {
-            if !panel.frame.contains(point) { setExpanded(false) }
+            if model.onboarding == nil, !panel.frame.contains(point) { setExpanded(false) }
         } else if event.type == .mouseMoved, hotZone.contains(point), pendingOpen == nil {
             // A short dwell, so flicking the cursor up to the menu bar doesn't pop the island open.
             pendingOpen = Task { [weak self] in

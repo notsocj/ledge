@@ -105,6 +105,7 @@ struct Icon: View {
 /// sizes: bold for what something is, semibold for details you scan, medium for supporting text.
 enum Typeface {
     static let display = Font.system(size: 40, weight: .bold).monospacedDigit()
+    static let heading = Font.system(size: 16, weight: .bold)
     static let lyric = Font.system(size: 16, weight: .bold)
     static let title = Font.system(size: 13, weight: .bold)
     static let headline = Font.system(size: 12, weight: .semibold)
@@ -115,4 +116,35 @@ enum Typeface {
     static let value = Font.system(size: 11, weight: .semibold).monospacedDigit()
     static let micro = Font.system(size: 9, weight: .bold)
     static let wing = Font.system(size: 12, weight: .bold).monospacedDigit()
+}
+
+/// The one main action on a page: a white capsule.
+struct PrimaryStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Typeface.label)
+            .foregroundStyle(.black)
+            .padding(.horizontal, 14)
+            .frame(height: 26)
+            .background(Capsule().fill(Palette.paper))
+            .opacity(isEnabled ? 1 : 0.35)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(Motion.easeOut(0.16), value: configuration.isPressed)
+            .animation(Motion.ease(0.15), value: isEnabled)
+    }
+}
+
+/// A quieter companion to `PrimaryStyle`, for Back and Skip.
+struct SecondaryStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Typeface.label)
+            .foregroundStyle(Palette.graphite)
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
 }

@@ -91,7 +91,27 @@ struct NotchView: View {
 
     // MARK: Open
 
-    private var expanded: some View {
+    @ViewBuilder private var expanded: some View {
+        if let flow = model.onboarding {
+            VStack(spacing: 0) {
+                OnboardingStrip(step: flow.step)
+                    .frame(height: model.notchSize.height)
+                    .padding(.horizontal, 22)
+                OnboardingView(app: app, flow: flow)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background { GeometryReader { Color.clear.preference(key: OnboardingHeight.self, value: $0.size.height) } }
+                    .padding(.top, NotchModel.contentInsets.top)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, NotchModel.contentInsets.bottom)
+            }
+            .frame(width: NotchModel.width, height: model.expandedSize.height, alignment: .top)
+            .onPreferenceChange(OnboardingHeight.self) { app.measuredOnboarding($0) }
+        } else {
+            tabbed
+        }
+    }
+
+    private var tabbed: some View {
         VStack(spacing: 0) {
             // Tab pills on both sides of the notch. One namespace, so the selection pill travels
             // between them, passing behind the notch.
@@ -138,6 +158,11 @@ struct NotchView: View {
         default: EmptyView()
         }
     }
+}
+
+private struct OnboardingHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 /// Each tab reports its own height under its own key, so during a tab switch the outgoing and

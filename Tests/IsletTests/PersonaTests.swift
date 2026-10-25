@@ -25,3 +25,16 @@ import Testing
     #expect(layout.closedOrder == [.media, .timer]) // the creator picked first
     #expect(layout.chips.first == .timer && layout.chips.contains(.claude))
 }
+
+@MainActor @Test func onboardingPicksRecommendToolsAndTheToolsStepCanAdjust() {
+    let flow = Onboarding()
+    flow.toggle(.student)
+    #expect(flow.tools == Layout.merging([.student]).tools)
+    flow.toggle(.windowSnapping)          // add one the persona didn't suggest
+    #expect(flow.tools.contains(.windowSnapping))
+    flow.toggle(.developer)               // a new persona pick re-recommends for the combination
+    #expect(flow.personas == [.student, .developer] && flow.tools == Layout.merging([.student, .developer]).tools)
+    flow.toggle(.student)
+    flow.toggle(.developer)
+    #expect(flow.tools.isEmpty)           // nothing picked, nothing to continue with
+}

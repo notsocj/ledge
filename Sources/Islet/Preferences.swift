@@ -23,6 +23,12 @@ enum Tool: String, CaseIterable, Identifiable {
         case .media: "Music"
         case .clipboard: "Clips"
         case .stats: "Stats"
+        case .shelf: "Shelf"
+        case .screenshot: "Screenshots"
+        case .volumeHUD: "Volume"
+        case .alerts: "Alerts"
+        case .windowSnapping: "Snapping"
+        case .menuBarHider: "Menu bar"
         default: title
         }
     }
@@ -87,6 +93,11 @@ enum Tool: String, CaseIterable, Identifiable {
     var needsAccessibility: Bool { self == .volumeHUD || self == .windowSnapping }
 }
 
+extension Notification.Name {
+    /// Runs setup again inside the island, from Settings or the menu bar.
+    static let startOnboarding = Notification.Name("IsletStartOnboarding")
+}
+
 /// Which tools are on. Stores the switched-off ones, so tools added in updates start switched on.
 @Observable @MainActor
 final class Preferences {
@@ -95,11 +106,14 @@ final class Preferences {
     private(set) var disabled: Set<Tool>
     /// In the order they were picked; the first one leads (see `Layout.merging`). Empty until chosen.
     private(set) var personas: [Persona]
+    /// Whether first-run setup has been finished or skipped.
+    var onboarded: Bool { didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") } }
     @ObservationIgnored var onChange: ((Tool, Bool) -> Void)?
 
     private init() {
         disabled = Set((UserDefaults.standard.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
         personas = (UserDefaults.standard.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
+        onboarded = UserDefaults.standard.bool(forKey: "onboarded")
     }
 
     var layout: Layout { Layout.merging(personas) }
@@ -146,6 +160,7 @@ struct SettingsView: View {
                         }
                     }
                 }
+                Button("Set up again in the island") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
             } header: {
                 Text("What do you do?")
             } footer: {

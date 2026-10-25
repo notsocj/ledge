@@ -8,6 +8,7 @@ struct IsletApp: App {
         MenuBarExtra {
             SettingsLink { Text("Settings…") }
                 .keyboardShortcut(",")
+            Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
             Divider()
             Button("Quit Islet") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
