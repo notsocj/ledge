@@ -1,0 +1,259 @@
+import AppKit
+import ApplicationServices
+import Carbon.HIToolbox
+import SwiftUI
+
+final class NotchPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    // Borderless windows still get pushed below the menu bar; the island has to sit over it.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
+}
+
+/// A short-lived message beside the closed notch, like the iPhone's Dynamic Island.
+enum Banner: Equatable {
+    case level(symbol: String, value: Double)
+    case battery(percent: Int, charging: Bool)
+    case headphones(name: String, battery: Int?)
+    case screenshot(NSImage)
+    case message(symbol: String, text: String)
+}
+
+@Observable @MainActor
+final class NotchModel {
+    static let width: CGFloat = 560
+    static let maxHeight: CGFloat = 280
+    /// Space above and below a tab's content inside the open island.
+    static let contentInsets = (top: CGFloat(8), bottom: CGFloat(14))
+
+    var expanded = false
+    var notchSize = CGSize(width: 180, height: 32)
+    var tab: Tool = .home { didSet { onResize?() } }
+    /// Each tab's measured content height, so the island fits what it shows and reopening doesn't resize again.
+    var contentHeights: [Tool: CGFloat] = [:] { didSet { onResize?() } }
+    @ObservationIgnored var onResize: (() -> Void)?
+
+    var expandedSize: CGSize {
+        let content = contentHeights[tab] ?? 120
+        return CGSize(width: Self.width, height: min(Self.maxHeight, notchSize.height + Self.contentInsets.top + content + Self.contentInsets.bottom))
+    }
+    private(set) var banner: Banner?
+    @ObservationIgnored private var bannerTask: Task<Void, Never>?
+
+    func show(_ banner: Banner, seconds: Double = 2) {
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        withAnimation(reduceMotion ? nil : Motion.open) { self.banner = banner }
+        bannerTask?.cancel()
+        bannerTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            withAnimation(reduceMotion ? nil : Motion.close) { self?.banner = nil }
+        }
+    }
+}
+
+/// Owns the island window and every tool. The window is a fixed, expanded-size panel pinned to the
+/// top center of the notched screen; it ignores the mouse while closed so the menu bar under its
+/// clear area stays clickable.
+@MainActor
+final class NotchController {
+    let model = NotchModel()
+    let preferences = Preferences.shared
+    let nowPlaying = NowPlaying()
+    let usage = Usage()
+    let shelf = Shelf()
+    let clipboard = ClipboardHistory()
+    let keepAwake = KeepAwake()
+    let agenda = Agenda()
+    let countdown = Countdown()
+    let notes = Notes()
+    let stats = SystemStats()
+    private let mediaKeys = MediaKeys()
+    private let alerts = Alerts()
+    private let snapper = WindowSnapper()
+    private let panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+    private var mouseMonitor: Any?
+    private var pendingOpen: Task<Void, Never>?
+    private var dragChangeCount = 0
+
+    var tabs: [Tool] { Tool.tabs.filter(preferences.isOn) }
+    var leftTabs: [Tool] { Tool.tabs.prefix(Tool.leftTabCount).filter(preferences.isOn) }
+    var rightTabs: [Tool] { Tool.tabs.dropFirst(Tool.leftTabCount).filter(preferences.isOn) }
+
+    init() {
+        panel.level = .mainMenu + 3
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = false
+        panel.ignoresMouseEvents = true
+        model.onResize = { [weak self] in self?.fitPanel() }
+        let host = NSHostingView(rootView: NotchView(app: self))
+        host.sizingOptions = [] // the panel frame is ours; don't let SwiftUI resize it
+        panel.contentView = host
+        layout()
+        panel.orderFrontRegardless()
+
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.layout() }
+        }
+        // Global monitors only see events aimed at other apps: exactly when the cursor is outside our
+        // panel, or over it while it ignores the mouse. That covers both entering and leaving.
+        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
+            MainActor.assumeIsolated { self?.handle(event) }
+        }
+
+        let show: (Banner) -> Void = { [weak self] in self?.model.show($0) }
+        mediaKeys.onChange = show
+        alerts.onBanner = { [weak self] in self?.model.show($0, seconds: 3) }
+        countdown.onFinish = { [weak self] in
+            NSSound(named: "Glass")?.play()
+            self?.model.show(.message(symbol: "stopwatch-bold", text: "Time's up"), seconds: 4)
+        }
+        preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
+        for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
+        waitForAccessibility()
+    }
+
+    func quit() {
+        nowPlaying.stop()
+        notes.save()
+        keepAwake.off()
+    }
+
+    func open(_ tab: Tool) {
+        model.tab = tab
+        if !model.expanded { setExpanded(true) }
+    }
+
+    func takeScreenshot() {
+        setExpanded(false) // keep the island out of the shot
+        Screenshot.capture { [weak self] url in
+            guard let self, let image = NSImage(contentsOf: url) else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.writeObjects([image])
+            if preferences.isOn(.shelf) { shelf.add([url]) }
+            model.show(.screenshot(image), seconds: 3)
+        }
+    }
+
+    private func apply(_ tool: Tool, on: Bool) {
+        switch tool {
+        case .media: if on { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap
+        case .clipboard: on ? clipboard.start() : clipboard.stop()
+        case .keepAwake: if !on { keepAwake.off() }
+        case .volumeHUD: on ? mediaKeys.start() : mediaKeys.stop()
+        case .alerts: on ? alerts.start() : alerts.stop()
+        case .windowSnapping: on ? snapper.start() : snapper.stop()
+        case .screenshot:
+            if on {
+                HotKeys.register(10, key: kVK_ANSI_S, modifiers: controlKey | optionKey) { [weak self] in self?.takeScreenshot() }
+            } else {
+                HotKeys.unregister(10)
+            }
+        case .home, .shelf, .calendar, .timer, .notes, .stats, .menuBarHider: break // tabs only need hiding
+        }
+        if !on, model.tab == tool { model.tab = tabs.first ?? .media }
+    }
+
+    /// Accessibility tools can't start until the user allows it, which happens outside the app.
+    private func waitForAccessibility() {
+        let needed = Tool.allCases.filter { $0.needsAccessibility && preferences.isOn($0) }
+        guard !needed.isEmpty, !AXIsProcessTrusted() else { return }
+        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        Task { [weak self] in
+            while !AXIsProcessTrusted() { try? await Task.sleep(for: .seconds(2)) }
+            guard let self else { return }
+            for tool in needed where preferences.isOn(tool) { apply(tool, on: true) }
+        }
+    }
+
+    private func layout() {
+        guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main else { return }
+        let frame = screen.frame
+        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            model.notchSize = CGSize(width: frame.width - left.width - right.width, height: screen.safeAreaInsets.top)
+        } else {
+            model.notchSize = CGSize(width: 180, height: NSStatusBar.system.thickness) // no notch: draw a pill instead
+        }
+        setPanelHeight(model.expandedSize.height)
+    }
+
+    private var pendingShrink: Task<Void, Never>?
+
+    /// The window follows the island: it grows at once so nothing is clipped, and shrinks only after
+    /// the island's spring has settled, so empty window never keeps the island open under the cursor.
+    private func fitPanel() {
+        let target = model.expandedSize.height
+        pendingShrink?.cancel()
+        if target >= panel.frame.height {
+            setPanelHeight(target)
+        } else {
+            pendingShrink = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(450))
+                guard let self, !Task.isCancelled else { return }
+                setPanelHeight(model.expandedSize.height)
+            }
+        }
+    }
+
+    private func setPanelHeight(_ height: CGFloat) {
+        guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main else { return }
+        let frame = screen.frame
+        panel.setFrame(NSRect(x: frame.midX - NotchModel.width / 2, y: frame.maxY - height, width: NotchModel.width, height: height), display: true)
+    }
+
+    /// Called by the view with each tab's natural content height.
+    func measured(_ heights: [Tool: CGFloat]) {
+        var updated = model.contentHeights
+        for (tab, height) in heights where abs((updated[tab] ?? 0) - height) > 0.5 { updated[tab] = height }
+        guard updated != model.contentHeights else { return }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        withAnimation(reduceMotion || !model.expanded ? nil : Motion.snappy) { model.contentHeights = updated }
+    }
+
+    private func handle(_ event: NSEvent) {
+        let point = NSEvent.mouseLocation
+        switch event.type {
+        case .leftMouseDown:
+            dragChangeCount = NSPasteboard(name: .drag).changeCount
+            if preferences.isOn(.windowSnapping) { snapper.mouseDown() }
+        case .leftMouseDragged:
+            if preferences.isOn(.windowSnapping) { snapper.mouseDragged() }
+            // A new drag carrying files, brought up to the notch: open the shelf to catch it.
+            let drag = NSPasteboard(name: .drag)
+            if !model.expanded, preferences.isOn(.shelf), drag.changeCount != dragChangeCount,
+               drag.types?.contains(.fileURL) == true, hotZone.insetBy(dx: -60, dy: 0).contains(point) {
+                open(.shelf)
+            }
+        case .leftMouseUp:
+            if preferences.isOn(.windowSnapping) { snapper.mouseUp() }
+        default:
+            break
+        }
+        if model.expanded {
+            if !panel.frame.contains(point) { setExpanded(false) }
+        } else if event.type == .mouseMoved, hotZone.contains(point), pendingOpen == nil {
+            // A short dwell, so flicking the cursor up to the menu bar doesn't pop the island open.
+            pendingOpen = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(100))
+                guard let self else { return }
+                pendingOpen = nil
+                if hotZone.contains(NSEvent.mouseLocation) { setExpanded(true) }
+            }
+        }
+    }
+
+    /// The closed notch, widened a little and extended past the top edge where the cursor rests.
+    private var hotZone: NSRect {
+        let frame = panel.frame, notch = model.notchSize
+        return NSRect(x: frame.midX - notch.width / 2 - 8, y: frame.maxY - notch.height, width: notch.width + 16, height: notch.height + 2)
+    }
+
+    private func setExpanded(_ expanded: Bool) {
+        panel.ignoresMouseEvents = !expanded
+        if expanded, !preferences.isOn(model.tab) { model.tab = tabs.first ?? .media }
+        // Reduce Motion: the island snaps between states instead of morphing.
+        let animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : expanded ? Motion.open : Motion.close
+        withAnimation(animation) { model.expanded = expanded }
+    }
+}
