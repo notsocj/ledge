@@ -1,4 +1,5 @@
 import AppKit
+import CoreBluetooth
 import IOBluetooth
 import IOKit.ps
 
@@ -10,6 +11,8 @@ final class Alerts: NSObject {
     private var wasOnPower: Bool?
     private var lastPercent: Int?
     private var connections: IOBluetoothUserNotification?
+    private var permissionPrompt: CBCentralManager?
+    private var waitingForBluetooth: Task<Void, Never>?
 
     func start() {
         guard powerSource == nil else { return }
@@ -18,12 +21,36 @@ final class Alerts: NSObject {
         }, Unmanaged.passUnretained(self).toOpaque())?.takeRetainedValue()
         if let powerSource { CFRunLoopAddSource(CFRunLoopGetMain(), powerSource, .defaultMode) }
         powerChanged(announce: false)
-        connections = IOBluetoothDevice.register(forConnectNotifications: self, selector: #selector(connected(_:device:)))
+        watchHeadphones()
+    }
+
+    /// Registering for Bluetooth connections blocks the main thread until Bluetooth permission is
+    /// settled, and macOS asks again for every new build. So register only once it's allowed, and
+    /// while it's undecided ask in the background instead of freezing launch.
+    private func watchHeadphones() {
+        switch CBManager.authorization {
+        case .allowedAlways:
+            connections = IOBluetoothDevice.register(forConnectNotifications: self, selector: #selector(connected(_:device:)))
+        case .notDetermined:
+            permissionPrompt = CBCentralManager(delegate: nil, queue: DispatchQueue(label: "Islet.bluetooth")) // shows the prompt without blocking
+            waitingForBluetooth = Task { [weak self] in
+                while CBManager.authorization == .notDetermined, !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(2))
+                }
+                guard let self, !Task.isCancelled else { return }
+                permissionPrompt = nil
+                if CBManager.authorization == .allowedAlways { watchHeadphones() }
+            }
+        default:
+            break // denied: battery alerts still work, headphone ones stay off
+        }
     }
 
     func stop() {
         if let powerSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), powerSource, .defaultMode) }
         powerSource = nil
+        waitingForBluetooth?.cancel()
+        permissionPrompt = nil
         connections?.unregister()
         connections = nil
     }
