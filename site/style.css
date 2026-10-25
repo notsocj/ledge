@@ -1,0 +1,258 @@
+/* Kestrel: the website. Colours come from the app icon's dusk sky; type is SF Pro, like the app. */
+:root {
+  --night: #070e1a;
+  --dusk: #10203a;
+  --deep: #16294a;
+  --horizon: #43689a;
+  --cream: #fff8ef;
+  --mist: #aebfd4;
+  --ash: rgba(255, 248, 239, 0.42);
+  --rail: rgba(255, 248, 239, 0.1);
+  --ease-island: cubic-bezier(0.32, 0.72, 0, 1); /* the iOS drawer curve: quick start, soft settle */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --page: min(1080px, 100% - 40px);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--night);
+  color: var(--cream);
+  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; border-radius: 6px; }
+
+h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif; margin: 0; }
+h1 { font-size: clamp(44px, 7.4vw, 92px); line-height: 1.02; letter-spacing: -0.04em; font-weight: 700; }
+h2 { font-size: clamp(32px, 4.6vw, 54px); line-height: 1.06; letter-spacing: -0.03em; font-weight: 700; }
+h3 { font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 650; }
+p { margin: 0; }
+.lede { color: var(--mist); font-size: clamp(17px, 1.6vw, 20px); max-width: 40ch; }
+
+/* Navigation */
+/* A frosted bar across the full width; its contents line up with the page. */
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px max(20px, (100% - 1080px) / 2);
+  background: rgba(7, 14, 26, 0.72);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom: 1px solid rgba(255, 248, 239, 0.06);
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: -0.01em; }
+.brand img { width: 26px; height: 26px; }
+.nav-links { display: flex; align-items: center; gap: 28px; font-size: 15px; }
+.nav-links a { text-decoration: none; color: var(--mist); transition: color 150ms ease; }
+.nav-links a:hover { color: var(--cream); }
+
+.button {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 999px;
+  background: var(--cream); color: #0b1424;
+  font-weight: 650; font-size: 16px; text-decoration: none;
+  transition: transform 160ms var(--ease-out), background 150ms ease;
+}
+.button:hover { background: #fff; }
+.button:active { transform: scale(0.97); }
+.button.small { padding: 8px 16px; font-size: 14px; }
+.nav .button { color: #0b1424; }
+
+/* Hero: a dusk sky and the top of a MacBook screen */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 72px 0 120px;
+  background:
+    radial-gradient(120% 70% at 50% 110%, rgba(143, 178, 218, 0.35), transparent 60%),
+    linear-gradient(180deg, var(--night) 0%, var(--dusk) 42%, #24467a 82%, var(--horizon) 100%);
+}
+.hero::before { /* a few faint stars, high up where the sky is darkest */
+  content: ""; position: absolute; inset: 0 0 45% 0; pointer-events: none; opacity: 0.55;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 8%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 41% 26%, #fff, transparent), radial-gradient(1px 1px at 63% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 77% 30%, #fff, transparent), radial-gradient(1.4px 1.4px at 88% 9%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 40%, #fff, transparent), radial-gradient(1px 1px at 94% 44%, #fff, transparent);
+}
+.hero::after { /* the horizon dissolves into the night of the page below, with no hard line */
+  content: ""; position: absolute; inset: auto 0 0 0; height: 220px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--night));
+}
+.hero-copy { width: var(--page); margin: 0 auto; text-align: center; display: grid; justify-items: center; gap: 22px; position: relative; }
+.hero-copy .lede { margin: 0 auto; }
+.fineprint { color: var(--ash); font-size: 14px; }
+
+.stage { width: min(900px, 100% - 32px); margin: 56px auto 0; position: relative; }
+.screen {
+  position: relative; aspect-ratio: 900 / 250;
+  border-radius: 22px 22px 0 0;
+  background:
+    linear-gradient(180deg, rgba(7, 14, 26, 0.0), rgba(7, 14, 26, 0.35)),
+    radial-gradient(80% 140% at 50% 120%, #5a83b6 0%, #2b4f82 45%, #142846 100%);
+  box-shadow: 0 0 0 10px #05080e, 0 40px 80px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.menubar {
+  position: absolute; inset: 0 0 auto 0; height: 12.8%; /* 32pt of a 250pt-tall slice */
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.4%;
+  background: rgba(10, 18, 32, 0.38);
+  backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
+  font-size: clamp(9px, 1.45vw, 13px); font-weight: 600; color: rgba(255, 255, 255, 0.92);
+}
+.menubar span { white-space: nowrap; }
+.menubar .left, .menubar .right { display: flex; gap: 1.8em; align-items: center; }
+.menubar .right img { width: 1.35em; height: 1.35em; filter: invert(1); opacity: 0.9; }
+
+/* The island. Everything is a share of the 559pt-wide open render, so it scales with the screen. */
+.island {
+  position: absolute; top: 0; left: 50%; translate: -50% 0;
+  width: 62.1%; /* 559 / 900 */
+}
+.island .open {
+  width: 100%;
+  clip-path: inset(0 25.58% 80.84% 25.58% round 0 0 10px 10px); /* the closed island: 273 x 32 of 559 x 167 */
+  transition: clip-path 520ms var(--ease-island);
+}
+.island .closed {
+  position: absolute; top: 0; left: 25.58%; width: 48.84%;
+  transition: opacity 140ms ease 60ms;
+}
+.island.is-open .open { clip-path: inset(0 0 0 0 round 0 0 30px 30px); }
+.island.is-open .closed { opacity: 0; transition-delay: 0ms; }
+.hotspot { position: absolute; top: 0; left: 24%; width: 52%; height: 22%; cursor: pointer; }
+.hint { text-align: center; color: var(--ash); font-size: 13px; margin-top: 18px; transition: opacity 300ms ease; }
+
+/* Sections */
+section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
+.section-head { display: grid; gap: 16px; margin-bottom: 44px; }
+.section-head.center { justify-items: center; text-align: center; }
+.section-head.center .lede { margin: 0 auto; }
+
+/* Personas */
+.personas { display: grid; grid-template-columns: 240px 1fr; gap: 48px; align-items: center; }
+.persona-list { display: grid; gap: 4px; }
+.persona {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 14px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--mist); text-align: left;
+  font: inherit; font-weight: 600; cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.persona:hover { color: var(--cream); background: var(--rail); }
+.persona[aria-selected="true"] { background: var(--rail); color: var(--cream); }
+.icon { width: 18px; height: 18px; flex: none; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+.persona-view { display: grid; gap: 22px; }
+/* A slice of screen: dusk wallpaper with the island hanging from its top edge, where it really lives. */
+.screen-slice {
+  border-radius: 20px; overflow: hidden; border: 1px solid var(--rail);
+  background: radial-gradient(90% 150% at 50% 135%, #4a73a6 0%, #1f3a62 55%, #0f1d33 100%);
+  padding: 0 6% 7%;
+}
+.persona-frame { position: relative; display: grid; align-items: start; }
+.persona-frame img { grid-area: 1 / 1; width: 100%; opacity: 0; transition: opacity 220ms ease; }
+.persona-frame img.is-active { opacity: 1; }
+.persona-note { color: var(--mist); min-height: 3.2em; }
+
+/* Closed-notch moments */
+.moments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.moment {
+  border-radius: 18px; overflow: hidden;
+  background: radial-gradient(90% 160% at 50% 140%, #3f6596, #1a3256 60%, #0f1d33);
+  border: 1px solid var(--rail);
+}
+.moment .bar { position: relative; display: grid; justify-items: center; padding-bottom: 26px; background: rgba(8, 14, 26, 0.28); }
+.moment .bar img { width: 88%; max-width: 433px; height: auto; } /* banners shrink to their card, pinned to the top like on screen */
+.moment p { padding: 16px 18px 18px; color: var(--mist); font-size: 15px; }
+.moment strong { color: var(--cream); font-weight: 650; display: block; margin-bottom: 2px; }
+
+/* Open tabs */
+.rows { display: grid; gap: 88px; }
+.row { display: grid; grid-template-columns: 1.25fr 1fr; gap: 56px; align-items: center; }
+.row:nth-child(even) .row-image { order: 2; }
+.row-image img { width: 100%; }
+.row-copy { display: grid; gap: 12px; }
+.row-copy p { color: var(--mist); max-width: 38ch; }
+
+/* Agents */
+.agents {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  padding: 56px; border-radius: 28px; border: 1px solid var(--rail);
+  background: radial-gradient(120% 120% at 0% 0%, rgba(67, 104, 154, 0.35), transparent 60%), #0b1628;
+}
+.agent-banners { display: grid; gap: 14px; justify-items: center; }
+.agent-banners img { height: 32px; width: auto; max-width: none; }
+.agent-copy { display: grid; gap: 14px; }
+.agent-copy p { color: var(--mist); }
+
+/* Shortcuts */
+.keys { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 48px; }
+.key { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--rail); }
+.key span { color: var(--mist); }
+kbd { font: 600 15px -apple-system, system-ui, sans-serif; color: var(--cream); white-space: nowrap; }
+
+/* Privacy, pricing, FAQ */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+.points { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; }
+.points li { color: var(--mist); padding-left: 22px; position: relative; }
+.points li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 8px; border-radius: 50%; background: var(--horizon); }
+.points strong { color: var(--cream); font-weight: 650; }
+
+.price { text-align: center; display: grid; justify-items: center; gap: 18px; }
+.price .amount { font: 700 clamp(64px, 10vw, 120px)/1 -apple-system, "SF Pro Display", system-ui, sans-serif; letter-spacing: -0.05em; }
+.price .amount small { font-size: 0.32em; letter-spacing: -0.01em; color: var(--mist); font-weight: 600; margin-left: 6px; }
+.price ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; list-style: none; padding: 0; margin: 4px 0 8px; color: var(--mist); }
+
+.faq { max-width: 760px; margin: 0 auto; }
+.faq details { border-bottom: 1px solid var(--rail); }
+.faq summary { list-style: none; cursor: pointer; padding: 22px 0; font-weight: 650; font-size: 18px; display: flex; justify-content: space-between; gap: 20px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--mist); font-weight: 400; transition: rotate 200ms var(--ease-out); }
+.faq details[open] summary::after { rotate: 45deg; }
+.faq details p { color: var(--mist); padding: 0 0 22px; max-width: 62ch; }
+
+.closing { text-align: center; padding: 140px 0 120px; display: grid; justify-items: center; gap: 22px; }
+.closing img { width: 96px; height: 96px; }
+
+footer { width: var(--page); margin: 0 auto; padding: 32px 0 48px; border-top: 1px solid var(--rail); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; color: var(--ash); font-size: 13px; }
+footer a { color: var(--mist); }
+
+/* A single reveal as each section arrives; nothing moves for people who'd rather it didn't. */
+.reveal { opacity: 0; translate: 0 16px; transition: opacity 600ms var(--ease-out), translate 600ms var(--ease-out); }
+.reveal.is-in { opacity: 1; translate: 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; translate: none; transition: none; }
+  .island .open, .island .closed { transition: none; }
+  .persona-frame img { transition: opacity 120ms ease; }
+}
+
+@media (max-width: 860px) {
+  .nav-links a:not(.button) { display: none; }
+  .personas, .row, .agents, .split { grid-template-columns: 1fr; gap: 28px; }
+  .row:nth-child(even) .row-image { order: 0; }
+  .persona-list { grid-template-columns: repeat(3, 1fr); }
+  .persona { justify-content: center; padding: 10px 8px; font-size: 14px; }
+  .persona .icon { display: none; }
+  .moments { grid-template-columns: 1fr; }
+  .keys { grid-template-columns: 1fr; }
+  .agents { padding: 32px 22px; }
+  section { padding-top: 88px; }
+  .moment .bar img { transform: scale(0.9); }
+}
+
+/* Privacy page */
+.doc { width: min(720px, 100% - 40px); margin: 0 auto; padding: 48px 0 96px; }
+.doc h1 { font-size: clamp(36px, 6vw, 56px); margin-bottom: 12px; }
+.doc .updated { color: var(--ash); margin-bottom: 40px; }
+.doc h2 { font-size: 24px; letter-spacing: -0.015em; margin: 44px 0 12px; }
+.doc p, .doc li { color: var(--mist); }
+.doc ul { padding-left: 20px; display: grid; gap: 8px; }
+.doc strong { color: var(--cream); }
+.doc code { font: 14px ui-monospace, "SF Mono", monospace; color: var(--cream); }

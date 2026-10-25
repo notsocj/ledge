@@ -27,6 +27,7 @@ struct NotchView: View {
         .task(id: nowPlaying.trackKey) {
             lyrics = nil
             guard nowPlaying.hasTrack else { return }
+            if Snapshots.folder != nil { lyrics = Snapshots.demoLyrics; return }
             let found = await LRCLIB.syncedLyrics(title: nowPlaying.title, artist: nowPlaying.artist, album: nowPlaying.album, duration: nowPlaying.duration)
             if !Task.isCancelled { lyrics = found }
         }

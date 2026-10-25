@@ -12,6 +12,33 @@ enum Snapshots {
         return URL(fileURLWithPath: arguments[index + 1])
     }()
 
+    /// Original lines for the demo song (no one's real lyrics on a marketing page).
+    static let demoLyrics: [LyricLine] = [
+        // Far apart, so whenever during a snapshot run the Music tab is captured, a next line shows too.
+        LyricLine(time: 0, text: "Hold the light a little longer"),
+        LyricLine(time: 50, text: "The city's turning gold behind us"),
+        LyricLine(time: 100, text: "Every window catching fire"),
+        LyricLine(time: 150, text: "We don't have to say we're leaving"),
+        LyricLine(time: 200, text: "Stay until the street lights find us"),
+    ]
+
+    /// Demo artwork drawn in code: a low sun over dark hills.
+    private static func demoArtwork() -> NSImage {
+        NSImage(size: NSSize(width: 600, height: 600), flipped: false) { rect in
+            NSGradient(colors: [NSColor(srgbRed: 0.98, green: 0.62, blue: 0.38, alpha: 1), NSColor(srgbRed: 0.52, green: 0.24, blue: 0.47, alpha: 1), NSColor(srgbRed: 0.13, green: 0.12, blue: 0.3, alpha: 1)])!
+                .draw(in: rect, angle: -90)
+            NSColor(srgbRed: 1, green: 0.86, blue: 0.62, alpha: 0.95).setFill()
+            NSBezierPath(ovalIn: NSRect(x: 210, y: 210, width: 180, height: 180)).fill()
+            NSColor(srgbRed: 0.08, green: 0.07, blue: 0.16, alpha: 1).setFill()
+            let hills = NSBezierPath()
+            hills.move(to: NSPoint(x: 0, y: 0)); hills.line(to: NSPoint(x: 0, y: 230))
+            hills.curve(to: NSPoint(x: 330, y: 250), controlPoint1: NSPoint(x: 120, y: 300), controlPoint2: NSPoint(x: 220, y: 200))
+            hills.curve(to: NSPoint(x: 600, y: 270), controlPoint1: NSPoint(x: 440, y: 300), controlPoint2: NSPoint(x: 520, y: 220))
+            hills.line(to: NSPoint(x: 600, y: 0)); hills.close(); hills.fill()
+            return true
+        }
+    }
+
     static func run(_ app: NotchController, into folder: URL) async {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let size = NSSize(width: NotchModel.width, height: NotchModel.maxHeight)
@@ -24,7 +51,8 @@ enum Snapshots {
         window.orderFrontRegardless()
         app.model.notchSize = CGSize(width: 185, height: 32) // a 14-inch MacBook Pro's notch, whatever screen this runs on
 
-        try? await Task.sleep(for: .seconds(4)) // now playing, lyrics and usage limits load
+        app.nowPlaying.showDemo(title: "Afterglow", artist: "Northbound", album: "Long Way Home", artwork: demoArtwork(), duration: 214, elapsed: 5)
+        try? await Task.sleep(for: .seconds(4)) // usage limits load
         app.stats.sample()
         try? await Task.sleep(for: .seconds(1))
         app.stats.sample()
@@ -54,8 +82,11 @@ enum Snapshots {
         }
         app.model.onboarding = nil
 
-        // The closed notch with each kind of banner.
+        // The closed notch: music playing beside it, then each kind of banner.
         app.model.expanded = false
+        app.preferences.preview = [.essentials] // no mic or camera indicator in front of the music
+        try? await Task.sleep(for: .milliseconds(900))
+        capture(host, "closed-media", in: folder)
         let banners: [(String, Banner)] = [
             ("agent-waiting", .agent(name: "Claude", waiting: true, project: "kestrel")),
             ("agent-done", .agent(name: "Codex", waiting: false, project: "website")),
@@ -73,18 +104,11 @@ enum Snapshots {
         NSApp.terminate(nil)
     }
 
-    /// The island on a dark grey backdrop, at 2x, so it reads like it does against a menu bar.
+    /// The island at 2x on a transparent background, so it can sit on any backdrop (review sheets, the website).
     private static func capture(_ view: NSView, _ name: String, in folder: URL) {
         view.layoutSubtreeIfNeeded()
         guard let island = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
         view.cacheDisplay(in: view.bounds, to: island)
-        let image = NSImage(size: view.bounds.size)
-        image.lockFocus()
-        NSColor(white: 0.22, alpha: 1).setFill()
-        NSRect(origin: .zero, size: view.bounds.size).fill()
-        island.draw(in: NSRect(origin: .zero, size: view.bounds.size))
-        image.unlockFocus()
-        guard let data = image.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))?.representation(using: .png, properties: [:]) else { return }
-        try? data.write(to: folder.appending(path: "\(name).png"))
+        try? island.representation(using: .png, properties: [:])?.write(to: folder.appending(path: "\(name).png"))
     }
 }

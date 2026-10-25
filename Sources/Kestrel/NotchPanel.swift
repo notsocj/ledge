@@ -229,7 +229,7 @@ final class NotchController {
 
     private func apply(_ tool: Tool, on: Bool) {
         switch tool {
-        case .media: if on { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap
+        case .media: if on, Snapshots.folder == nil { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap. Snapshots use demo music.
         case .clipboard: on ? clipboard.start() : clipboard.stop()
         case .keepAwake: if !on { keepAwake.off() }
         case .volumeHUD: on ? mediaKeys.start() : mediaKeys.stop()

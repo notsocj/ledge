@@ -122,6 +122,15 @@ final class NowPlaying {
         }
     }
 
+    /// A made-up song for screenshots, so marketing images never show someone's real music.
+    func showDemo(title: String, artist: String, album: String, artwork: NSImage, duration: TimeInterval, elapsed: TimeInterval) {
+        (self.title, self.artist, self.album, self.artwork, self.duration, self.elapsed) = (title, artist, album, artwork, duration, elapsed)
+        accent = Self.accent(of: artwork) ?? .white
+        appBundleID = nil
+        isPlaying = true
+        elapsedAt = .now
+    }
+
     private static let imageContext = CIContext()
 
     /// The artwork's average color, lifted and tamed so it stays legible on the black island.

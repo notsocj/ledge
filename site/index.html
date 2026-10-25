@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kestrel: the notch, put to work</title>
+  <meta name="description" content="Kestrel turns the space around your MacBook's notch into the tools you reach for all day, arranged around what you do.">
+  <meta property="og:title" content="Kestrel: the notch, put to work">
+  <meta property="og:description" content="Music, your week, AI agent alerts, files, colors and more, right under the notch. Built around what you do.">
+  <meta property="og:image" content="assets/hero-open.png">
+  <meta name="theme-color" content="#070e1a">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="#"><img src="assets/icon.svg" alt="">Kestrel</a>
+  <div class="nav-links">
+    <a href="#what-you-do">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#questions">Questions</a>
+    <a class="button small" href="#download">Download</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-copy">
+    <h1>The notch,<br>put to work.</h1>
+    <p class="lede">Kestrel turns the space around your MacBook's notch into the tools you reach for all day, and arranges them around what you do.</p>
+    <a class="button" href="#download" id="download">Download for Mac</a>
+    <p class="fineprint">Free for 7 days, then $19.99 once. macOS 14 or later.</p>
+  </div>
+
+  <div class="stage" aria-label="Kestrel opening out of the notch">
+    <div class="screen">
+      <div class="menubar" aria-hidden="true">
+        <div class="left"><span>Finder</span><span>File</span><span>Edit</span><span>View</span></div>
+        <div class="right"><img src="assets/mark.svg" alt=""><span>Mon 12:24 PM</span></div>
+      </div>
+      <div class="island" id="island">
+        <img class="open" src="assets/hero-open.png" width="559" height="167" alt="Kestrel open: now playing, this week's calendar, quick actions and a status row with Claude and Codex usage">
+        <img class="closed" src="assets/hero-closed.png" width="273" height="32" alt="">
+        <div class="hotspot" id="hotspot" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="hint" id="hint">Hover the notch</p>
+  </div>
+</header>
+
+<main>
+
+<section id="what-you-do">
+  <div class="section-head reveal">
+    <h2>Built around what you do.</h2>
+    <p class="lede">Tell it what you do the first time it opens. Kestrel switches on the tools that fit and puts the ones you'll use most closest to the notch. Mix as many as you like.</p>
+  </div>
+  <div class="personas reveal">
+    <div class="persona-list" role="tablist" aria-label="Personas">
+      <button class="persona" role="tab" aria-selected="true" data-persona="developer"><span class="icon" style="--icon: url(assets/code-linear.svg)"></span>Developer</button>
+      <button class="persona" role="tab" aria-selected="false" data-persona="designer"><span class="icon" style="--icon: url(assets/pallete-2-linear.svg)"></span>Designer</button>
+      <button class="persona" role="tab" aria-selected="false" data-persona="creator"><span class="icon" style="--icon: url(assets/videocamera-record-linear.svg)"></span>Creator</button>
+      <button class="persona" role="tab" aria-selected="false" data-persona="student"><span class="icon" style="--icon: url(assets/square-academic-cap-linear.svg)"></span>Student</button>
+      <button class="persona" role="tab" aria-selected="false" data-persona="professional"><span class="icon" style="--icon: url(assets/case-round-linear.svg)"></span>Professional</button>
+      <button class="persona" role="tab" aria-selected="false" data-persona="essentials"><span class="icon" style="--icon: url(assets/star-linear.svg)"></span>Essentials</button>
+    </div>
+    <div class="persona-view" role="tabpanel">
+      <div class="persona-frame screen-slice">
+        <img class="is-active" data-persona="developer" src="assets/home-developer.png" width="559" height="167" alt="Kestrel for developers: Claude and Codex limits, CPU and battery in the status row">
+        <img data-persona="designer" src="assets/home-designer.png" width="559" height="167" alt="Kestrel for designers: a color picker beside the music and calendar" loading="lazy">
+        <img data-persona="creator" src="assets/home-creator.png" width="559" height="152" alt="Kestrel for creators: music, mic mute and audio output" loading="lazy">
+        <img data-persona="student" src="assets/home-student.png" width="559" height="167" alt="Kestrel for students: the week first, with music beside it" loading="lazy">
+        <img data-persona="professional" src="assets/home-professional.png" width="559" height="167" alt="Kestrel for professionals: the week, mic mute and three world clocks" loading="lazy">
+        <img data-persona="essentials" src="assets/home-essentials.png" width="559" height="167" alt="Kestrel's essentials: music and the week" loading="lazy">
+      </div>
+      <p class="persona-note" id="persona-note">Claude and Codex usage, alerts when an agent finishes, your dev servers' ports, and the clipboard close by.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head reveal">
+    <h2>Quiet, until<br>something needs you.</h2>
+    <p class="lede">Closed, Kestrel is just the notch. When something happens, it says so right beside it, then gets out of the way.</p>
+  </div>
+  <div class="moments">
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-agent.png" width="433" height="32" alt="Claude needs you in the kestrel project"></div><p><strong>An agent needs you</strong>Claude Code or Codex is waiting on your answer.</p></div>
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-meeting.png" width="433" height="32" alt="Design review in 2 minutes"></div><p><strong>A meeting's about to start</strong>Two minutes' warning, once per meeting.</p></div>
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-mic.png" width="377" height="32" alt="Microphone muted"></div><p><strong>Your mic is muted</strong>It stays there, so you never talk into the void.</p></div>
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-volume.png" width="377" height="32" alt="Volume level"></div><p><strong>Volume and brightness</strong>A slim level instead of the big square in the middle of the screen.</p></div>
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-battery.png" width="377" height="32" alt="Charging, 54 percent"></div><p><strong>Plugged in, or running low</strong>And your AirPods' battery when they connect.</p></div>
+    <div class="moment reveal"><div class="bar"><img src="assets/banner-color.png" width="377" height="32" alt="Picked color #FF8000"></div><p><strong>A color, copied</strong>Pick any pixel on screen with ⌃⌥P.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head reveal">
+    <h2>Open it, and<br>it's all there.</h2>
+    <p class="lede">Hover the notch and each tool is a tab away, with the ones you use most nearest the middle.</p>
+  </div>
+  <div class="rows">
+    <div class="row reveal">
+      <div class="row-image screen-slice"><img src="assets/tab-music.png" width="559" height="173" alt="The Music tab: song, controls, the current lyric line and a progress bar" loading="lazy"></div>
+      <div class="row-copy"><h3>Lyrics that keep time.</h3><p>Whatever's playing, in any app, with synced lyrics that scroll a line at a time and the app's own icon on the artwork.</p></div>
+    </div>
+    <div class="row reveal">
+      <div class="row-image screen-slice"><img src="assets/tab-stats.png" width="559" height="149" alt="The Stats tab: CPU, memory, battery, network, and Claude and Codex usage with reset times" loading="lazy"></div>
+      <div class="row-copy"><h3>Your Mac, and your limits.</h3><p>CPU, memory, battery and network, next to how much of your Claude and Codex plans you've used and when they reset.</p></div>
+    </div>
+    <div class="row reveal">
+      <div class="row-image screen-slice"><img src="assets/tab-ports.png" width="559" height="122" alt="The Ports tab listing a local server with Open and Stop" loading="lazy"></div>
+      <div class="row-copy"><h3>Every dev server, one click away.</h3><p>What's listening on localhost, with Open in the browser and a Stop that asks twice.</p></div>
+    </div>
+    <div class="row reveal">
+      <div class="row-image screen-slice"><img src="assets/tab-timer.png" width="559" height="210" alt="The Timer tab with a focus session button and presets" loading="lazy"></div>
+      <div class="row-copy"><h3>Focus in good-sized pieces.</h3><p>Twenty-five minutes of focus rolls straight into a five minute break, and the countdown ticks beside the notch.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="agents reveal">
+    <div class="agent-banners">
+      <img src="assets/banner-agent.png" width="433" height="32" alt="Claude needs you" loading="lazy">
+      <img src="assets/banner-agent-done.png" width="433" height="32" alt="Codex done" loading="lazy">
+    </div>
+    <div class="agent-copy">
+      <h2>Made for building with AI.</h2>
+      <p>Connect Claude Code and Codex, and the notch tells you when a long task finishes or needs your say, so you can look away while they work.</p>
+      <p>Kestrel asks before it changes anything, keeps a backup, and leaves your existing settings working.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head reveal">
+    <h2>And everywhere else.</h2>
+    <p class="lede">The small things you'd otherwise install five apps for.</p>
+  </div>
+  <div class="keys reveal">
+    <div class="key"><span>Snap a window to half the screen</span><kbd>⌃⌥ ← → ↑ ↓</kbd></div>
+    <div class="key"><span>Fill the screen</span><kbd>⌃⌥ ↩</kbd></div>
+    <div class="key"><span>Screenshot an area</span><kbd>⌃⌥ S</kbd></div>
+    <div class="key"><span>Pick a color</span><kbd>⌃⌥ P</kbd></div>
+    <div class="key"><span>Mute the microphone</span><kbd>⌃⌥ M</kbd></div>
+    <div class="key"><span>Drag files onto the notch to keep them</span><kbd>Shelf</kbd></div>
+    <div class="key"><span>Copy something from earlier</span><kbd>Clipboard</kbd></div>
+    <div class="key"><span>Keep your Mac awake</span><kbd>One click</kbd></div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="split reveal">
+    <div class="section-head">
+      <h2>It stays on<br>your Mac.</h2>
+      <p class="lede">No accounts, no analytics, no tracking.</p>
+    </div>
+    <ul class="points">
+      <li><strong>Your clipboard is kept in memory only,</strong> and anything a password manager marks as secret is skipped.</li>
+      <li><strong>Notes, files and colors stay in your Mac's own folders.</strong> Calendar events are read through macOS and never leave it.</li>
+      <li><strong>Two things go online:</strong> lyrics are looked up by song and artist, and the Claude meter asks Anthropic for your usage with the login Claude Code already saved.</li>
+      <li><a href="privacy.html">The full privacy policy</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="price reveal">
+    <h2>One price, once.</h2>
+    <div class="amount">$19.99<small>one time</small></div>
+    <ul>
+      <li>Two Macs</li>
+      <li>Every 1.x update</li>
+      <li>Seven days free first</li>
+    </ul>
+    <a class="button" href="#download">Download for Mac</a>
+  </div>
+</section>
+
+<section id="questions">
+  <div class="section-head center reveal"><h2>Questions, answered.</h2></div>
+  <div class="faq reveal">
+    <details><summary>Will it slow my Mac down?</summary><p>No. It's a native Mac app that sits idle until something changes. The few things it checks on a timer, like the clipboard and your microphone, are tiny and only run while those tools are on.</p></details>
+    <details><summary>My Mac doesn't have a notch.</summary><p>Kestrel works on any Mac running macOS 14 or later, and on external displays. Without a notch it sits at the top of the screen as a small pill.</p></details>
+    <details><summary>Is it a subscription?</summary><p>No. You pay once and it's yours on two Macs, with every 1.x update included.</p></details>
+    <details><summary>Why does it ask for Accessibility?</summary><p>Only for two tools: showing volume and brightness in the notch, and snapping windows. Everything else works without it, and setup only asks for what your tools need.</p></details>
+    <details><summary>What does connecting Claude Code or Codex change?</summary><p>It adds a small command to their settings that tells Kestrel when a task finishes or needs you. Kestrel asks first, saves a backup of each file, keeps any notification command you already had working, and removes everything when you disconnect.</p></details>
+    <details><summary>Can I change what it shows later?</summary><p>Any time. Change what you do in Settings, switch individual tools on or off, or run setup again from the menu bar.</p></details>
+  </div>
+</section>
+
+<div class="closing reveal">
+  <img src="assets/icon.svg" alt="Kestrel's icon: a kestrel hovering under a notch" width="96" height="96">
+  <h2>Make the notch<br>earn its place.</h2>
+  <a class="button" href="#download">Download for Mac</a>
+  <p class="fineprint">Free for 7 days. macOS 14 or later.</p>
+</div>
+
+</main>
+
+<footer>
+  <span>© 2026 Kestrel</span>
+  <span><a href="privacy.html">Privacy</a> &nbsp; Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</span>
+</footer>
+
+<script>
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // The island: opens once on its own so you see what it does, then follows the pointer.
+  const island = document.getElementById("island");
+  const hotspot = document.getElementById("hotspot");
+  const hint = document.getElementById("hint");
+  let hovering = false;
+  const setOpen = (open) => island.classList.toggle("is-open", open);
+  setTimeout(() => {
+    setOpen(true);
+    setTimeout(() => { if (!hovering) setOpen(false); }, 3400);
+  }, reduceMotion ? 400 : 1100);
+  hotspot.addEventListener("mouseenter", () => { hovering = true; setOpen(true); hint.style.opacity = 0; });
+  island.addEventListener("mouseleave", () => { hovering = false; setOpen(false); });
+  island.addEventListener("click", () => setOpen(!island.classList.contains("is-open"))); // touch screens
+
+  // Personas: each shows its own Home, as Kestrel lays it out.
+  const notes = {
+    developer: "Claude and Codex usage, alerts when an agent finishes, your dev servers' ports, and the clipboard close by.",
+    designer: "A color picker up front, a shelf for assets, screenshots that land on it, and an image-friendly clipboard.",
+    creator: "What's playing, timers, a mute switch, the mic and camera indicator, and where your sound goes.",
+    student: "Your week first, focus sessions with breaks, notes, and music for the long stretches.",
+    professional: "Meeting countdowns with Join, mic mute, three world clocks, and your notes.",
+    essentials: "Music, your week, a shelf and the clipboard. Nothing else in the way.",
+  };
+  document.querySelectorAll(".persona").forEach((button) => {
+    button.addEventListener("click", () => {
+      const persona = button.dataset.persona;
+      document.querySelectorAll(".persona").forEach((b) => b.setAttribute("aria-selected", b === button));
+      document.querySelectorAll(".persona-frame img").forEach((img) => img.classList.toggle("is-active", img.dataset.persona === persona));
+      document.getElementById("persona-note").textContent = notes[persona];
+    });
+  });
+
+  // Sections fade up once as they arrive.
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add("is-in"); observer.unobserve(entry.target); } });
+  }, { rootMargin: "0px 0px -10% 0px" });
+  document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+</script>
+</body>
+</html>
