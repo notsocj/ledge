@@ -23,7 +23,7 @@ enum Persona: String, CaseIterable, Identifiable {
 
     var blurb: String {
         switch self {
-        case .developer: "AI usage limits, clipboard, notes and window snapping."
+        case .developer: "Agent alerts, AI usage limits, localhost ports and the clipboard."
         case .designer: "A color picker, screenshots, and a shelf for assets."
         case .creator: "Music, timers, screenshots and a shelf for clips."
         case .student: "Timers, notes and your class calendar."
@@ -46,12 +46,12 @@ enum Persona: String, CaseIterable, Identifiable {
     /// Most important first. Tools left out are switched off for this persona.
     var ranking: [Tool] {
         switch self {
-        case .developer: [.stats, .clipboard, .notes, .shelf, .calendar, .media, .timer, .windowSnapping, .keepAwake, .screenshot, .menuBarHider]
+        case .developer: [.stats, .agentAlerts, .ports, .clipboard, .notes, .shelf, .calendar, .media, .timer, .windowSnapping, .keepAwake, .screenshot, .menuBarHider]
         case .designer: [.colorPicker, .shelf, .clipboard, .screenshot, .media, .notes, .calendar, .windowSnapping, .timer]
-        case .creator: [.media, .timer, .shelf, .screenshot, .notes, .stats, .keepAwake, .micMute]
+        case .creator: [.media, .timer, .shelf, .screenshot, .notes, .stats, .keepAwake, .micMute, .inUse, .audioOutput]
         case .student: [.timer, .notes, .calendar, .media, .clipboard, .keepAwake]
-        case .professional: [.calendar, .meetingAlerts, .notes, .micMute, .worldClock, .clipboard, .timer, .shelf, .media, .keepAwake, .screenshot]
-        case .essentials: [.media, .shelf, .clipboard, .calendar, .keepAwake, .timer]
+        case .professional: [.calendar, .meetingAlerts, .notes, .micMute, .worldClock, .clipboard, .timer, .shelf, .media, .keepAwake, .screenshot, .inUse, .audioOutput]
+        case .essentials: [.media, .shelf, .clipboard, .calendar, .keepAwake, .timer, .audioOutput]
         }
     }
 
@@ -97,7 +97,7 @@ struct Layout: Equatable {
     var closedOrder: [ClosedActivity]
 
     /// Before anyone picks a persona: everything on, in the original order.
-    static let standard = Layout(tools: Set(Tool.allCases), tabOrder: Tool.tabs.filter { $0 != .colorPicker }, homeWidgets: [.media, .week],
+    static let standard = Layout(tools: Set(Tool.allCases), tabOrder: Tool.tabs.filter { $0 != .colorPicker && $0 != .ports }, homeWidgets: [.media, .week],
                                  chips: StatusChip.allCases, closedOrder: [.timer, .media])
 
     /// Several personas merge: a tool is on if any of them wants it, and ranks as high as the persona

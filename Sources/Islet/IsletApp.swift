@@ -29,6 +29,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notch = NotchController()
     }
 
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls { notch?.open(url) }
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         notch?.quit()
     }

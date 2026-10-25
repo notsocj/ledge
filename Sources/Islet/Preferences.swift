@@ -4,15 +4,16 @@ import SwiftUI
 
 enum Tool: String, CaseIterable, Identifiable {
     // In the open island.
-    case home, media, shelf, colorPicker, clipboard, calendar, timer, notes, stats
+    case home, media, shelf, colorPicker, clipboard, calendar, timer, notes, stats, ports
     // Work everywhere, outside the island.
     case keepAwake, screenshot, volumeHUD, alerts, windowSnapping, menuBarHider, meetingAlerts, worldClock, micMute
+    case audioOutput, agentAlerts, inUse
 
     /// Tabs, split around the notch: the first `leftTabCount` sit left of it, the rest right.
-    static let tabs: [Tool] = [.home, .media, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats]
+    static let tabs: [Tool] = [.home, .media, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports]
     static let leftTabCount = 4
     /// Calendar has no tab of its own; it lives on Home.
-    static let island: [Tool] = [.home, .media, .calendar, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats]
+    static let island: [Tool] = [.home, .media, .calendar, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports]
     static let everywhere = allCases.filter { !island.contains($0) }
 
     var id: String { rawValue }
@@ -32,6 +33,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .colorPicker: "Colors"
         case .meetingAlerts: "Meetings"
         case .worldClock: "Clocks"
+        case .ports: "Ports"
+        case .audioOutput: "Output"
+        case .agentAlerts: "Agents"
+        case .inUse: "In use"
         default: title
         }
     }
@@ -56,6 +61,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .meetingAlerts: "Meeting countdown"
         case .worldClock: "World clock"
         case .micMute: "Mic mute"
+        case .ports: "Localhost ports"
+        case .audioOutput: "Audio output"
+        case .agentAlerts: "Agent alerts"
+        case .inUse: "Mic and camera in use"
         }
     }
 
@@ -79,6 +88,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .meetingAlerts: "calendar-mark-linear"
         case .worldClock: "earth-linear"
         case .micMute: "microphone-linear"
+        case .ports: "server-square-linear"
+        case .audioOutput: "speaker-minimalistic-linear"
+        case .agentAlerts: "bell-ring-linear"
+        case .inUse: "record-circle-linear"
         }
     }
 
@@ -102,6 +115,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .meetingAlerts: "A heads-up beside the notch two minutes before each meeting. Uses your calendar."
         case .worldClock: "Up to three cities' times in Home's status row. Choose them below."
         case .micMute: "⌃⌥M, or the mic button on Home: mutes your input in every app, with a red mark in the notch."
+        case .ports: "What's listening on localhost, like your dev servers, with Open and Stop."
+        case .audioOutput: "Switch between speakers, AirPods and other outputs from Home."
+        case .agentAlerts: "The notch lights up when Claude Code or Codex finishes or needs you. Connect them below."
+        case .inUse: "Shows beside the notch while any app is using your microphone or camera."
         }
     }
 
@@ -140,7 +157,7 @@ final class Preferences {
         let defaults = UserDefaults.standard
         // Before this was tracked, every tool except these four already existed.
         let known = defaults.stringArray(forKey: "knownTools").map { Set($0.compactMap(Tool.init)) }
-            ?? Set(Tool.allCases).subtracting([.colorPicker, .meetingAlerts, .worldClock, .micMute])
+            ?? Set(Tool.allCases).subtracting([.colorPicker, .meetingAlerts, .worldClock, .micMute, .ports, .audioOutput, .agentAlerts, .inUse])
         let arrived = Tool.allCases.filter { !known.contains($0) }
         if !personas.isEmpty {
             let wanted = layout.tools
@@ -204,6 +221,9 @@ struct SettingsView: View {
             }
             Section("Everywhere") {
                 ForEach(Tool.everywhere) { toggle($0) }
+            }
+            if preferences.isOn(.agentAlerts) {
+                AgentSettings(agents: .shared)
             }
             if preferences.isOn(.worldClock) {
                 WorldClockSettings(clock: .shared)
@@ -273,6 +293,58 @@ private struct WorldClockSettings: View {
                     Text("None").tag("")
                     ForEach(Self.zones, id: \.self) { Text(WorldClock.city($0)).tag($0) }
                 }
+            }
+        }
+    }
+}
+
+/// Connecting edits each agent's own settings file, so it asks first and says exactly what changes.
+private struct AgentSettings: View {
+    let agents: AgentAlerts
+    @State private var confirming: AgentAlerts.Agent?
+
+    var body: some View {
+        Section {
+            row(.claude, name: "Claude Code", logo: "claude-logo", status: agents.claude)
+            row(.codex, name: "Codex", logo: "codex-logo", status: agents.codex)
+            if let error = agents.lastError {
+                Text(error).foregroundStyle(.red)
+            }
+        } header: {
+            Text("Coding agents")
+        } footer: {
+            Text("Islet adds a small command to each agent's settings, saving a backup of the file first. Disconnect removes it again.")
+                .foregroundStyle(.secondary)
+        }
+        .onAppear { agents.refresh() }
+        .confirmationDialog(confirming == .claude ? "Connect Claude Code?" : "Connect Codex?",
+                            isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })) {
+            Button("Connect") {
+                if let agent = confirming { agents.connect(agent) }
+                confirming = nil
+            }
+            Button("Cancel", role: .cancel) { confirming = nil }
+        } message: {
+            Text(confirming == .claude
+                 ? "Islet will add a Stop and a Notification hook to ~/.claude/settings.json. A backup is saved as settings.json.islet-backup."
+                 : "Islet will set notify in ~/.codex/config.toml. If you already have one, it keeps running after Islet's. A backup is saved as config.toml.islet-backup.")
+        }
+    }
+
+    @ViewBuilder private func row(_ agent: AgentAlerts.Agent, name: String, logo: String, status: AgentAlerts.Status) -> some View {
+        LabeledContent {
+            switch status {
+            case .notInstalled: Text("Not installed").foregroundStyle(.secondary)
+            case .connected: Button("Disconnect") { agents.disconnect(agent) }
+            case .disconnected: Button("Connect…") { confirming = agent }
+            case .blocked(let reason): Text(reason).foregroundStyle(.secondary)
+            }
+        } label: {
+            Label {
+                Text(name)
+                Text(status == .connected ? "Connected" : status == .notInstalled ? "" : "Not connected")
+            } icon: {
+                Icon(name: logo)
             }
         }
     }

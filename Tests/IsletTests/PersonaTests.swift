@@ -16,10 +16,10 @@ import Testing
 
 @Test func mergedPersonasTakeEachToolsBestRankAndTheFirstPicksHome() {
     let layout = Layout.merging([.creator, .developer])
-    // Union of tools, each ranked by whichever persona cares most; ties go to the creator's order
-    // (timer before clipboard, shelf before notes).
+    // Union of tools, each ranked by whichever persona cares most; ties go to the creator's order.
+    // Eight tabs qualify, so the lowest-ranked (notes) doesn't get one.
     #expect(layout.tools.isSuperset(of: [.media, .timer, .stats, .clipboard, .windowSnapping]))
-    #expect(layout.tabOrder == [.home, .media, .stats, .timer, .clipboard, .shelf, .notes])
+    #expect(layout.tabOrder == [.home, .media, .stats, .timer, .shelf, .ports, .clipboard])
     #expect(layout.tabOrder.count <= Layout.maxTabs)
     #expect(layout.homeWidgets == [.media, .week])
     #expect(layout.closedOrder == [.media, .timer]) // the creator picked first

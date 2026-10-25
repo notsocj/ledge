@@ -28,6 +28,7 @@ struct HomeView: View {
             app.usage.refresh()
             while !Task.isCancelled {
                 app.stats.sample()
+                if app.preferences.isOn(.audioOutput) { app.audioOutputs.refresh() }
                 try? await Task.sleep(for: .seconds(2))
             }
         }
@@ -277,6 +278,9 @@ private struct QuickColumn: View {
                 IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 26) { app.pickColor() }
                     .help("Pick a color on screen (⌃⌥P)")
             }
+            if app.preferences.isOn(.audioOutput) {
+                OutputMenu(outputs: app.audioOutputs)
+            }
             if app.preferences.isOn(.micMute) {
                 let muted = app.microphone.isMuted
                 IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 26, active: muted) {
@@ -295,22 +299,25 @@ private struct StatusRow: View {
     let open: (Tool) -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            // In your personas' order; each chip appears only when it has something to say.
-            ForEach(app.preferences.layout.chips, id: \.self) { kind in
-                chip(for: kind)
+        // One clock for the whole row: the timer chip needs seconds, the world clock minutes.
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            // In your personas' order. Chips that don't fit are left out whole, least important first,
+            // rather than every chip being squeezed into "…".
+            PriorityRow(spacing: 12) {
+                ForEach(app.preferences.layout.chips, id: \.self) { kind in
+                    chip(for: kind, at: context.date)
+                }
             }
-            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 18)
+        .clipped()
     }
 
-    @ViewBuilder private func chip(for kind: StatusChip) -> some View {
+    @ViewBuilder private func chip(for kind: StatusChip, at date: Date) -> some View {
         switch kind {
         case .timer where isOn(.timer) && app.countdown.isActive:
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                chip("stopwatch-linear", Countdown.format(app.countdown.remaining(at: context.date)), tint: .orange, opens: .timer)
-            }
+            chip("stopwatch-linear", Countdown.format(app.countdown.remaining(at: date)), tint: .orange, opens: .timer)
         case .shelf where isOn(.shelf) && !app.shelf.files.isEmpty:
             chip("inbox-linear", app.shelf.files.count == 1 ? "1 file" : "\(app.shelf.files.count) files", opens: .shelf)
         case .clipboard where isOn(.clipboard) && !app.clipboard.entries.isEmpty:
@@ -329,13 +336,10 @@ private struct StatusRow: View {
                 chip("codex-logo", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
             }
         case .clocks where isOn(.worldClock) && !app.worldClock.zones.isEmpty:
-            TimelineView(.periodic(from: .now, by: 30)) { context in
-                HStack(spacing: 14) {
-                    ForEach(app.worldClock.zones, id: \.self) { zone in
-                        Chip(symbol: zone == app.worldClock.zones.first ? "earth-linear" : nil,
-                             text: "\(WorldClock.city(zone)) \(WorldClock.time(zone, at: context.date))", tint: Palette.ash, action: nil)
-                    }
-                }
+            // Each city is its own chip, so the row can keep the first ones when space runs out.
+            ForEach(app.worldClock.zones, id: \.self) { zone in
+                Chip(symbol: zone == app.worldClock.zones.first ? "earth-linear" : nil, caption: WorldClock.city(zone),
+                     text: WorldClock.time(zone, at: date), tint: Palette.ash, action: nil)
             }
         default:
             EmptyView()
@@ -351,6 +355,8 @@ private struct StatusRow: View {
 
 private struct Chip: View {
     let symbol: String?
+    /// A quieter word before the value, like a city before its time.
+    var caption: String?
     let text: String
     let tint: Color
     /// Nil for read-only chips like the clocks.
@@ -371,10 +377,64 @@ private struct Chip: View {
     private var label: some View {
         HStack(spacing: 4) {
             if let symbol { Icon(name: symbol, size: 12).foregroundStyle(tint) }
+            if let caption { Text(caption).fontWeight(.medium).foregroundStyle(Palette.ash) }
             Text(text).foregroundStyle(hovering ? Palette.paper : Palette.graphite)
         }
         .font(Typeface.value)
         .lineLimit(1)
+        .fixedSize() // never truncated; the row drops whole chips instead
         .contentShape(Rectangle())
+    }
+}
+
+/// A row that keeps its children at full size in order, and leaves out any child that no longer
+/// fits (trying the smaller ones after it), so nothing is cut off mid-word.
+struct PriorityRow: SwiftUI.Layout { // SwiftUI's, not the persona Layout
+    var spacing: CGFloat = 12
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let natural = sizes.map(\.width).reduce(0, +) + spacing * CGFloat(max(0, sizes.count - 1))
+        return CGSize(width: proposal.width ?? natural, height: sizes.map(\.height).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width <= bounds.maxX + 0.5 {
+                subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            } else {
+                // Off to the side, out of the clipped row.
+                subview.place(at: CGPoint(x: bounds.maxX + 10_000, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(size))
+            }
+        }
+    }
+}
+
+/// Pick where sound plays, as a native menu (it can extend past the island's edge).
+private struct OutputMenu: View {
+    let outputs: AudioOutputs
+
+    var body: some View {
+        Menu {
+            ForEach(outputs.devices) { device in
+                Button {
+                    outputs.select(device)
+                } label: {
+                    if device.id == outputs.current { Label(device.name, systemImage: "checkmark") } else { Text(device.name) }
+                }
+            }
+        } label: {
+            Icon(name: "speaker-minimalistic-linear", size: 15)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .frame(width: 26, height: 26)
+        .foregroundStyle(Palette.graphite)
+        .help("Choose where sound plays")
+        .accessibilityLabel("Audio output")
     }
 }

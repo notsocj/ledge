@@ -19,12 +19,13 @@ enum Banner: Equatable {
     case color(hex: String)
     case meeting(title: String, startsAt: Date)
     case mic(muted: Bool)
+    case agent(name: String, waiting: Bool, project: String)
 }
 
 @Observable @MainActor
 final class NotchModel {
     static let width: CGFloat = 560
-    static let maxHeight: CGFloat = 300
+    static let maxHeight: CGFloat = 330
     /// Space above and below a tab's content inside the open island.
     static let contentInsets = (top: CGFloat(8), bottom: CGFloat(14))
 
@@ -76,6 +77,10 @@ final class NotchController {
     let colorPicker = ColorPicker()
     let worldClock = WorldClock.shared
     let microphone = Microphone()
+    let audioOutputs = AudioOutputs()
+    let ports = Ports()
+    let inUse = InUse()
+    let agents = AgentAlerts.shared
     private lazy var meetingAlerts = MeetingAlerts(agenda: agenda)
     let notes = Notes()
     let stats = SystemStats()
@@ -130,6 +135,7 @@ final class NotchController {
         colorPicker.onPicked = { [weak self] in self?.model.show(.color(hex: $0), seconds: 2.5) }
         microphone.onChange = { [weak self] in self?.model.show(.mic(muted: $0)) }
         meetingAlerts.onBanner = { [weak self] in self?.model.show($0, seconds: 8) }
+        audioOutputs.onSwitch = { [weak self] in self?.model.show(.message(symbol: "speaker-minimalistic-linear", text: $0), seconds: 2.5) }
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
         waitForAccessibility()
@@ -190,6 +196,17 @@ final class NotchController {
         if !model.expanded { setExpanded(true) }
     }
 
+    /// `islet://agent/<claude|codex>/<done|waiting>?project=<folder>`, sent by the agent alert script.
+    func open(_ url: URL) {
+        guard url.scheme == "islet", url.host == "agent", preferences.isOn(.agentAlerts) else { return }
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard parts.count >= 2, let agent = AgentAlerts.Agent(rawValue: parts[0]) else { return }
+        let waiting = parts[1] == "waiting"
+        let project = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "project" }?.value ?? ""
+        NSSound(named: waiting ? "Tink" : "Pop")?.play()
+        model.show(.agent(name: agent == .claude ? "Claude" : "Codex", waiting: waiting, project: project), seconds: waiting ? 10 : 6)
+    }
+
     func pickColor() {
         setExpanded(false) // keep the island out of the way of what you're sampling
         colorPicker.pick()
@@ -235,6 +252,9 @@ final class NotchController {
                 HotKeys.unregister(12)
             }
         case .meetingAlerts: on ? meetingAlerts.start() : meetingAlerts.stop()
+        case .inUse: on ? inUse.start() : inUse.stop()
+        case .audioOutput: if on { audioOutputs.refresh() }
+        case .ports, .agentAlerts: break // ports scan while their tab is open; agent links arrive by URL
         case .home, .shelf, .calendar, .timer, .notes, .stats, .menuBarHider, .worldClock: break // nothing to start or stop
         }
         if !on, model.tab == tool { model.tab = tabs.first ?? .media }

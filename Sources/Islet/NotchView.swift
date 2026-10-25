@@ -34,13 +34,14 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case banner(Banner), micMuted, timer, media, nothing
+        case banner(Banner), micMuted, inUse, timer, media, nothing
     }
 
     private var closedContent: Closed {
         if let banner = model.banner { return .banner(banner) }
         // A muted mic outranks everything: it's what you need to know before you speak.
         if app.preferences.isOn(.micMute), app.microphone.isMuted { return .micMuted }
+        if app.preferences.isOn(.inUse), app.inUse.any { return .inUse }
         for activity in app.preferences.layout.closedOrder {
             switch activity {
             case .timer where app.preferences.isOn(.timer) && app.countdown.isActive: return .timer
@@ -54,7 +55,8 @@ struct NotchView: View {
     private var shapeSize: CGSize {
         if model.expanded { return model.expandedSize }
         let wing: CGFloat = switch closedContent {
-        case .banner(.meeting): 124
+        case .banner(.meeting), .banner(.agent): 124
+        case .inUse: 64
         case .banner: 96
         case .micMuted: 64
         case .timer: 64
@@ -77,6 +79,17 @@ struct NotchView: View {
                 Text("Muted").foregroundStyle(.red)
             }
             .accessibilityLabel("Microphone muted")
+        case .inUse:
+            // Green for camera, orange for microphone: the colours macOS uses for the same thing.
+            Wings(height: model.notchSize.height) {
+                HStack(spacing: 6) {
+                    if app.inUse.camera { Icon(name: "videocamera-linear", size: 15).foregroundStyle(.green) }
+                    if app.inUse.microphone { MicIcon(muted: false, size: 15).foregroundStyle(.orange) }
+                }
+            } trailing: {
+                Text(app.inUse.camera ? "Live" : "Mic on").foregroundStyle(app.inUse.camera ? .green : .orange)
+            }
+            .accessibilityLabel(app.inUse.camera ? "Camera in use" : "Microphone in use")
         case .timer:
             Wings(height: model.notchSize.height) {
                 let onBreak = app.countdown.focus?.onBreak == true
@@ -164,6 +177,7 @@ struct NotchView: View {
         case .media: MediaTab(nowPlaying: nowPlaying, lyrics: lyrics)
         case .shelf: ShelfView(shelf: app.shelf)
         case .colorPicker: ColorsView(picker: app.colorPicker) { app.pickColor() }
+        case .ports: PortsView(ports: app.ports)
         case .clipboard: ClipboardView(history: app.clipboard)
         case .timer: TimerView(countdown: app.countdown)
         case .notes: NotesView(notes: app.notes)
@@ -265,6 +279,11 @@ private struct BannerView: View {
                     Text(title).frame(maxWidth: 82, alignment: .leading)
                 }
             case .mic(let muted): MicIcon(muted: muted, size: 15).foregroundStyle(muted ? .red : Palette.paper)
+            case .agent(let name, _, let project):
+                HStack(spacing: 6) {
+                    Icon(name: name == "Claude" ? "claude-logo" : "codex-logo", size: 15)
+                    Text(project.isEmpty ? name : project).frame(maxWidth: 82, alignment: .leading)
+                }
             }
         } trailing: {
             switch banner {
@@ -286,6 +305,7 @@ private struct BannerView: View {
             case .color(let hex): Text(hex)
             case .meeting(_, let startsAt): Text("in \(max(1, Int((startsAt.timeIntervalSinceNow / 60).rounded(.up)))) min")
             case .mic(let muted): Text(muted ? "Muted" : "Mic on")
+            case .agent(_, let waiting, _): Text(waiting ? "Needs you" : "Done").foregroundStyle(waiting ? .orange : Palette.paper)
             }
         }
     }
