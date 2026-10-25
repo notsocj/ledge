@@ -96,8 +96,8 @@ struct StatsView: View {
             }
             if usage.showsAny {
                 HStack(spacing: 24) {
-                    if usage.showsClaude { Meter(name: "Claude", reading: usage.claude) }
-                    if usage.showsCodex { Meter(name: "Codex", reading: usage.codex) }
+                    if usage.showsClaude { Meter(name: "Claude", icon: "claude-logo", reading: usage.claude) }
+                    if usage.showsCodex { Meter(name: "Codex", icon: "codex-logo", reading: usage.codex) }
                 }
             }
         }
@@ -127,11 +127,13 @@ struct Meter: View {
     var detail = ""
     var value = ""
     var note: String?
+    var icon: String?
 
     var body: some View {
         let level = min(1, max(0, fraction ?? 0))
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
+                if let icon { Icon(name: icon, size: 12) }
                 Text(name).foregroundStyle(Palette.graphite)
                 Spacer(minLength: 4)
                 if let note {
@@ -165,16 +167,16 @@ struct Meter: View {
 
 extension Meter {
     /// A Claude or Codex plan limit.
-    init(name: String, reading: UsageReading) {
+    init(name: String, icon: String? = nil, reading: UsageReading) {
         switch reading {
         case .loading:
-            self.init(name: name, fraction: nil)
+            self.init(name: name, fraction: nil, icon: icon)
         case .unavailable(let note):
-            self.init(name: name, fraction: nil, note: note)
+            self.init(name: name, fraction: nil, note: note, icon: icon)
         case .limit(let limit):
             self.init(name: name, fraction: limit.percent / 100,
                       detail: limit.resetsAt.map { "resets in " + Self.until($0) } ?? "",
-                      value: "\(Int(limit.percent.rounded()))%")
+                      value: "\(Int(limit.percent.rounded()))%", icon: icon)
         }
     }
 

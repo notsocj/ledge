@@ -4,15 +4,15 @@ import SwiftUI
 
 enum Tool: String, CaseIterable, Identifiable {
     // In the open island.
-    case home, media, shelf, clipboard, calendar, timer, notes, stats
+    case home, media, shelf, colorPicker, clipboard, calendar, timer, notes, stats
     // Work everywhere, outside the island.
-    case keepAwake, screenshot, volumeHUD, alerts, windowSnapping, menuBarHider
+    case keepAwake, screenshot, volumeHUD, alerts, windowSnapping, menuBarHider, meetingAlerts, worldClock, micMute
 
     /// Tabs, split around the notch: the first `leftTabCount` sit left of it, the rest right.
-    static let tabs: [Tool] = [.home, .media, .shelf, .clipboard, .timer, .notes, .stats]
+    static let tabs: [Tool] = [.home, .media, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats]
     static let leftTabCount = 4
     /// Calendar has no tab of its own; it lives on Home.
-    static let island: [Tool] = [.home, .media, .calendar, .shelf, .clipboard, .timer, .notes, .stats]
+    static let island: [Tool] = [.home, .media, .calendar, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats]
     static let everywhere = allCases.filter { !island.contains($0) }
 
     var id: String { rawValue }
@@ -29,6 +29,9 @@ enum Tool: String, CaseIterable, Identifiable {
         case .alerts: "Alerts"
         case .windowSnapping: "Snapping"
         case .menuBarHider: "Menu bar"
+        case .colorPicker: "Colors"
+        case .meetingAlerts: "Meetings"
+        case .worldClock: "Clocks"
         default: title
         }
     }
@@ -49,6 +52,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .alerts: "AirPods and battery alerts"
         case .windowSnapping: "Window snapping"
         case .menuBarHider: "Menu bar icons"
+        case .colorPicker: "Color picker"
+        case .meetingAlerts: "Meeting countdown"
+        case .worldClock: "World clock"
+        case .micMute: "Mic mute"
         }
     }
 
@@ -68,6 +75,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .alerts: "headphones-round-linear"
         case .windowSnapping: "window-frame-linear"
         case .menuBarHider: "hamburger-menu-linear"
+        case .colorPicker: "pipette-linear"
+        case .meetingAlerts: "calendar-mark-linear"
+        case .worldClock: "earth-linear"
+        case .micMute: "microphone-linear"
         }
     }
 
@@ -87,6 +98,10 @@ enum Tool: String, CaseIterable, Identifiable {
         case .alerts: "Battery when you plug in or run low, and headphone battery when they connect."
         case .windowSnapping: "Drag a window to a screen edge, or ⌃⌥ + arrow keys or Return. Needs Accessibility."
         case .menuBarHider: "A button on Home that opens macOS's Menu Bar settings, where you choose which apps show icons."
+        case .colorPicker: "⌃⌥P, or the pipette on Home: pick any color on screen. It's copied as hex and kept in the Colors tab."
+        case .meetingAlerts: "A heads-up beside the notch two minutes before each meeting. Uses your calendar."
+        case .worldClock: "Up to three cities' times in Home's status row. Choose them below."
+        case .micMute: "⌃⌥M, or the mic button on Home: mutes your input in every app, with a red mark in the notch."
         }
     }
 
@@ -114,9 +129,26 @@ final class Preferences {
         disabled = Set((UserDefaults.standard.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
         personas = (UserDefaults.standard.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
         onboarded = UserDefaults.standard.bool(forKey: "onboarded")
+        adoptNewTools()
     }
 
     var layout: Layout { Layout.merging(personas) }
+
+    /// Tools that arrived in an update start on only if your personas want them; tools you've
+    /// already seen keep whatever you set.
+    private func adoptNewTools() {
+        let defaults = UserDefaults.standard
+        // Before this was tracked, every tool except these four already existed.
+        let known = defaults.stringArray(forKey: "knownTools").map { Set($0.compactMap(Tool.init)) }
+            ?? Set(Tool.allCases).subtracting([.colorPicker, .meetingAlerts, .worldClock, .micMute])
+        let arrived = Tool.allCases.filter { !known.contains($0) }
+        if !personas.isEmpty {
+            let wanted = layout.tools
+            for tool in arrived where !wanted.contains(tool) { disabled.insert(tool) }
+            defaults.set(disabled.map(\.rawValue), forKey: "disabledTools")
+        }
+        defaults.set(Tool.allCases.map(\.rawValue), forKey: "knownTools")
+    }
 
     /// Picking what you do rebuilds which tools are on; individual switches still work afterwards.
     func choose(_ personas: [Persona]) {
@@ -173,6 +205,9 @@ struct SettingsView: View {
             Section("Everywhere") {
                 ForEach(Tool.everywhere) { toggle($0) }
             }
+            if preferences.isOn(.worldClock) {
+                WorldClockSettings(clock: .shared)
+            }
             Section("General") {
                 Toggle("Open at login", isOn: $openAtLogin)
                     .onChange(of: openAtLogin) { _, on in
@@ -216,6 +251,28 @@ struct SettingsView: View {
                 Text(tool.detail)
             } icon: {
                 Icon(name: tool.symbol)
+            }
+        }
+    }
+}
+
+private struct WorldClockSettings: View {
+    let clock: WorldClock
+    private static let zones = TimeZone.knownTimeZoneIdentifiers.sorted { WorldClock.city($0) < WorldClock.city($1) }
+
+    var body: some View {
+        Section("World clock") {
+            ForEach(0..<WorldClock.limit, id: \.self) { index in
+                Picker("City \(index + 1)", selection: Binding(
+                    get: { index < clock.zones.count ? clock.zones[index] : "" },
+                    set: { zone in
+                        var zones = clock.zones
+                        if index < zones.count { zones[index] = zone } else { zones.append(zone) }
+                        clock.zones = zones.filter { !$0.isEmpty }
+                    })) {
+                    Text("None").tag("")
+                    ForEach(Self.zones, id: \.self) { Text(WorldClock.city($0)).tag($0) }
+                }
             }
         }
     }

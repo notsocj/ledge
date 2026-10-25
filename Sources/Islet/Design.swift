@@ -78,7 +78,7 @@ struct Icon: View {
     var body: some View {
         Group {
             if let image = Self.image(name) {
-                Image(nsImage: image).renderingMode(.template).resizable().interpolation(.high)
+                Image(nsImage: image).renderingMode(Self.fullColor.contains(name) ? .original : .template).resizable().interpolation(.high)
             } else {
                 Color.clear
             }
@@ -87,14 +87,19 @@ struct Icon: View {
         .accessibilityHidden(true)
     }
 
+    /// Brand marks keep their own colours instead of being tinted like text.
+    static let fullColor: Set<String> = ["claude-logo"]
+
     @MainActor private static var cache: [String: NSImage] = [:]
 
-    /// SVGs load as vectors, so one file stays sharp at every size.
+    /// SVGs load as vectors, so one file stays sharp at every size; a PNG is the fallback for artwork
+    /// that only exists as an image (the Codex mark).
     @MainActor static func image(_ name: String) -> NSImage? {
         if let cached = cache[name] { return cached }
-        guard let url = Bundle.main.url(forResource: name, withExtension: "svg", subdirectory: "Icons"),
+        guard let url = Bundle.main.url(forResource: name, withExtension: "svg", subdirectory: "Icons")
+                ?? Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "Icons"),
               let image = NSImage(contentsOf: url) else { return nil }
-        image.isTemplate = true
+        image.isTemplate = !fullColor.contains(name)
         image.size = NSSize(width: 18, height: 18) // the SVGs say "1em"; give places that use the natural size (the menu bar) a real one
         cache[name] = image
         return image

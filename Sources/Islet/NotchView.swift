@@ -34,11 +34,13 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case banner(Banner), timer, media, nothing
+        case banner(Banner), micMuted, timer, media, nothing
     }
 
     private var closedContent: Closed {
         if let banner = model.banner { return .banner(banner) }
+        // A muted mic outranks everything: it's what you need to know before you speak.
+        if app.preferences.isOn(.micMute), app.microphone.isMuted { return .micMuted }
         for activity in app.preferences.layout.closedOrder {
             switch activity {
             case .timer where app.preferences.isOn(.timer) && app.countdown.isActive: return .timer
@@ -52,7 +54,9 @@ struct NotchView: View {
     private var shapeSize: CGSize {
         if model.expanded { return model.expandedSize }
         let wing: CGFloat = switch closedContent {
+        case .banner(.meeting): 124
         case .banner: 96
+        case .micMuted: 64
         case .timer: 64
         case .media: 44
         case .nothing: 0
@@ -66,9 +70,17 @@ struct NotchView: View {
         switch closedContent {
         case .banner(let banner):
             BannerView(banner: banner, height: model.notchSize.height)
+        case .micMuted:
+            Wings(height: model.notchSize.height) {
+                MicIcon(muted: true, size: 15).foregroundStyle(.red)
+            } trailing: {
+                Text("Muted").foregroundStyle(.red)
+            }
+            .accessibilityLabel("Microphone muted")
         case .timer:
             Wings(height: model.notchSize.height) {
-                Icon(name: "stopwatch-bold", size: 15).foregroundStyle(.orange)
+                let onBreak = app.countdown.focus?.onBreak == true
+                Icon(name: onBreak ? "leaf-linear" : "stopwatch-bold", size: 15).foregroundStyle(onBreak ? .green : .orange)
             } trailing: {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     Text(Countdown.format(app.countdown.remaining(at: context.date)))
@@ -151,6 +163,7 @@ struct NotchView: View {
         case .home: HomeView(app: app)
         case .media: MediaTab(nowPlaying: nowPlaying, lyrics: lyrics)
         case .shelf: ShelfView(shelf: app.shelf)
+        case .colorPicker: ColorsView(picker: app.colorPicker) { app.pickColor() }
         case .clipboard: ClipboardView(history: app.clipboard)
         case .timer: TimerView(countdown: app.countdown)
         case .notes: NotesView(notes: app.notes)
@@ -241,6 +254,17 @@ private struct BannerView: View {
             case .headphones: Icon(name: "headphones-round-bold", size: 16)
             case .screenshot(let image): Artwork(image: image, size: height - 12, radius: 4)
             case .message(let symbol, _): Icon(name: symbol, size: 16)
+            case .color(let hex):
+                Circle()
+                    .fill(Color(nsColor: ColorPicker.color(hex: hex) ?? .gray))
+                    .overlay(Circle().strokeBorder(Palette.ash, lineWidth: 1))
+                    .frame(width: 15, height: 15)
+            case .meeting(let title, _):
+                HStack(spacing: 6) {
+                    Icon(name: "calendar-mark-linear", size: 15)
+                    Text(title).frame(maxWidth: 82, alignment: .leading)
+                }
+            case .mic(let muted): MicIcon(muted: muted, size: 15).foregroundStyle(muted ? .red : Palette.paper)
             }
         } trailing: {
             switch banner {
@@ -259,8 +283,26 @@ private struct BannerView: View {
             case .headphones(_, let battery): Text(battery.map { "\($0)%" } ?? "Connected")
             case .screenshot: Text("Copied")
             case .message(_, let text): Text(text)
+            case .color(let hex): Text(hex)
+            case .meeting(_, let startsAt): Text("in \(max(1, Int((startsAt.timeIntervalSinceNow / 60).rounded(.up)))) min")
+            case .mic(let muted): Text(muted ? "Muted" : "Mic on")
             }
         }
+    }
+}
+
+/// A microphone, struck through while muted (Solar has no muted-microphone icon).
+struct MicIcon: View {
+    let muted: Bool
+    var size: CGFloat = 15
+
+    var body: some View {
+        Icon(name: "microphone-linear", size: size)
+            .overlay {
+                if muted {
+                    Capsule().frame(width: 1.8, height: size * 1.15).rotationEffect(.degrees(-45))
+                }
+            }
     }
 }
 

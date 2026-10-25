@@ -123,7 +123,7 @@ struct OnboardingView: View {
 
     private var tools: some View {
         Page(title: "Your tools", subtitle: "These fit what you do. Tap to add or remove; you can change them any time in Settings.") {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
                 ForEach(Tool.allCases.filter { $0 != .home }) { tool in
                     ToolChip(tool: tool, on: flow.tools.contains(tool)) {
                         withAnimation(Motion.snappy) { flow.toggle(tool) }

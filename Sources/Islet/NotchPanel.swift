@@ -16,6 +16,9 @@ enum Banner: Equatable {
     case headphones(name: String, battery: Int?)
     case screenshot(NSImage)
     case message(symbol: String, text: String)
+    case color(hex: String)
+    case meeting(title: String, startsAt: Date)
+    case mic(muted: Bool)
 }
 
 @Observable @MainActor
@@ -70,6 +73,10 @@ final class NotchController {
     let keepAwake = KeepAwake()
     let agenda = Agenda()
     let countdown = Countdown()
+    let colorPicker = ColorPicker()
+    let worldClock = WorldClock.shared
+    let microphone = Microphone()
+    private lazy var meetingAlerts = MeetingAlerts(agenda: agenda)
     let notes = Notes()
     let stats = SystemStats()
     private let mediaKeys = MediaKeys()
@@ -111,10 +118,18 @@ final class NotchController {
         let show: (Banner) -> Void = { [weak self] in self?.model.show($0) }
         mediaKeys.onChange = show
         alerts.onBanner = { [weak self] in self?.model.show($0, seconds: 3) }
-        countdown.onFinish = { [weak self] in
+        countdown.onFinish = { [weak self] finish in
             NSSound(named: "Glass")?.play()
-            self?.model.show(.message(symbol: "stopwatch-bold", text: "Time's up"), seconds: 4)
+            let banner: Banner = switch finish {
+            case .timer: .message(symbol: "stopwatch-bold", text: "Time's up")
+            case .focusDone: .message(symbol: "leaf-linear", text: "Break time")
+            case .breakOver: .message(symbol: "target-linear", text: "Back to focus")
+            }
+            self?.model.show(banner, seconds: 4)
         }
+        colorPicker.onPicked = { [weak self] in self?.model.show(.color(hex: $0), seconds: 2.5) }
+        microphone.onChange = { [weak self] in self?.model.show(.mic(muted: $0)) }
+        meetingAlerts.onBanner = { [weak self] in self?.model.show($0, seconds: 8) }
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
         waitForAccessibility()
@@ -175,6 +190,11 @@ final class NotchController {
         if !model.expanded { setExpanded(true) }
     }
 
+    func pickColor() {
+        setExpanded(false) // keep the island out of the way of what you're sampling
+        colorPicker.pick()
+    }
+
     func takeScreenshot() {
         setExpanded(false) // keep the island out of the shot
         Screenshot.capture { [weak self] url in
@@ -200,7 +220,22 @@ final class NotchController {
             } else {
                 HotKeys.unregister(10)
             }
-        case .home, .shelf, .calendar, .timer, .notes, .stats, .menuBarHider: break // tabs only need hiding
+        case .colorPicker:
+            if on {
+                HotKeys.register(11, key: kVK_ANSI_P, modifiers: controlKey | optionKey) { [weak self] in self?.pickColor() }
+            } else {
+                HotKeys.unregister(11)
+            }
+        case .micMute:
+            if on {
+                microphone.start()
+                HotKeys.register(12, key: kVK_ANSI_M, modifiers: controlKey | optionKey) { [weak self] in self?.microphone.toggle() }
+            } else {
+                microphone.stop()
+                HotKeys.unregister(12)
+            }
+        case .meetingAlerts: on ? meetingAlerts.start() : meetingAlerts.stop()
+        case .home, .shelf, .calendar, .timer, .notes, .stats, .menuBarHider, .worldClock: break // nothing to start or stop
         }
         if !on, model.tab == tool { model.tab = tabs.first ?? .media }
     }

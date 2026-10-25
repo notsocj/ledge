@@ -24,10 +24,10 @@ enum Persona: String, CaseIterable, Identifiable {
     var blurb: String {
         switch self {
         case .developer: "AI usage limits, clipboard, notes and window snapping."
-        case .designer: "Screenshots, a file shelf for assets, and image clipboard."
+        case .designer: "A color picker, screenshots, and a shelf for assets."
         case .creator: "Music, timers, screenshots and a shelf for clips."
         case .student: "Timers, notes and your class calendar."
-        case .professional: "Meetings first, with notes and the clipboard close by."
+        case .professional: "Meeting countdowns, mic mute, world clock and notes."
         case .essentials: "Music, shelf, clipboard and calendar. Nothing more."
         }
     }
@@ -47,10 +47,10 @@ enum Persona: String, CaseIterable, Identifiable {
     var ranking: [Tool] {
         switch self {
         case .developer: [.stats, .clipboard, .notes, .shelf, .calendar, .media, .timer, .windowSnapping, .keepAwake, .screenshot, .menuBarHider]
-        case .designer: [.shelf, .clipboard, .screenshot, .media, .notes, .calendar, .windowSnapping, .timer]
-        case .creator: [.media, .timer, .shelf, .screenshot, .notes, .stats, .keepAwake]
+        case .designer: [.colorPicker, .shelf, .clipboard, .screenshot, .media, .notes, .calendar, .windowSnapping, .timer]
+        case .creator: [.media, .timer, .shelf, .screenshot, .notes, .stats, .keepAwake, .micMute]
         case .student: [.timer, .notes, .calendar, .media, .clipboard, .keepAwake]
-        case .professional: [.calendar, .notes, .clipboard, .timer, .shelf, .media, .keepAwake, .screenshot]
+        case .professional: [.calendar, .meetingAlerts, .notes, .micMute, .worldClock, .clipboard, .timer, .shelf, .media, .keepAwake, .screenshot]
         case .essentials: [.media, .shelf, .clipboard, .calendar, .keepAwake, .timer]
         }
     }
@@ -68,7 +68,7 @@ enum Persona: String, CaseIterable, Identifiable {
         case .designer: [.shelf, .clipboard, .battery, .timer]
         case .creator: [.timer, .shelf, .cpu, .battery]
         case .student: [.timer, .battery, .shelf]
-        case .professional: [.timer, .clipboard, .battery, .shelf]
+        case .professional: [.clocks, .timer, .clipboard, .battery, .shelf]
         case .essentials: [.timer, .shelf, .clipboard, .battery]
         }
     }
@@ -83,7 +83,7 @@ enum Persona: String, CaseIterable, Identifiable {
 }
 
 enum HomeWidget: Equatable { case media, week }
-enum StatusChip: CaseIterable, Equatable { case timer, shelf, clipboard, battery, cpu, claude, codex }
+enum StatusChip: CaseIterable, Equatable { case timer, shelf, clipboard, battery, cpu, claude, codex, clocks }
 enum ClosedActivity: Equatable { case timer, media }
 
 /// Everything the island's arrangement depends on, worked out from the chosen personas.
@@ -97,7 +97,7 @@ struct Layout: Equatable {
     var closedOrder: [ClosedActivity]
 
     /// Before anyone picks a persona: everything on, in the original order.
-    static let standard = Layout(tools: Set(Tool.allCases), tabOrder: Tool.tabs, homeWidgets: [.media, .week],
+    static let standard = Layout(tools: Set(Tool.allCases), tabOrder: Tool.tabs.filter { $0 != .colorPicker }, homeWidgets: [.media, .week],
                                  chips: StatusChip.allCases, closedOrder: [.timer, .media])
 
     /// Several personas merge: a tool is on if any of them wants it, and ranks as high as the persona

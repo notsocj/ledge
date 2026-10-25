@@ -252,7 +252,8 @@ private struct QuickColumn: View {
     let app: NotchController
 
     var body: some View {
-        VStack(spacing: 2) {
+        // Two narrow columns, so five actions stay as short as the widgets beside them.
+        LazyVGrid(columns: [GridItem(.fixed(26), spacing: 2), GridItem(.fixed(26), spacing: 2)], spacing: 2) {
             if app.preferences.isOn(.keepAwake) {
                 let on = app.keepAwake.isOn
                 IconButton(symbol: on ? "cup-hot-bold" : "cup-hot-linear", label: on ? "Let Mac sleep" : "Keep Mac awake", size: 12, box: 26, active: on) {
@@ -272,7 +273,19 @@ private struct QuickColumn: View {
                 }
                 .help("Choose which icons show in the menu bar")
             }
+            if app.preferences.isOn(.colorPicker) {
+                IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 26) { app.pickColor() }
+                    .help("Pick a color on screen (⌃⌥P)")
+            }
+            if app.preferences.isOn(.micMute) {
+                let muted = app.microphone.isMuted
+                IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 26, active: muted) {
+                    app.microphone.toggle()
+                }
+                .help(muted ? "Microphone muted (⌃⌥M)" : "Mute microphone (⌃⌥M)")
+            }
         }
+        .frame(width: 54)
     }
 }
 
@@ -309,11 +322,20 @@ private struct StatusRow: View {
             chip("cpu-linear", "\(Int((app.stats.cpu! * 100).rounded()))%", opens: .stats)
         case .claude where isOn(.stats) && app.usage.showsClaude:
             if case .limit(let limit) = app.usage.claude {
-                chip("stars-minimalistic-linear", "Claude \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
+                chip("claude-logo", "Claude \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
             }
         case .codex where isOn(.stats) && app.usage.showsCodex:
             if case .limit(let limit) = app.usage.codex {
-                chip("code-linear", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
+                chip("codex-logo", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
+            }
+        case .clocks where isOn(.worldClock) && !app.worldClock.zones.isEmpty:
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                HStack(spacing: 14) {
+                    ForEach(app.worldClock.zones, id: \.self) { zone in
+                        Chip(symbol: zone == app.worldClock.zones.first ? "earth-linear" : nil,
+                             text: "\(WorldClock.city(zone)) \(WorldClock.time(zone, at: context.date))", tint: Palette.ash, action: nil)
+                    }
+                }
             }
         default:
             EmptyView()
@@ -328,24 +350,31 @@ private struct StatusRow: View {
 }
 
 private struct Chip: View {
-    let symbol: String
+    let symbol: String?
     let text: String
     let tint: Color
-    let action: () -> Void
+    /// Nil for read-only chips like the clocks.
+    let action: (() -> Void)?
     @State private var hovering = false
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Icon(name: symbol, size: 12).foregroundStyle(tint)
-                Text(text).foregroundStyle(hovering ? Palette.paper : Palette.graphite)
-            }
-            .font(Typeface.value)
-            .lineLimit(1)
-            .contentShape(Rectangle())
+        if let action {
+            Button(action: action) { label }
+                .buttonStyle(PressStyle())
+                .onHover { hovering = $0 }
+                .animation(Motion.ease(0.15), value: hovering)
+        } else {
+            label
         }
-        .buttonStyle(PressStyle())
-        .onHover { hovering = $0 }
-        .animation(Motion.ease(0.15), value: hovering)
+    }
+
+    private var label: some View {
+        HStack(spacing: 4) {
+            if let symbol { Icon(name: symbol, size: 12).foregroundStyle(tint) }
+            Text(text).foregroundStyle(hovering ? Palette.paper : Palette.graphite)
+        }
+        .font(Typeface.value)
+        .lineLimit(1)
+        .contentShape(Rectangle())
     }
 }
