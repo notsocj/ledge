@@ -93,10 +93,26 @@ final class Preferences {
     static let shared = Preferences()
 
     private(set) var disabled: Set<Tool>
+    /// In the order they were picked; the first one leads (see `Layout.merging`). Empty until chosen.
+    private(set) var personas: [Persona]
     @ObservationIgnored var onChange: ((Tool, Bool) -> Void)?
 
     private init() {
         disabled = Set((UserDefaults.standard.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
+        personas = (UserDefaults.standard.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
+    }
+
+    var layout: Layout { Layout.merging(personas) }
+
+    /// Picking what you do rebuilds which tools are on; individual switches still work afterwards.
+    func choose(_ personas: [Persona]) {
+        self.personas = personas
+        UserDefaults.standard.set(personas.map(\.rawValue), forKey: "personas")
+        guard !personas.isEmpty else { return }
+        let wanted = layout.tools
+        for tool in Tool.allCases where isOn(tool) != wanted.contains(tool) {
+            set(tool, on: wanted.contains(tool))
+        }
     }
 
     func isOn(_ tool: Tool) -> Bool { !disabled.contains(tool) }
@@ -115,6 +131,27 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                ForEach(Persona.allCases) { persona in
+                    Toggle(isOn: Binding(get: { preferences.personas.contains(persona) }, set: { on in
+                        var chosen = preferences.personas.filter { $0 != persona }
+                        if on { chosen.append(persona) }
+                        preferences.choose(chosen)
+                    })) {
+                        Label {
+                            Text(persona.title)
+                            Text(persona.blurb)
+                        } icon: {
+                            Icon(name: persona.symbol)
+                        }
+                    }
+                }
+            } header: {
+                Text("What do you do?")
+            } footer: {
+                Text("Pick one or more. Islet switches on the tools that fit and puts the ones you'll use most closest to hand. You can still change any tool below.")
+                    .foregroundStyle(.secondary)
+            }
             Section("In the island") {
                 ForEach(Tool.island) { toggle($0) }
             }

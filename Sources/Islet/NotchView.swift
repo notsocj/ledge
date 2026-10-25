@@ -39,8 +39,13 @@ struct NotchView: View {
 
     private var closedContent: Closed {
         if let banner = model.banner { return .banner(banner) }
-        if app.preferences.isOn(.timer), app.countdown.isActive { return .timer }
-        if app.preferences.isOn(.media), nowPlaying.hasTrack { return .media }
+        for activity in app.preferences.layout.closedOrder {
+            switch activity {
+            case .timer where app.preferences.isOn(.timer) && app.countdown.isActive: return .timer
+            case .media where app.preferences.isOn(.media) && nowPlaying.hasTrack: return .media
+            default: continue
+            }
+        }
         return .nothing
     }
 

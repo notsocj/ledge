@@ -11,8 +11,12 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 18) {
-                if isOn(.media) { MediaWidget(nowPlaying: app.nowPlaying) { open(.media) }.entrance(0, shown) }
-                if isOn(.calendar) { WeekWidget(agenda: app.agenda).entrance(1, shown) }
+                ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
+                    switch widget {
+                    case .media: MediaWidget(nowPlaying: app.nowPlaying) { open(.media) }.entrance(index, shown)
+                    case .week: WeekWidget(agenda: app.agenda).entrance(index, shown)
+                    }
+                }
                 Spacer(minLength: 0)
                 QuickColumn(app: app).entrance(2, shown)
             }
@@ -29,7 +33,10 @@ struct HomeView: View {
         }
     }
 
-    private func isOn(_ tool: Tool) -> Bool { app.preferences.isOn(tool) }
+    /// In the order your personas put them, skipping switched-off tools.
+    private var widgets: [HomeWidget] {
+        app.preferences.layout.homeWidgets.filter { app.preferences.isOn($0 == .media ? .media : .calendar) }
+    }
 
     private func open(_ tool: Tool) {
         withAnimation(Motion.snappy) { app.open(tool) }
@@ -276,34 +283,41 @@ private struct StatusRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            if isOn(.timer), app.countdown.isActive {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    chip("stopwatch-linear", Countdown.format(app.countdown.remaining(at: context.date)), tint: .orange, opens: .timer)
-                }
-            }
-            if isOn(.shelf), !app.shelf.files.isEmpty {
-                chip("inbox-linear", app.shelf.files.count == 1 ? "1 file" : "\(app.shelf.files.count) files", opens: .shelf)
-            }
-            if isOn(.clipboard), !app.clipboard.entries.isEmpty {
-                chip("copy-linear", "\(app.clipboard.entries.count) copied", opens: .clipboard)
-            }
-            if isOn(.stats) {
-                if let battery = app.stats.battery {
-                    chip(battery.onPower ? "battery-charge-linear" : "battery-full-linear", "\(battery.percent)%", opens: .stats)
-                }
-                if let cpu = app.stats.cpu {
-                    chip("cpu-linear", "\(Int((cpu * 100).rounded()))%", opens: .stats)
-                }
-                if app.usage.showsClaude, case .limit(let limit) = app.usage.claude {
-                    chip("stars-minimalistic-linear", "Claude \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
-                }
-                if app.usage.showsCodex, case .limit(let limit) = app.usage.codex {
-                    chip("code-linear", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
-                }
+            // In your personas' order; each chip appears only when it has something to say.
+            ForEach(app.preferences.layout.chips, id: \.self) { kind in
+                chip(for: kind)
             }
             Spacer(minLength: 0)
         }
         .frame(height: 18)
+    }
+
+    @ViewBuilder private func chip(for kind: StatusChip) -> some View {
+        switch kind {
+        case .timer where isOn(.timer) && app.countdown.isActive:
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                chip("stopwatch-linear", Countdown.format(app.countdown.remaining(at: context.date)), tint: .orange, opens: .timer)
+            }
+        case .shelf where isOn(.shelf) && !app.shelf.files.isEmpty:
+            chip("inbox-linear", app.shelf.files.count == 1 ? "1 file" : "\(app.shelf.files.count) files", opens: .shelf)
+        case .clipboard where isOn(.clipboard) && !app.clipboard.entries.isEmpty:
+            chip("copy-linear", "\(app.clipboard.entries.count) copied", opens: .clipboard)
+        case .battery where isOn(.stats) && app.stats.battery != nil:
+            let battery = app.stats.battery!
+            chip(battery.onPower ? "battery-charge-linear" : "battery-full-linear", "\(battery.percent)%", opens: .stats)
+        case .cpu where isOn(.stats) && app.stats.cpu != nil:
+            chip("cpu-linear", "\(Int((app.stats.cpu! * 100).rounded()))%", opens: .stats)
+        case .claude where isOn(.stats) && app.usage.showsClaude:
+            if case .limit(let limit) = app.usage.claude {
+                chip("stars-minimalistic-linear", "Claude \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
+            }
+        case .codex where isOn(.stats) && app.usage.showsCodex:
+            if case .limit(let limit) = app.usage.codex {
+                chip("code-linear", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
+            }
+        default:
+            EmptyView()
+        }
     }
 
     private func isOn(_ tool: Tool) -> Bool { app.preferences.isOn(tool) }

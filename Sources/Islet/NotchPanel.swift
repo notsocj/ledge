@@ -75,9 +75,10 @@ final class NotchController {
     private var pendingOpen: Task<Void, Never>?
     private var dragChangeCount = 0
 
-    var tabs: [Tool] { Tool.tabs.filter(preferences.isOn) }
-    var leftTabs: [Tool] { Tool.tabs.prefix(Tool.leftTabCount).filter(preferences.isOn) }
-    var rightTabs: [Tool] { Tool.tabs.dropFirst(Tool.leftTabCount).filter(preferences.isOn) }
+    /// In the order your personas rank them; the first `leftTabCount` go left of the notch.
+    var tabs: [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
+    var leftTabs: [Tool] { Array(tabs.prefix(Tool.leftTabCount)) }
+    var rightTabs: [Tool] { Array(tabs.dropFirst(Tool.leftTabCount)) }
 
     init() {
         panel.level = .mainMenu + 3
