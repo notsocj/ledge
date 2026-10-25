@@ -25,11 +25,12 @@ enum Tool: String, CaseIterable, Identifiable {
         case .clipboard: "Clips"
         case .stats: "Stats"
         case .shelf: "Shelf"
-        case .screenshot: "Screenshots"
         case .volumeHUD: "Volume"
         case .alerts: "Alerts"
         case .windowSnapping: "Snapping"
         case .menuBarHider: "Menu bar"
+        case .screenshot: "Capture"
+        case .keepAwake: "Awake"
         case .colorPicker: "Colors"
         case .meetingAlerts: "Meetings"
         case .worldClock: "Clocks"
@@ -149,7 +150,10 @@ final class Preferences {
         adoptNewTools()
     }
 
-    var layout: Layout { Layout.merging(personas) }
+    /// A layout to show without saving anything (the snapshot renderer). Overrides personas and switches.
+    var preview: [Persona]?
+
+    var layout: Layout { Layout.merging(preview ?? personas) }
 
     /// Tools that arrived in an update start on only if your personas want them; tools you've
     /// already seen keep whatever you set.
@@ -178,7 +182,10 @@ final class Preferences {
         }
     }
 
-    func isOn(_ tool: Tool) -> Bool { !disabled.contains(tool) }
+    func isOn(_ tool: Tool) -> Bool {
+        if let preview { return Layout.merging(preview).tools.contains(tool) }
+        return !disabled.contains(tool)
+    }
 
     func set(_ tool: Tool, on: Bool) {
         if on { disabled.remove(tool) } else { disabled.insert(tool) }

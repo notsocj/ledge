@@ -104,7 +104,7 @@ private struct PortRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(":\(listener.port)")
+            Text(verbatim: ":\(listener.port)") // a port, not a quantity: no thousands separator
                 .font(Typeface.headline.monospacedDigit())
                 .foregroundStyle(Palette.paper)
                 .frame(width: 58, alignment: .leading)

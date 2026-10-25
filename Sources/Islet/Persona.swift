@@ -17,7 +17,7 @@ enum Persona: String, CaseIterable, Identifiable {
         case .creator: "Creator"
         case .student: "Student"
         case .professional: "Professional"
-        case .essentials: "Just the essentials"
+        case .essentials: "Essentials"
         }
     }
 
@@ -113,7 +113,10 @@ struct Layout: Equatable {
 
         let rankings = personas.map(\.ranking)
         let tools = Set(Persona.basics + rankings.flatMap { $0 })
-        let tabs = [Tool.home] + ordered(Tool.tabs.filter { $0 != .home && tools.contains($0) }, by: rankings)
+        // Tabs rank by their place among each persona's tabs, so tools without a tab (calendar, alerts)
+        // ahead of them don't push a persona's top tab out of the seven.
+        let tabRankings = rankings.map { $0.filter(Tool.tabs.contains) }
+        let tabs = [Tool.home] + ordered(Tool.tabs.filter { $0 != .home && tools.contains($0) }, by: tabRankings)
         let widgets = personas.flatMap(\.homeWidgets).reduce(into: [HomeWidget]()) { if !$0.contains($1) { $0.append($1) } }
         let chipLists = personas.map(\.chips)
         let chips = ordered(StatusChip.allCases.filter { chip in chipLists.contains { $0.contains(chip) } }, by: chipLists)

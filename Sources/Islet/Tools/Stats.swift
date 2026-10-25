@@ -85,7 +85,7 @@ struct StatsView: View {
             HStack(spacing: 24) {
                 Meter(name: "CPU", fraction: stats.cpu, value: stats.cpu.map { "\(Int(($0 * 100).rounded()))%" } ?? "")
                 Meter(name: "Memory", fraction: stats.memoryUsed / stats.memoryTotal,
-                      detail: "of \(Self.gigabytes(stats.memoryTotal))", value: Self.gigabytes(stats.memoryUsed))
+                      value: String(format: "%.1f of %.1f GB", stats.memoryUsed / 1_073_741_824, stats.memoryTotal / 1_073_741_824))
             }
             HStack(spacing: 24) {
                 if let battery = stats.battery {
@@ -115,8 +115,15 @@ struct StatsView: View {
     }
 
     static func rate(_ bytesPerSecond: Double) -> String {
-        ByteCountFormatter.string(fromByteCount: Int64(bytesPerSecond), countStyle: .binary) + "/s"
+        rateFormatter.string(fromByteCount: Int64(bytesPerSecond)) + "/s"
     }
+
+    private static let rateFormatter: ByteCountFormatter = {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .binary
+        formatter.allowsNonnumericFormatting = false // "0 KB", not "Zero KB"
+        return formatter
+    }()
 }
 
 /// A labeled level: name, optional detail, value, and a thin bar that turns orange near full.

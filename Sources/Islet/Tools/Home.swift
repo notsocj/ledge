@@ -20,7 +20,8 @@ struct HomeView: View {
                 Spacer(minLength: 0)
                 QuickColumn(app: app).entrance(2, shown)
             }
-            StatusRow(app: app, open: open).entrance(3, shown)
+            // Gone entirely when nothing has anything to say, instead of leaving an empty band.
+            if StatusRow.hasChips(app) { StatusRow(app: app, open: open).entrance(3, shown) }
         }
         .onAppear { shown = true }
         .task {
@@ -314,35 +315,54 @@ private struct StatusRow: View {
         .clipped()
     }
 
+    static func hasChips(_ app: NotchController) -> Bool {
+        app.preferences.layout.chips.contains { shows($0, app) }
+    }
+
+    /// Whether a chip has something to say right now. Battery is everyone's; the rest follow their tool.
+    static func shows(_ kind: StatusChip, _ app: NotchController) -> Bool {
+        let isOn = app.preferences.isOn
+        switch kind {
+        case .timer: return isOn(.timer) && app.countdown.isActive
+        case .shelf: return isOn(.shelf) && !app.shelf.files.isEmpty
+        case .clipboard: return isOn(.clipboard) && !app.clipboard.entries.isEmpty
+        case .battery: return app.stats.battery != nil
+        case .cpu: return isOn(.stats) && app.stats.cpu != nil
+        case .claude: if case .limit = app.usage.claude { return isOn(.stats) && app.usage.showsClaude } else { return false }
+        case .codex: if case .limit = app.usage.codex { return isOn(.stats) && app.usage.showsCodex } else { return false }
+        case .clocks: return isOn(.worldClock) && !app.worldClock.zones.isEmpty
+        }
+    }
+
     @ViewBuilder private func chip(for kind: StatusChip, at date: Date) -> some View {
         switch kind {
-        case .timer where isOn(.timer) && app.countdown.isActive:
+        case _ where !Self.shows(kind, app):
+            EmptyView()
+        case .timer:
             chip("stopwatch-linear", Countdown.format(app.countdown.remaining(at: date)), tint: .orange, opens: .timer)
-        case .shelf where isOn(.shelf) && !app.shelf.files.isEmpty:
+        case .shelf:
             chip("inbox-linear", app.shelf.files.count == 1 ? "1 file" : "\(app.shelf.files.count) files", opens: .shelf)
-        case .clipboard where isOn(.clipboard) && !app.clipboard.entries.isEmpty:
+        case .clipboard:
             chip("copy-linear", "\(app.clipboard.entries.count) copied", opens: .clipboard)
-        case .battery where isOn(.stats) && app.stats.battery != nil:
+        case .battery:
             let battery = app.stats.battery!
             chip(battery.onPower ? "battery-charge-linear" : "battery-full-linear", "\(battery.percent)%", opens: .stats)
-        case .cpu where isOn(.stats) && app.stats.cpu != nil:
+        case .cpu:
             chip("cpu-linear", "\(Int((app.stats.cpu! * 100).rounded()))%", opens: .stats)
-        case .claude where isOn(.stats) && app.usage.showsClaude:
+        case .claude:
             if case .limit(let limit) = app.usage.claude {
                 chip("claude-logo", "Claude \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
             }
-        case .codex where isOn(.stats) && app.usage.showsCodex:
+        case .codex:
             if case .limit(let limit) = app.usage.codex {
                 chip("codex-logo", "Codex \(Int(limit.percent.rounded()))%", warn: limit.percent >= 90, opens: .stats)
             }
-        case .clocks where isOn(.worldClock) && !app.worldClock.zones.isEmpty:
+        case .clocks:
             // Each city is its own chip, so the row can keep the first ones when space runs out.
             ForEach(app.worldClock.zones, id: \.self) { zone in
                 Chip(symbol: zone == app.worldClock.zones.first ? "earth-linear" : nil, caption: WorldClock.city(zone),
                      text: WorldClock.time(zone, at: date), tint: Palette.ash, action: nil)
             }
-        default:
-            EmptyView()
         }
     }
 
@@ -429,7 +449,8 @@ private struct OutputMenu: View {
         } label: {
             Icon(name: "speaker-minimalistic-linear", size: 15)
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.plain) // keeps our colour; the borderless menu style draws the icon in its own
         .menuIndicator(.hidden)
         .fixedSize()
         .frame(width: 26, height: 26)

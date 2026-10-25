@@ -109,7 +109,7 @@ final class NotchController {
         host.sizingOptions = [] // the panel frame is ours; don't let SwiftUI resize it
         panel.contentView = host
         layout()
-        panel.orderFrontRegardless()
+        if Snapshots.folder == nil { panel.orderFrontRegardless() } // snapshots render off-screen instead
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.layout() }
@@ -138,6 +138,10 @@ final class NotchController {
         audioOutputs.onSwitch = { [weak self] in self?.model.show(.message(symbol: "speaker-minimalistic-linear", text: $0), seconds: 2.5) }
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
+        if let folder = Snapshots.folder {
+            Task { await Snapshots.run(self, into: folder) }
+            return
+        }
         waitForAccessibility()
 
         NotificationCenter.default.addObserver(forName: .startOnboarding, object: nil, queue: .main) { [weak self] _ in
@@ -317,6 +321,7 @@ final class NotchController {
     }
 
     private func handle(_ event: NSEvent) {
+        guard Snapshots.folder == nil else { return } // the snapshot renderer drives the island itself
         let point = NSEvent.mouseLocation
         switch event.type {
         case .leftMouseDown:

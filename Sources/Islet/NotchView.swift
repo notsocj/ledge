@@ -276,13 +276,13 @@ private struct BannerView: View {
             case .meeting(let title, _):
                 HStack(spacing: 6) {
                     Icon(name: "calendar-mark-linear", size: 15)
-                    Text(title).frame(maxWidth: 82, alignment: .leading)
+                    Text(title).frame(maxWidth: 98, alignment: .leading)
                 }
             case .mic(let muted): MicIcon(muted: muted, size: 15).foregroundStyle(muted ? .red : Palette.paper)
             case .agent(let name, _, let project):
                 HStack(spacing: 6) {
                     Icon(name: name == "Claude" ? "claude-logo" : "codex-logo", size: 15)
-                    Text(project.isEmpty ? name : project).frame(maxWidth: 82, alignment: .leading)
+                    Text(project.isEmpty ? name : project).frame(maxWidth: 98, alignment: .leading)
                 }
             }
         } trailing: {
