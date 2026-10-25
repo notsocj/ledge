@@ -23,7 +23,7 @@ struct KestrelApp: App {
             Button("Quit Kestrel") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
         } label: {
-            if let icon = Icon.image("widget-5-bold") { Image(nsImage: icon) } else { Text("Kestrel") }
+            if let icon = Icon.image("kestrel-mark") { Image(nsImage: icon) } else { Text("Kestrel") }
         }
         Settings {
             SettingsView(preferences: .shared)

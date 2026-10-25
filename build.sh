@@ -19,6 +19,7 @@ rm -rf $APP
 mkdir -p $APP/Contents/{MacOS,Resources,Frameworks}
 cp "$(swift build -c release --show-bin-path)/Kestrel" $APP/Contents/MacOS/
 cp Info.plist $APP/Contents/
+cp Branding/AppIcon.icns $APP/Contents/Resources/ # regenerate with: swift Branding/make-icon.swift
 cp -R Icons $APP/Contents/Resources/ # Solar icons, CC BY 4.0 (credit in Icons/LICENSE.txt)
 cp $A/bin/mediaremote-adapter.pl $APP/Contents/Resources/
 cp $A/LICENSE $APP/Contents/Resources/mediaremote-adapter-LICENSE.txt

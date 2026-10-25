@@ -180,7 +180,7 @@ final class NotchController {
         preferences.onboarded = true
         setExpanded(false)
         model.onboarding = nil
-        model.show(.message(symbol: "widget-5-bold", text: "Hover here"), seconds: 3) // where to find it from now on
+        model.show(.message(symbol: "kestrel-mark", text: "Hover here"), seconds: 3) // where to find it from now on
     }
 
     func measuredOnboarding(_ height: CGFloat) {

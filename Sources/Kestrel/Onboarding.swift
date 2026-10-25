@@ -39,7 +39,7 @@ struct OnboardingStrip: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 6) {
-                Icon(name: "widget-5-bold", size: 13)
+                Icon(name: "kestrel-mark", size: 13)
                 Text("Kestrel").font(Typeface.label)
             }
             .foregroundStyle(Palette.paper)
@@ -399,7 +399,7 @@ private struct OpenAtLoginRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Icon(name: "widget-5-bold", size: 14)
+            Icon(name: "kestrel-mark", size: 14)
                 .foregroundStyle(Palette.paper)
                 .frame(width: 28, height: 28)
                 .background(Circle().fill(Palette.rail))
