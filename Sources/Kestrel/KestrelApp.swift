@@ -1,19 +1,29 @@
 import SwiftUI
 
 @main
-struct IsletApp: App {
+struct KestrelApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
+
+    init() {
+        Migration.fromIslet() // before anything reads settings
+    }
 
     var body: some Scene {
         MenuBarExtra {
             SettingsLink { Text("Settings…") }
                 .keyboardShortcut(",")
             Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
+            if Preferences.shared.isOn(.menuBarHider) {
+                // macOS 26+ draws every app's menu bar icon itself, so choosing which show is a system setting.
+                Button("Choose Menu Bar Icons…") {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!)
+                }
+            }
             Divider()
-            Button("Quit Islet") { NSApp.terminate(nil) }
+            Button("Quit Kestrel") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
         } label: {
-            if let icon = Icon.image("widget-5-bold") { Image(nsImage: icon) } else { Text("Islet") }
+            if let icon = Icon.image("widget-5-bold") { Image(nsImage: icon) } else { Text("Kestrel") }
         }
         Settings {
             SettingsView(preferences: .shared)

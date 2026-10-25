@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// `Islet --snapshot <folder>` renders the island off-screen for each persona, some mixes, every tab,
+/// `Kestrel --snapshot <folder>` renders the island off-screen for each persona, some mixes, every tab,
 /// each setup step and the closed-notch states, writes them as PNGs, and quits. Layouts are shown
 /// through `Preferences.preview`, so nothing you've set is changed. For reviewing the design.
 @MainActor
@@ -57,7 +57,7 @@ enum Snapshots {
         // The closed notch with each kind of banner.
         app.model.expanded = false
         let banners: [(String, Banner)] = [
-            ("agent-waiting", .agent(name: "Claude", waiting: true, project: "islet")),
+            ("agent-waiting", .agent(name: "Claude", waiting: true, project: "kestrel")),
             ("agent-done", .agent(name: "Codex", waiting: false, project: "website")),
             ("meeting", .meeting(title: "Design review", startsAt: .now.addingTimeInterval(110))),
             ("volume", .level(symbol: "volume-loud-bold", value: 0.6)),

@@ -1,5 +1,5 @@
 import Testing
-@testable import Islet
+@testable import Kestrel
 
 @Test func noPersonaKeepsEverythingAsBefore() {
     #expect(Layout.merging([]) == .standard)

@@ -9,15 +9,20 @@ struct HomeView: View {
     @State private var shown = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 18) {
-                ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
-                    switch widget {
-                    case .media: MediaWidget(nowPlaying: app.nowPlaying) { open(.media) }.entrance(index, shown)
-                    case .week: WeekWidget(agenda: app.agenda).entrance(index, shown)
+        VStack(alignment: .leading, spacing: 12) {
+            // Widgets on the left, quick actions on the right. No Spacer between them: a Spacer takes the
+            // stack's spacing on both sides, which made the row wider than the island and clipped its edge.
+            // 210 + 20 + 196 + 16 + 60 = 502pt, inside the 512pt the island gives its content.
+            HStack(alignment: .top, spacing: 16) {
+                HStack(alignment: .top, spacing: 20) {
+                    ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
+                        switch widget {
+                        case .media: MediaWidget(nowPlaying: app.nowPlaying) { open(.media) }.entrance(index, shown)
+                        case .week: WeekWidget(agenda: app.agenda).entrance(index, shown)
+                        }
                     }
                 }
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 QuickColumn(app: app).entrance(2, shown)
             }
             // Gone entirely when nothing has anything to say, instead of leaving an empty band.
@@ -73,7 +78,7 @@ private struct MediaWidget: View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: openPlayer) {
                 ZStack(alignment: .bottomTrailing) {
-                    Artwork(image: nowPlaying.artwork, size: 72, radius: 12)
+                    Artwork(image: nowPlaying.artwork, size: 64, radius: 12)
                         .overlay {
                             if nowPlaying.artwork == nil {
                                 Icon(name: "music-note-linear", size: 22).foregroundStyle(Palette.ash)
@@ -82,9 +87,9 @@ private struct MediaWidget: View {
                     if let appIcon {
                         Image(nsImage: appIcon)
                             .resizable()
-                            .frame(width: 22, height: 22)
-                            .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
-                            .offset(x: 5, y: 5)
+                            .frame(width: 20, height: 20)
+                            .shadow(color: .black.opacity(0.6), radius: 2, y: 1)
+                            .offset(x: 4, y: 4)
                             .transition(.scale(scale: 0.9).combined(with: .opacity))
                     }
                 }
@@ -92,7 +97,8 @@ private struct MediaWidget: View {
             .buttonStyle(PressStyle())
             .accessibilityLabel("Open the player")
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
+                // Song and artist only; the album and lyrics are a click away in the Music tab.
                 if nowPlaying.hasTrack {
                     Text(nowPlaying.title)
                         .font(Typeface.title)
@@ -100,11 +106,6 @@ private struct MediaWidget: View {
                     Text(nowPlaying.artist)
                         .font(Typeface.body)
                         .foregroundStyle(Palette.graphite)
-                    if !nowPlaying.album.isEmpty {
-                        Text(nowPlaying.album)
-                            .font(Typeface.caption)
-                            .foregroundStyle(Palette.ash)
-                    }
                 } else {
                     Text("Nothing playing")
                         .font(Typeface.title)
@@ -128,9 +129,9 @@ private struct MediaWidget: View {
             .lineLimit(1)
             .contentTransition(.opacity)
             .animation(Motion.easeOut(0.25), value: nowPlaying.trackKey)
-            .frame(height: 72 + 4, alignment: .topLeading)
+            .frame(height: 64 + 4, alignment: .topLeading)
         }
-        .frame(width: 222, alignment: .leading)
+        .frame(width: 210, alignment: .leading)
         .animation(Motion.easeOut(0.25), value: nowPlaying.appBundleID)
     }
 
@@ -192,13 +193,17 @@ private struct WeekWidget: View {
                 }
             }
         case .denied:
-            Button("Allow calendar access") {
+            Button {
                 NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!)
+            } label: {
+                Label { Text("Allow calendar access") } icon: { Icon(name: "calendar-linear", size: 13) }
             }
             .buttonStyle(LinkStyle())
         case .unknown:
-            Button("Connect your calendar") { Task { await agenda.refresh() } }
-                .buttonStyle(LinkStyle())
+            Button { Task { await agenda.refresh() } } label: {
+                Label { Text("Connect calendar") } icon: { Icon(name: "calendar-linear", size: 13) }
+            }
+            .buttonStyle(LinkStyle())
         }
     }
 }
@@ -239,12 +244,26 @@ private struct DayCell: View {
     }
 }
 
+/// A quiet inline action: grey until hovered, so it doesn't compete with the content around it.
 private struct LinkStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Typeface.label)
-            .foregroundStyle(Palette.paper)
-            .opacity(configuration.isPressed ? 0.6 : 1)
+        LinkLabel(configuration: configuration)
+    }
+
+    private struct LinkLabel: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .font(Typeface.caption.weight(.semibold))
+                .foregroundStyle(hovering ? Palette.paper : Palette.graphite)
+                .opacity(configuration.isPressed ? 0.6 : 1)
+                .padding(.top, 2)
+                .contentShape(Rectangle())
+                .onHover { hovering = $0 }
+                .animation(Motion.ease(0.15), value: hovering)
+        }
     }
 }
 
@@ -253,44 +272,54 @@ private struct LinkStyle: ButtonStyle {
 private struct QuickColumn: View {
     let app: NotchController
 
-    var body: some View {
-        // Two narrow columns, so five actions stay as short as the widgets beside them.
-        LazyVGrid(columns: [GridItem(.fixed(26), spacing: 2), GridItem(.fixed(26), spacing: 2)], spacing: 2) {
-            if app.preferences.isOn(.keepAwake) {
-                let on = app.keepAwake.isOn
-                IconButton(symbol: on ? "cup-hot-bold" : "cup-hot-linear", label: on ? "Let Mac sleep" : "Keep Mac awake", size: 12, box: 26, active: on) {
-                    app.keepAwake.toggle()
-                }
-                .help(on ? "Keeping your Mac awake" : "Keep your Mac awake")
-            }
-            if app.preferences.isOn(.screenshot) {
-                IconButton(symbol: "camera-linear", label: "Take a screenshot", size: 12, box: 26) { app.takeScreenshot() }
-                    .help("Take a screenshot (⌃⌥S)")
-            }
-            if app.preferences.isOn(.menuBarHider) {
-                // macOS 26+ draws every app's menu bar icon itself and ignores the old trick of pushing icons
-                // off-screen, so hiding them is a system setting now: send people straight to it.
-                IconButton(symbol: "hamburger-menu-linear", label: "Choose menu bar icons", size: 12, box: 26) {
-                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!)
-                }
-                .help("Choose which icons show in the menu bar")
-            }
-            if app.preferences.isOn(.colorPicker) {
-                IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 26) { app.pickColor() }
-                    .help("Pick a color on screen (⌃⌥P)")
-            }
-            if app.preferences.isOn(.audioOutput) {
-                OutputMenu(outputs: app.audioOutputs)
-            }
-            if app.preferences.isOn(.micMute) {
-                let muted = app.microphone.isMuted
-                IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 26, active: muted) {
-                    app.microphone.toggle()
-                }
-                .help(muted ? "Microphone muted (⌃⌥M)" : "Mute microphone (⌃⌥M)")
+    /// In order of urgency: muting is the one you reach for in a hurry.
+    enum Action: CaseIterable {
+        case mic, awake, screenshot, color, output
+
+        var tool: Tool {
+            switch self {
+            case .mic: .micMute
+            case .awake: .keepAwake
+            case .screenshot: .screenshot
+            case .color: .colorPicker
+            case .output: .audioOutput
             }
         }
-        .frame(width: 54)
+    }
+
+    /// At most four, two by two, so the column is never taller than the widgets beside it.
+    private var actions: [Action] { Array(Action.allCases.filter { app.preferences.isOn($0.tool) }.prefix(4)) }
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.fixed(28), spacing: 4), GridItem(.fixed(28), spacing: 4)], spacing: 4) {
+            ForEach(actions, id: \.self) { button(for: $0) }
+        }
+        .frame(width: 60)
+    }
+
+    @ViewBuilder private func button(for action: Action) -> some View {
+        switch action {
+        case .mic:
+            let muted = app.microphone.isMuted
+            IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 28, active: muted) {
+                app.microphone.toggle()
+            }
+            .help(muted ? "Microphone muted (⌃⌥M)" : "Mute microphone (⌃⌥M)")
+        case .awake:
+            let on = app.keepAwake.isOn
+            IconButton(symbol: on ? "cup-hot-bold" : "cup-hot-linear", label: on ? "Let Mac sleep" : "Keep Mac awake", size: 12, box: 28, active: on) {
+                app.keepAwake.toggle()
+            }
+            .help(on ? "Keeping your Mac awake" : "Keep your Mac awake")
+        case .screenshot:
+            IconButton(symbol: "camera-linear", label: "Take a screenshot", size: 12, box: 28) { app.takeScreenshot() }
+                .help("Take a screenshot (⌃⌥S)")
+        case .color:
+            IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 28) { app.pickColor() }
+                .help("Pick a color on screen (⌃⌥P)")
+        case .output:
+            OutputMenu(outputs: app.audioOutputs)
+        }
     }
 }
 
@@ -304,7 +333,7 @@ private struct StatusRow: View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             // In your personas' order. Chips that don't fit are left out whole, least important first,
             // rather than every chip being squeezed into "…".
-            PriorityRow(spacing: 12) {
+            PriorityRow(spacing: 16) {
                 ForEach(app.preferences.layout.chips, id: \.self) { kind in
                     chip(for: kind, at: context.date)
                 }
@@ -453,7 +482,7 @@ private struct OutputMenu: View {
         .buttonStyle(.plain) // keeps our colour; the borderless menu style draws the icon in its own
         .menuIndicator(.hidden)
         .fixedSize()
-        .frame(width: 26, height: 26)
+        .frame(width: 28, height: 28)
         .foregroundStyle(Palette.graphite)
         .help("Choose where sound plays")
         .accessibilityLabel("Audio output")

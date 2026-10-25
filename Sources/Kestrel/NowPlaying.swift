@@ -44,7 +44,7 @@ final class NowPlaying {
                 if await stream() { failures = 0 } else { failures += 1 }
                 try? await Task.sleep(for: .seconds(2))
             }
-            print("Islet: mediaremote-adapter keeps failing; now playing disabled")
+            print("Kestrel: mediaremote-adapter keeps failing; now playing disabled")
         }
     }
 
@@ -74,14 +74,14 @@ final class NowPlaying {
                 gotData = true
             }
         } catch {
-            print("Islet: adapter stream failed: \(error)")
+            print("Kestrel: adapter stream failed: \(error)")
         }
         return gotData
     }
 
     private func launch(_ arguments: [String], output: Pipe? = nil) -> Process? {
         guard let script, let framework else {
-            print("Islet: mediaremote-adapter missing from the app bundle; build with ./build.sh")
+            print("Kestrel: mediaremote-adapter missing from the app bundle; build with ./build.sh")
             return nil
         }
         let process = Process()
@@ -92,7 +92,7 @@ final class NowPlaying {
             try process.run()
             return process
         } catch {
-            print("Islet: couldn't start perl: \(error)")
+            print("Kestrel: couldn't start perl: \(error)")
             return nil
         }
     }

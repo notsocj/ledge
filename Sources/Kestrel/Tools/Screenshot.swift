@@ -1,15 +1,15 @@
 import Foundation
 
-/// Area screenshots through macOS's own `screencapture` tool, saved to Pictures/Islet Screenshots.
+/// Area screenshots through macOS's own `screencapture` tool, saved to Pictures/Kestrel Screenshots.
 /// macOS asks for Screen Recording permission the first time.
 @MainActor
 enum Screenshot {
     static func capture(then done: @escaping @MainActor (URL) -> Void) {
-        let folder = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask)[0].appending(path: "Islet Screenshots")
+        let folder = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask)[0].appending(path: "Kestrel Screenshots")
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         } catch {
-            print("Islet: couldn't create the screenshots folder: \(error)")
+            print("Kestrel: couldn't create the screenshots folder: \(error)")
             return
         }
         let url = folder.appending(path: "Screenshot \(fileDate.string(from: .now)).png")
@@ -23,7 +23,7 @@ enum Screenshot {
         do {
             try process.run()
         } catch {
-            print("Islet: couldn't start screencapture: \(error)")
+            print("Kestrel: couldn't start screencapture: \(error)")
         }
     }
 

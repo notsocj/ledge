@@ -53,7 +53,7 @@ enum LRCLIB {
 
     private static func fetch<T: Decodable>(_ url: URL) async -> T? {
         var request = URLRequest(url: url)
-        request.setValue("Islet/0.1 (macOS notch app)", forHTTPHeaderField: "User-Agent") // LRCLIB asks clients to identify themselves
+        request.setValue("Kestrel/0.1 (macOS notch app)", forHTTPHeaderField: "User-Agent") // LRCLIB asks clients to identify themselves
         guard let (data, response) = try? await URLSession.shared.data(for: request),
               (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
         return try? JSONDecoder().decode(T.self, from: data)

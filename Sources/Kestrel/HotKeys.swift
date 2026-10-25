@@ -11,9 +11,9 @@ enum HotKeys {
         installHandler()
         unregister(id)
         var ref: EventHotKeyRef?
-        let hotKeyID = EventHotKeyID(signature: OSType(0x4953_4C54), id: id) // "ISLT"
+        let hotKeyID = EventHotKeyID(signature: OSType(0x4B53_5452), id: id) // "KSTR"
         guard RegisterEventHotKey(UInt32(key), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &ref) == noErr, let ref else {
-            print("Islet: shortcut \(id) is taken by another app")
+            print("Kestrel: shortcut \(id) is taken by another app")
             return
         }
         refs[id] = ref

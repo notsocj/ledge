@@ -40,7 +40,7 @@ struct OnboardingStrip: View {
         HStack(spacing: 0) {
             HStack(spacing: 6) {
                 Icon(name: "widget-5-bold", size: 13)
-                Text("Islet").font(Typeface.label)
+                Text("Kestrel").font(Typeface.label)
             }
             .foregroundStyle(Palette.paper)
             Spacer()
@@ -87,7 +87,7 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text("Welcome to Islet")
+                Text("Welcome to Kestrel")
                     .font(Typeface.heading)
                     .foregroundStyle(Palette.paper)
                 Text("Your everyday tools, right in the notch. Tell it what you do and it sets itself up around you.")
@@ -108,7 +108,7 @@ struct OnboardingView: View {
     }
 
     private var personas: some View {
-        Page(title: "What do you do?", subtitle: "Pick one or more. Islet puts the tools you'll use most closest to hand.") {
+        Page(title: "What do you do?", subtitle: "Pick one or more. Kestrel puts the tools you'll use most closest to hand.") {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                 ForEach(Persona.allCases) { persona in
                     PersonaCard(persona: persona, selected: flow.personas.contains(persona)) {
@@ -139,7 +139,7 @@ struct OnboardingView: View {
     }
 
     private var done: some View {
-        Page(title: "You're all set", subtitle: "Hover the notch any time to open Islet. Everything here can be changed in Settings.") {
+        Page(title: "You're all set", subtitle: "Hover the notch any time to open Kestrel. Everything here can be changed in Settings.") {
             OpenAtLoginRow()
         } footer: {
             footer(back: .permissions, next: "Finish", enabled: true) { app.finishOnboarding() }

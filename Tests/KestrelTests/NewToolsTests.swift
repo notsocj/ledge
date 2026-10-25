@@ -1,7 +1,7 @@
 import AppKit
 import EventKit
 import Testing
-@testable import Islet
+@testable import Kestrel
 
 @MainActor @Test func focusRollsIntoABreakThenWaitsForTheNextSession() {
     let countdown = Countdown()

@@ -32,7 +32,7 @@ final class Alerts: NSObject {
         case .allowedAlways:
             connections = IOBluetoothDevice.register(forConnectNotifications: self, selector: #selector(connected(_:device:)))
         case .notDetermined:
-            permissionPrompt = CBCentralManager(delegate: nil, queue: DispatchQueue(label: "Islet.bluetooth")) // shows the prompt without blocking
+            permissionPrompt = CBCentralManager(delegate: nil, queue: DispatchQueue(label: "Kestrel.bluetooth")) // shows the prompt without blocking
             waitingForBluetooth = Task { [weak self] in
                 while CBManager.authorization == .notDetermined, !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(2))

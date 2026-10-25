@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Islet
+@testable import Kestrel
 
 @Test func readsCodexNotifyOnlyAtTheTopLevel() {
     let config = """
@@ -24,7 +24,7 @@ import Testing
 
 @Test func swapsOrAddsTheNotifyLineWithoutTouchingTheRest() {
     let config = "model = \"gpt-5\"\nnotify = [\"old\"]\n\n[tui]\ntheme = \"dark\""
-    let ours = #"notify = ["/path/islet-agent", "codex", "done", "--then", "old"]"#
+    let ours = #"notify = ["/path/kestrel-agent", "codex", "done", "--then", "old"]"#
     #expect(AgentAlerts.replacingNotifyLine(in: config, with: ours) == "model = \"gpt-5\"\n\(ours)\n\n[tui]\ntheme = \"dark\"")
     #expect(AgentAlerts.replacingNotifyLine(in: config, with: nil) == "model = \"gpt-5\"\n\n[tui]\ntheme = \"dark\"")
     // No notify yet: it goes first, so it can't land inside a [table].
@@ -32,14 +32,14 @@ import Testing
     #expect(AgentAlerts.tomlString(#"C:\a "b""#) == #""C:\\a \"b\"""#)
 }
 
-@Test func addsAndRemovesOnlyIsletsClaudeHooks() {
+@Test func addsAndRemovesOnlyKestrelsClaudeHooks() {
     let theirs: [String: Any] = ["hooks": ["Stop": [["hooks": [["type": "command", "command": "say done"]]]]], "theme": "dark"]
     var settings = theirs
     var hooks = settings["hooks"] as! [String: Any]
     var stop = hooks["Stop"] as! [[String: Any]]
-    stop.append(["hooks": [["type": "command", "command": "\"/x/islet-agent\" claude done"]]])
+    stop.append(["hooks": [["type": "command", "command": "\"/x/kestrel-agent\" claude done"]]])
     hooks["Stop"] = stop
-    hooks["Notification"] = [["hooks": [["type": "command", "command": "\"/x/islet-agent\" claude waiting"]]]]
+    hooks["Notification"] = [["hooks": [["type": "command", "command": "\"/x/kestrel-agent\" claude waiting"]]]]
     settings["hooks"] = hooks
     #expect(AgentAlerts.claudeHooks(in: settings).count == 2)
 
@@ -54,4 +54,11 @@ import Testing
         Ports.Listener(port: 3000, pid: 100, command: "node"),
         Ports.Listener(port: 8000, pid: 200, command: "python3"),
     ]) // 57621 is in the private range apps use internally
+}
+
+@Test func hooksInstalledBeforeTheRenameStillCountAsOurs() {
+    let settings: [String: Any] = ["hooks": ["Stop": [["hooks": [["type": "command", "command": "\"/x/islet-agent\" claude done"]]]]]]
+    #expect(AgentAlerts.claudeHooks(in: settings).count == 1)
+    #expect(AgentAlerts.claudeHooks(in: AgentAlerts.removingClaudeHooks(from: settings)).isEmpty)
+    #expect(AgentAlerts.isOurs(#"notify = ["/old/islet-agent", "codex", "done"]"#))
 }

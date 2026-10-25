@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Builds build/Islet.app: the Swift app plus mediaremote-adapter (BSD-3-Clause) bundled inside.
+# Builds build/Kestrel.app: the Swift app plus mediaremote-adapter (BSD-3-Clause) bundled inside.
 set -euo pipefail
 cd "${0:A:h}"
 
@@ -14,10 +14,10 @@ if [[ ! -d $A/build/MediaRemoteAdapter.framework ]]; then
 fi
 
 swift build -c release
-APP=build/Islet.app
+APP=build/Kestrel.app
 rm -rf $APP
 mkdir -p $APP/Contents/{MacOS,Resources,Frameworks}
-cp "$(swift build -c release --show-bin-path)/Islet" $APP/Contents/MacOS/
+cp "$(swift build -c release --show-bin-path)/Kestrel" $APP/Contents/MacOS/
 cp Info.plist $APP/Contents/
 cp -R Icons $APP/Contents/Resources/ # Solar icons, CC BY 4.0 (credit in Icons/LICENSE.txt)
 cp $A/bin/mediaremote-adapter.pl $APP/Contents/Resources/
