@@ -13,26 +13,27 @@ import Testing
     #expect(License.state(trialStart: start, now: start + day * 30, licensed: true) == .licensed)
 }
 
-@Test func readsLemonSqueezyResponsesAndChecksTheProduct() throws {
+@Test func readsPolarRepliesAndChecksTheProduct() throws {
     let activated = """
-    {"activated": true, "error": null,
-     "license_key": {"id": 1, "status": "active", "key": "abc", "activation_limit": 2, "activation_usage": 1},
-     "instance": {"id": "f90ec370-fd83-46a5-8bbd-44a241e78665", "name": "Mac"},
-     "meta": {"store_id": 11, "order_id": 2, "product_id": 44, "product_name": "Ledge", "customer_email": "a@b.c"}}
+    {"id": "f90ec370-fd83-46a5-8bbd-44a241e78665", "license_key_id": "k1", "label": "Mac", "meta": {},
+     "license_key": {"id": "k1", "organization_id": "o1", "benefit_id": "b-ledge", "key": "LEDGE-1", "status": "granted",
+                     "limit_activations": 2, "usage": 0, "validations": 0, "customer": {"email": "a@b.c"}}}
     """
-    let response = try #require(License.decode(Data(activated.utf8)))
-    #expect(response.activated == true)
-    #expect(response.instance?.id == "f90ec370-fd83-46a5-8bbd-44a241e78665")
-    #expect(License.isOurs(response.meta, store: 11, product: 44))
-    #expect(!License.isOurs(response.meta, store: 11, product: 45))
-    #expect(License.isOurs(response.meta, store: 0, product: 0)) // unconfigured: any store
-    #expect(!License.isOurs(nil, store: 0, product: 0))
+    let reply = try #require(License.decode(Data(activated.utf8)))
+    #expect(reply.id == "f90ec370-fd83-46a5-8bbd-44a241e78665")
+    #expect(reply.licenseKey?.benefitId == "b-ledge")
+    #expect(License.isOurs(benefit: reply.licenseKey?.benefitId, expected: "b-ledge"))
+    #expect(!License.isOurs(benefit: reply.licenseKey?.benefitId, expected: "b-other"))
+    #expect(License.isOurs(benefit: nil, expected: nil)) // one product: any key in the organization
 
-    let limit = #"{"activated": false, "error": "This license key has reached the activation limit.", "license_key": {"id": 1}, "meta": null}"#
-    let refused = try #require(License.decode(Data(limit.utf8)))
-    #expect(refused.activated == false)
-    #expect(refused.error == "This license key has reached the activation limit.")
+    let limit = try #require(License.decode(Data(#"{"error": "NotPermitted", "detail": "License key activation limit reached"}"#.utf8)))
+    #expect(License.problem(status: 403, reply: limit).hasPrefix("This key is already on two Macs"))
+    let revoked = try #require(License.decode(Data(#"{"error": "NotPermitted", "detail": "License key is revoked"}"#.utf8)))
+    #expect(License.problem(status: 403, reply: revoked) == "License key is revoked")
+    #expect(License.problem(status: 404, reply: nil).hasPrefix("That key wasn't found"))
 
-    let invalid = try #require(License.decode(Data(#"{"valid": false, "error": "license_key not found.", "license_key": null, "instance": null, "meta": null}"#.utf8)))
-    #expect(invalid.valid == false)
+    // Field errors send `detail` as a list; the rest of the reply still reads.
+    let invalid = try #require(License.decode(Data(#"{"detail": [{"loc": ["body", "key"], "msg": "Field required", "type": "missing"}]}"#.utf8)))
+    #expect(invalid.detail == nil)
+    #expect(License.problem(status: 422, reply: invalid).hasPrefix("That key didn't work"))
 }

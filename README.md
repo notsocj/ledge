@@ -102,19 +102,31 @@ Tests/LedgeTests/
 
 ## Trial and license
 
-Ledge is free for 7 days, then needs a [Lemon Squeezy](https://www.lemonsqueezy.com) license key
-(two Macs per key). Once the trial ends the island shows how to buy and every tool stops; Settings ›
-License takes the key. The trial start and key live in the login keychain. `License.swift` holds the
-store and product IDs and the checkout link; the site's Buy button uses the same link.
+Ledge is free for 7 days, then needs a [Polar](https://polar.sh) license key (two Macs per key).
+Once the trial ends the island shows how to buy and every tool stops; Settings › License takes the
+key. The trial start and key live in the login keychain. `License.swift` holds the Polar organization
+ID, the optional benefit ID and the checkout link; the site's Buy button uses the same link.
+
+## Releasing
 
 `./build.sh dmg` also packs `site/Ledge.dmg`, which the site's Download buttons link to.
+`./build.sh release` signs that DMG with your Developer ID, sends it to Apple for notarization,
+staples the ticket and checks that Gatekeeper accepts it. It needs, once:
+
+1. A **Developer ID Application** certificate: Xcode › Settings › Accounts › Manage Certificates › + ›
+   Developer ID Application.
+2. Notarization credentials saved in your keychain: `xcrun notarytool store-credentials ledge`
+   (it asks for your Apple ID, team ID and an app-specific password from account.apple.com).
+
+Builds are signed with the Developer ID whenever the certificate is present, with the hardened runtime
+and the calendar entitlement in `Ledge.entitlements`.
 
 ## Before selling
 
-- In Lemon Squeezy, create the $19.99 product with license keys on and an activation limit of 2,
-  then put its store ID, product ID and checkout link in `License.swift` and the checkout link in
-  `site/index.html`. Until then any Lemon Squeezy key is accepted.
-- Sign with a Developer ID and notarize; add Sparkle for updates.
+- In Polar, create the $19.99 product with a License Keys benefit limited to 2 activations, then put
+  the organization ID, the benefit ID and the checkout link in `License.swift` and the checkout link
+  in `site/index.html`. Until the organization ID is set, Ledge refuses every key.
+- Add Sparkle for updates.
 - Lyrics come from a crowd-sourced service without a lyrics license.
 - The Claude usage endpoint is undocumented; check Anthropic's terms for this use of Claude Code's login.
 - Now playing and brightness use private macOS APIs that can change in updates.

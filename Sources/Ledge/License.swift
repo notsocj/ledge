@@ -2,17 +2,20 @@ import AppKit
 import Security
 import SwiftUI
 
-/// The 7-day trial, then a Lemon Squeezy license key good for two Macs. Lemon Squeezy's license
-/// API needs no secret, so the app talks to it directly and there's no server of our own.
+/// The 7-day trial, then a Polar license key good for two Macs. Polar's customer-portal license API
+/// needs no secret, so the app talks to it directly and there's no server of our own.
 @Observable @MainActor
 final class License {
     static let shared = License()
     nonisolated static let trialDays = 7
-    // shortcut: 0 accepts a key from any Lemon Squeezy store; set both from the dashboard before selling.
-    static let storeID = 0
-    static let productID = 0
-    // Replace with the product's checkout link from Lemon Squeezy (Products › Share).
-    static let buyURL = URL(string: "https://ledge.lemonsqueezy.com/buy")!
+    // From the Polar dashboard: the organization ID (Settings › General) and, if you sell more than one
+    // product, the license key benefit's ID so only Ledge keys unlock Ledge. While testing with sandbox
+    // keys, point `api` at https://sandbox-api.polar.sh.
+    static let organizationID = ""
+    static let benefitID: String? = nil
+    static let api = "https://api.polar.sh/v1/customer-portal/license-keys/"
+    // Replace with the product's checkout link from Polar (Products › Checkout Links).
+    static let buyURL = URL(string: "https://buy.polar.sh/ledge")!
 
     enum State: Equatable { case trial(daysLeft: Int), expired, licensed }
 
@@ -23,20 +26,15 @@ final class License {
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private var trialStart = Date.now
     @ObservationIgnored private var key: String?
-    @ObservationIgnored private var instance: String?
+    @ObservationIgnored private var activation: String?
 
     private init() {
         guard Snapshots.folder == nil else { return } // renders show the full app
-        // A license or trial from when the app was called Kestrel carries over.
-        let old = Migration.oldBundleID
-        key = Keychain.read("licenseKey") ?? Keychain.read("licenseKey", service: old)
-        instance = Keychain.read("instance") ?? Keychain.read("instance", service: old)
-        if key != nil, instance != nil {
-            Keychain.write("licenseKey", key)
-            Keychain.write("instance", instance)
-        }
+        key = Keychain.read("licenseKey")
+        activation = Keychain.read("activation")
         // Kept in both places, earliest wins: deleting the app's preferences doesn't restart the trial.
-        let saved = [Keychain.read("trialStart"), Keychain.read("trialStart", service: old)].map { $0.flatMap(Double.init) }
+        // A trial started back when the app was called Kestrel carries over too.
+        let saved = [Keychain.read("trialStart"), Keychain.read("trialStart", service: Migration.oldBundleID)].map { $0.flatMap(Double.init) }
             + [UserDefaults.standard.object(forKey: "trialStart") as? Double]
         trialStart = saved.compactMap { $0 }.min().map(Date.init(timeIntervalSince1970:)) ?? .now
         Keychain.write("trialStart", String(trialStart.timeIntervalSince1970))
@@ -62,91 +60,113 @@ final class License {
     func activate(_ input: String) async -> String? {
         let key = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else { return "Paste the license key from your receipt email." }
-        let name = Host.current().localizedName ?? "Mac"
-        guard let response = await Self.post("activate", ["license_key": key, "instance_name": name]) else { return Self.offline }
-        guard response.activated == true, let instance = response.instance?.id else {
-            if response.error?.contains("not found") == true { return "That key wasn't found. Check it against your receipt email." }
-            return response.error ?? "That key didn't work."
+        guard !Self.organizationID.isEmpty else { return "This build of Ledge can't take license keys yet." }
+        let label = Host.current().localizedName ?? "Mac"
+        guard let (status, reply) = await Self.post("activate", ["key": key, "organization_id": Self.organizationID, "label": label]) else {
+            return Self.offline
         }
-        guard Self.isOurs(response.meta, store: Self.storeID, product: Self.productID) else {
-            _ = await Self.post("deactivate", ["license_key": key, "instance_id": instance]) // don't use up the other product's slot
-            return "That key is for a different app."
+        guard status == 200, let activation = reply?.id else { return Self.problem(status: status, reply: reply) }
+        guard Self.isOurs(benefit: reply?.licenseKey?.benefitId, expected: Self.benefitID) else {
+            // Don't use up a slot on the other product's key.
+            _ = await Self.post("deactivate", ["key": key, "organization_id": Self.organizationID, "activation_id": activation])
+            return "That key is for a different product."
         }
-        save(key: key, instance: instance)
+        save(key: key, activation: activation)
         return nil
     }
 
     /// Frees this Mac's slot so the key can be used on another one.
     func deactivate() async -> String? {
-        guard let key, let instance else { save(key: nil, instance: nil); return nil }
-        guard let response = await Self.post("deactivate", ["license_key": key, "instance_id": instance]) else { return Self.offline }
-        guard response.deactivated == true else { return response.error ?? "Couldn't deactivate this Mac." }
-        save(key: nil, instance: nil)
+        guard let key, let activation else { save(key: nil, activation: nil); return nil }
+        guard let (status, reply) = await Self.post("deactivate", ["key": key, "organization_id": Self.organizationID, "activation_id": activation]) else {
+            return Self.offline
+        }
+        // 404: Polar no longer has this activation, so the slot is already free.
+        guard status == 204 || status == 404 else { return reply?.detail ?? "Couldn't deactivate this Mac." }
+        save(key: nil, activation: nil)
         return nil
     }
 
-    /// A refunded or disabled key stops working. Offline, a licensed Mac stays licensed.
+    /// A refunded or revoked key stops working; Polar answers 404 for it. Offline, or on any server
+    /// trouble, a licensed Mac stays licensed.
     private func check() async {
-        guard let key, let instance else { return }
-        let response = await Self.post("validate", ["license_key": key, "instance_id": instance])
-        if response?.valid == false { save(key: nil, instance: nil) }
+        guard let key, let activation else { return }
+        let result = await Self.post("validate", ["key": key, "organization_id": Self.organizationID, "activation_id": activation])
+        if result?.status == 404 { save(key: nil, activation: nil) }
     }
 
-    private func save(key: String?, instance: String?) {
-        (self.key, self.instance) = (key, instance)
+    private func save(key: String?, activation: String?) {
+        (self.key, self.activation) = (key, activation)
         Keychain.write("licenseKey", key)
-        Keychain.write("instance", instance)
+        Keychain.write("activation", activation)
         refresh()
     }
 
     private func refresh() {
-        let new = Self.state(trialStart: trialStart, now: .now, licensed: instance != nil)
+        let new = Self.state(trialStart: trialStart, now: .now, licensed: activation != nil)
         guard new != state else { return }
         let wasUnlocked = unlocked
         state = new
         if unlocked != wasUnlocked { onChange?() }
     }
 
-    // MARK: Lemon Squeezy
+    // MARK: Polar
 
-    struct Response: Decodable {
-        var activated: Bool?
-        var valid: Bool?
-        var deactivated: Bool?
+    /// What Polar sends back: the activation on success, `{"error", "detail"}` on failure. Field
+    /// checks send `detail` as a list instead of a sentence, so each field is read on its own.
+    struct Reply: Decodable {
+        var id: String?
         var error: String?
-        var instance: Instance?
-        var meta: Meta?
-        struct Instance: Decodable { var id: String }
-        struct Meta: Decodable { var storeId: Int; var productId: Int }
+        var detail: String?
+        var licenseKey: Key?
+        struct Key: Decodable { var benefitId: String? }
+
+        enum CodingKeys: String, CodingKey { case id, error, detail, licenseKey }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try? container.decodeIfPresent(String.self, forKey: .id)
+            error = try? container.decodeIfPresent(String.self, forKey: .error)
+            detail = try? container.decodeIfPresent(String.self, forKey: .detail)
+            licenseKey = try? container.decodeIfPresent(Key.self, forKey: .licenseKey)
+        }
     }
 
-    nonisolated static func isOurs(_ meta: Response.Meta?, store: Int, product: Int) -> Bool {
-        guard let meta else { return false }
-        return (store == 0 || meta.storeId == store) && (product == 0 || meta.productId == product)
+    nonisolated static func isOurs(benefit: String?, expected: String?) -> Bool {
+        guard let expected else { return true } // one product: every key in the organization is a Ledge key
+        return benefit == expected
     }
 
-    nonisolated static func decode(_ data: Data) -> Response? {
+    nonisolated static func decode(_ data: Data) -> Reply? {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try? decoder.decode(Response.self, from: data)
+        return try? decoder.decode(Reply.self, from: data)
+    }
+
+    /// The sentence to show for a refused activation.
+    nonisolated static func problem(status: Int, reply: Reply?) -> String {
+        switch status {
+        case 404: return "That key wasn't found. Check it against your receipt email."
+        case 403 where reply?.detail?.localizedCaseInsensitiveContains("limit") == true:
+            return "This key is already on two Macs. Deactivate it on one of them in Ledge's Settings, then try again."
+        case 403: return reply?.detail ?? "That key can't be activated."
+        default: return reply?.detail ?? "That key didn't work. Try again in a moment."
+        }
     }
 
     private static let offline = "Couldn't reach the license server. Check your connection and try again."
 
-    /// nil when the server couldn't be reached. Errors (a wrong key, the limit reached) come back as
-    /// a 4xx with the same JSON shape, so the body is read whatever the status.
-    private static func post(_ action: String, _ fields: [String: String]) async -> Response? {
-        var request = URLRequest(url: URL(string: "https://api.lemonsqueezy.com/v1/licenses/\(action)")!)
+    /// The status and reply, or nil when the server couldn't be reached.
+    private static func post(_ action: String, _ fields: [String: String]) async -> (status: Int, reply: Reply?)? {
+        var request = URLRequest(url: URL(string: api + action)!)
         request.httpMethod = "POST"
         request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        var form = URLComponents()
-        form.queryItems = fields.map { URLQueryItem(name: $0.key, value: $0.value) }
-        // A form body reads "+" as a space, which URLComponents leaves alone.
-        request.httpBody = form.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B").data(using: .utf8)
-        guard let (data, _) = try? await URLSession.shared.data(for: request) else { return nil }
-        return decode(data)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: fields)
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let status = (response as? HTTPURLResponse)?.statusCode else { return nil }
+        return (status, decode(data))
     }
 }
 
