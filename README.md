@@ -100,8 +100,20 @@ Tests/KestrelTests/
 - Synced lyrics: [LRCLIB](https://lrclib.net).
 - The Claude and Codex marks belong to Anthropic and OpenAI and identify whose usage is shown.
 
+## Trial and license
+
+Kestrel is free for 7 days, then needs a [Lemon Squeezy](https://www.lemonsqueezy.com) license key
+(two Macs per key). Once the trial ends the island shows how to buy and every tool stops; Settings ›
+License takes the key. The trial start and key live in the login keychain. `License.swift` holds the
+store and product IDs and the checkout link; the site's Buy button uses the same link.
+
+`./build.sh dmg` also packs `site/Kestrel.dmg`, which the site's Download buttons link to.
+
 ## Before selling
 
+- In Lemon Squeezy, create the $19.99 product with license keys on and an activation limit of 2,
+  then put its store ID, product ID and checkout link in `License.swift` and the checkout link in
+  `site/index.html`. Until then any Lemon Squeezy key is accepted.
 - Sign with a Developer ID and notarize; add Sparkle for updates.
 - Lyrics come from a crowd-sourced service without a lyrics license.
 - The Claude usage endpoint is undocumented; check Anthropic's terms for this use of Claude Code's login.

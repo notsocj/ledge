@@ -36,11 +36,14 @@ final class NotchModel {
     var contentHeights: [Tool: CGFloat] = [:] { didSet { onResize?() } }
     /// Set while first-run setup runs inside the island; the island stays open until it's done.
     var onboarding: Onboarding? { didSet { onResize?() } }
-    var onboardingHeight: CGFloat = 200 { didSet { onResize?() } }
+    /// Once the trial is over the island shows only how to buy, in place of the tabs.
+    var locked = false { didSet { onResize?() } }
+    /// The measured height of setup or the trial-ended page, whichever is showing.
+    var pageHeight: CGFloat = 200 { didSet { onResize?() } }
     @ObservationIgnored var onResize: (() -> Void)?
 
     var expandedSize: CGSize {
-        let content = onboarding != nil ? onboardingHeight : contentHeights[tab] ?? 120
+        let content = onboarding != nil || locked ? pageHeight : contentHeights[tab] ?? 120
         return CGSize(width: Self.width, height: min(Self.maxHeight, notchSize.height + Self.contentInsets.top + content + Self.contentInsets.bottom))
     }
     private(set) var banner: Banner?
@@ -67,6 +70,7 @@ final class NotchModel {
 final class NotchController {
     let model = NotchModel()
     let preferences = Preferences.shared
+    let license = License.shared
     let nowPlaying = NowPlaying()
     let usage = Usage()
     let shelf = Shelf()
@@ -137,6 +141,8 @@ final class NotchController {
         meetingAlerts.onBanner = { [weak self] in self?.model.show($0, seconds: 8) }
         audioOutputs.onSwitch = { [weak self] in self?.model.show(.message(symbol: "speaker-minimalistic-linear", text: $0), seconds: 2.5) }
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
+        license.onChange = { [weak self] in self?.applyLicense() }
+        model.locked = !license.unlocked
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
         if let folder = Snapshots.folder {
             Task { await Snapshots.run(self, into: folder) }
@@ -153,6 +159,8 @@ final class NotchController {
                 try? await Task.sleep(for: .seconds(1))
                 self?.startOnboarding()
             }
+        } else if case .trial(let days) = license.state, days <= 2 {
+            model.show(.message(symbol: "kestrel-mark", text: days == 1 ? "Last trial day" : "2 days left"), seconds: 4)
         }
     }
 
@@ -183,10 +191,16 @@ final class NotchController {
         model.show(.message(symbol: "kestrel-mark", text: "Hover here"), seconds: 3) // where to find it from now on
     }
 
-    func measuredOnboarding(_ height: CGFloat) {
-        guard abs(model.onboardingHeight - height) > 0.5 else { return }
+    func measuredPage(_ height: CGFloat) {
+        guard abs(model.pageHeight - height) > 0.5 else { return }
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        withAnimation(reduceMotion ? nil : Motion.snappy) { model.onboardingHeight = height }
+        withAnimation(reduceMotion ? nil : Motion.snappy) { model.pageHeight = height }
+    }
+
+    /// The trial ended, or a key was activated or removed: stop or start every tool to match.
+    private func applyLicense() {
+        model.locked = !license.unlocked
+        for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
     }
 
     func quit() {
@@ -202,7 +216,7 @@ final class NotchController {
 
     /// `kestrel://agent/<claude|codex>/<done|waiting>?project=<folder>`, sent by the agent alert script.
     func open(_ url: URL) {
-        guard url.scheme == "kestrel", url.host == "agent", preferences.isOn(.agentAlerts) else { return }
+        guard url.scheme == "kestrel", url.host == "agent", preferences.isOn(.agentAlerts), license.unlocked else { return }
         let parts = url.pathComponents.filter { $0 != "/" }
         guard parts.count >= 2, let agent = AgentAlerts.Agent(rawValue: parts[0]) else { return }
         let waiting = parts[1] == "waiting"
@@ -227,7 +241,8 @@ final class NotchController {
         }
     }
 
-    private func apply(_ tool: Tool, on: Bool) {
+    private func apply(_ tool: Tool, on wanted: Bool) {
+        let on = wanted && license.unlocked
         switch tool {
         case .media: if on, Snapshots.folder == nil { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap. Snapshots use demo music.
         case .clipboard: on ? clipboard.start() : clipboard.stop()
@@ -326,9 +341,9 @@ final class NotchController {
         switch event.type {
         case .leftMouseDown:
             dragChangeCount = NSPasteboard(name: .drag).changeCount
-            if preferences.isOn(.windowSnapping) { snapper.mouseDown() }
+            if snapping { snapper.mouseDown() }
         case .leftMouseDragged:
-            if preferences.isOn(.windowSnapping) { snapper.mouseDragged() }
+            if snapping { snapper.mouseDragged() }
             // A new drag carrying files, brought up to the notch: open the shelf to catch it.
             let drag = NSPasteboard(name: .drag)
             if !model.expanded, preferences.isOn(.shelf), drag.changeCount != dragChangeCount,
@@ -336,7 +351,7 @@ final class NotchController {
                 open(.shelf)
             }
         case .leftMouseUp:
-            if preferences.isOn(.windowSnapping) { snapper.mouseUp() }
+            if snapping { snapper.mouseUp() }
         default:
             break
         }
@@ -352,6 +367,8 @@ final class NotchController {
             }
         }
     }
+
+    private var snapping: Bool { preferences.isOn(.windowSnapping) && license.unlocked }
 
     /// The closed notch, widened a little and extended past the top edge where the cursor rests.
     private var hotZone: NSRect {

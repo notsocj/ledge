@@ -27,3 +27,14 @@ cp -R $A/build/MediaRemoteAdapter.framework $APP/Contents/Frameworks/
 codesign --force --sign - $APP/Contents/Frameworks/MediaRemoteAdapter.framework
 codesign --force --sign - $APP
 echo "Built $APP. Run: open $APP"
+
+# ./build.sh dmg also packs the app into site/Kestrel.dmg, the file the site's Download buttons link to.
+if [[ ${1:-} == dmg ]]; then
+  STAGE=build/dmg
+  rm -rf $STAGE site/Kestrel.dmg
+  mkdir -p $STAGE
+  cp -R $APP $STAGE/
+  ln -s /Applications $STAGE/Applications
+  hdiutil create -quiet -volname Kestrel -srcfolder $STAGE -fs HFS+ -format UDZO site/Kestrel.dmg
+  echo "Packed site/Kestrel.dmg"
+fi

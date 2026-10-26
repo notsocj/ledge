@@ -40,6 +40,7 @@ struct NotchView: View {
 
     private var closedContent: Closed {
         if let banner = model.banner { return .banner(banner) }
+        guard app.license.unlocked else { return .nothing }
         // A muted mic outranks everything: it's what you need to know before you speak.
         if app.preferences.isOn(.micMute), app.microphone.isMuted { return .micMuted }
         if app.preferences.isOn(.inUse), app.inUse.any { return .inUse }
@@ -125,13 +126,22 @@ struct NotchView: View {
                     .padding(.horizontal, 22)
                 OnboardingView(app: app, flow: flow)
                     .fixedSize(horizontal: false, vertical: true)
-                    .background { GeometryReader { Color.clear.preference(key: OnboardingHeight.self, value: $0.size.height) } }
+                    .background { GeometryReader { Color.clear.preference(key: PageHeight.self, value: $0.size.height) } }
                     .padding(.top, NotchModel.contentInsets.top)
                     .padding(.horizontal, 24)
                     .padding(.bottom, NotchModel.contentInsets.bottom)
             }
             .frame(width: NotchModel.width, height: model.expandedSize.height, alignment: .top)
-            .onPreferenceChange(OnboardingHeight.self) { app.measuredOnboarding($0) }
+            .onPreferenceChange(PageHeight.self) { app.measuredPage($0) }
+        } else if model.locked {
+            TrialEndedView()
+                .fixedSize(horizontal: false, vertical: true)
+                .background { GeometryReader { Color.clear.preference(key: PageHeight.self, value: $0.size.height) } }
+                .padding(.top, model.notchSize.height + NotchModel.contentInsets.top)
+                .padding(.horizontal, 24)
+                .padding(.bottom, NotchModel.contentInsets.bottom)
+                .frame(width: NotchModel.width, height: model.expandedSize.height, alignment: .top)
+                .onPreferenceChange(PageHeight.self) { app.measuredPage($0) }
         } else {
             tabbed
         }
@@ -188,7 +198,7 @@ struct NotchView: View {
     }
 }
 
-private struct OnboardingHeight: PreferenceKey {
+private struct PageHeight: PreferenceKey {
     static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }

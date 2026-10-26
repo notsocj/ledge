@@ -61,6 +61,9 @@ p { margin: 0; }
 .button:hover { background: #fff; }
 .button:active { transform: scale(0.97); }
 .button.small { padding: 8px 16px; font-size: 14px; }
+.button.quiet { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1px rgba(255, 248, 239, 0.22); }
+.button.quiet:hover { background: rgba(255, 248, 239, 0.08); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 .nav .button { color: #0b1424; }
 
 /* Hero: a dusk sky and the top of a MacBook screen */
