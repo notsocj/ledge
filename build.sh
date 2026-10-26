@@ -1,8 +1,8 @@
 #!/bin/zsh
 # Builds build/Ledge.app: the Swift app plus mediaremote-adapter (BSD-3-Clause) bundled inside.
 #   ./build.sh          the app
-#   ./build.sh dmg      also packs site/Ledge.dmg, the file the site's Download buttons link to
-#   ./build.sh release  a DMG that's signed, notarized by Apple and stapled, ready to publish
+#   ./build.sh dmg      also packs site/Ledge.dmg
+#   ./build.sh release  a DMG that's signed, notarized by Apple and stapled, published as a GitHub Release
 set -euo pipefail
 cd "${0:A:h}"
 
@@ -69,5 +69,14 @@ if [[ ${1:-} == release ]]; then
   fi
   xcrun stapler staple -q site/Ledge.dmg
   spctl --assess --type open --context context:primary-signature -v site/Ledge.dmg
-  echo "site/Ledge.dmg is notarized and ready to publish."
+  echo "site/Ledge.dmg is notarized."
+
+  # The site and the Homebrew cask both download releases/latest/download/Ledge.dmg, so this is all it takes.
+  VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Info.plist)
+  if gh release view v$VERSION >/dev/null 2>&1; then
+    gh release upload v$VERSION site/Ledge.dmg --clobber
+  else
+    gh release create v$VERSION site/Ledge.dmg --title "Ledge $VERSION" --generate-notes
+  fi
+  echo "Published v$VERSION: https://github.com/notsocj/ledge/releases/tag/v$VERSION"
 fi

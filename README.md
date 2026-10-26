@@ -9,6 +9,16 @@ On first launch you tell Ledge what you do, and it arranges itself around that.
 
 Ledge is free and open source under the [MIT license](LICENSE).
 
+## Install
+
+Download [Ledge.dmg](https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg), or:
+
+```sh
+brew install --cask notsocj/ledge/ledge
+```
+
+macOS 14 or later on Apple Silicon.
+
 ## What you do decides what you get
 
 Pick one or more in setup (or later in Settings). Each persona ranks the tools; Ledge switches on
@@ -104,14 +114,18 @@ Tests/LedgeTests/
 
 ## Releasing
 
-`./build.sh dmg` also packs `site/Ledge.dmg`, which the site's Download buttons link to.
-`./build.sh release` signs that DMG with your Developer ID, sends it to Apple for notarization,
-staples the ticket and checks that Gatekeeper accepts it. It needs, once:
+`./build.sh dmg` also packs `site/Ledge.dmg`. `./build.sh release` signs that DMG with your Developer
+ID, sends it to Apple for notarization, staples the ticket, checks that Gatekeeper accepts it, and
+publishes it as the GitHub Release for the version in `Info.plist` (bump `CFBundleShortVersionString`
+first). The site's Download buttons and the [Homebrew cask](https://github.com/notsocj/homebrew-ledge)
+both fetch `releases/latest/download/Ledge.dmg`, so nothing else needs updating. It needs, once:
 
 1. A **Developer ID Application** certificate: Xcode › Settings › Accounts › Manage Certificates › + ›
    Developer ID Application.
 2. Notarization credentials saved in your keychain: `xcrun notarytool store-credentials ledge`
    (it asks for your Apple ID, team ID and an app-specific password from account.apple.com).
+
+Downloads per release: `gh api repos/notsocj/ledge/releases --jq '.[] | "\(.tag_name) \(.assets[0].download_count)"'`.
 
 Builds are signed with the Developer ID whenever the certificate is present, with the hardened runtime
 and the calendar entitlement in `Ledge.entitlements`.
