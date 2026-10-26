@@ -1,7 +1,7 @@
 # Mac newsletters and sites
 
 Short, personal pitches do best. One email per outlet, sent to the tips or contact address on their
-own site (look it up when you send; don't guess). Send it a few days before launch with a free license,
+own site (look it up when you send; don't guess). Send it a few days before launch,
 and follow up once a week later if there's no reply.
 
 ## Where to pitch
@@ -35,9 +35,10 @@ For the AI-dev outlets, lead with the developer angle (agent alerts and limits),
 > sets itself up around that. Developers get Claude and Codex limits, agent alerts and their
 > localhost ports; designers get a color picker and screenshots on the shelf.
 >
-> It's native Swift, keeps everything on the Mac, and costs $19.99 once.
+> It's native Swift, keeps everything on the Mac, and it's free and open source.
 >
-> Here's a license so you can try it: [license]
+> Download: [site link]
+> Source: [GitHub link]
 > Video (40 seconds): [link]
 > Images and icon: [press kit link]
 >

@@ -2,7 +2,7 @@ import Foundation
 
 /// Ledge was called Kestrel before (and Islet before that). On the first launch as Ledge, bring over
 /// what Kestrel saved: its settings (stored under Kestrel's bundle identifier) and its folder in
-/// Application Support (notes, the agent script). The trial and license move in `License`.
+/// Application Support (notes, the agent script).
 enum Migration {
     static let oldBundleID = "com.kestrel.Kestrel"
 

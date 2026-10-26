@@ -201,7 +201,6 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            LicenseSettings(license: .shared)
             Section {
                 ForEach(Persona.allCases) { persona in
                     Toggle(isOn: Binding(get: { preferences.personas.contains(persona) }, set: { on in

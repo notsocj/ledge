@@ -3,8 +3,8 @@
 Launch on a Tuesday, Wednesday or Thursday. The day starts at 12:01 a.m. Pacific, so schedule the post
 for then and be around for the first few hours to answer comments.
 
-Before launch day: a download link that works, the trial, and the license purchase (the page and
-posts say "7 days free, then $19.99 once", and none of that is built yet).
+Before launch day: a notarized download that works, and the GitHub repository made public (the
+page and posts link to it).
 
 ## Name
 
@@ -22,7 +22,7 @@ Alternatives:
 
 > Hover the notch and Ledge opens: what's playing, your week, your files, Claude and Codex usage.
 > While it's closed, small alerts slide out beside it. Tell it what you do (developer, designer,
-> student…) and it sets itself up around that. $19.99 once.
+> student…) and it sets itself up around that. Free and open source.
 
 ## Topics
 
@@ -59,7 +59,7 @@ into a dark gallery.
 >
 > A few things I held to:
 > - Everything stays on your Mac. The only network calls are lyrics lookups and your Claude usage.
-> - One price, $19.99, no subscription. Try it free for 7 days.
+> - Free and open source (MIT). No account, no trial, no ads.
 > - Native Swift, no Electron.
 >
 > I'd love to hear what you'd want in the notch that isn't there yet.

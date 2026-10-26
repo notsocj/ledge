@@ -13,9 +13,6 @@ struct LedgeApp: App {
             SettingsLink { Text("Settings…") }
                 .keyboardShortcut(",")
             Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
-            if !License.shared.licensed {
-                Button("Buy Ledge…") { NSWorkspace.shared.open(License.buyURL) }
-            }
             if Preferences.shared.isOn(.menuBarHider) {
                 // macOS 26+ draws every app's menu bar icon itself, so choosing which show is a system setting.
                 Button("Choose Menu Bar Icons…") {

@@ -7,6 +7,8 @@ while it's closed. On Macs without a notch it sits at the top of the screen as a
 
 On first launch you tell Ledge what you do, and it arranges itself around that.
 
+Ledge is free and open source under the [MIT license](LICENSE).
+
 ## What you do decides what you get
 
 Pick one or more in setup (or later in Settings). Each persona ranks the tools; Ledge switches on
@@ -100,13 +102,6 @@ Tests/LedgeTests/
 - Synced lyrics: [LRCLIB](https://lrclib.net).
 - The Claude and Codex marks belong to Anthropic and OpenAI and identify whose usage is shown.
 
-## Trial and license
-
-Ledge is free for 7 days, then needs a [Polar](https://polar.sh) license key (two Macs per key).
-Once the trial ends the island shows how to buy and every tool stops; Settings › License takes the
-key. The trial start and key live in the login keychain. `License.swift` holds the Polar organization
-ID, the optional benefit ID and the checkout link; the site's Buy button uses the same link.
-
 ## Releasing
 
 `./build.sh dmg` also packs `site/Ledge.dmg`, which the site's Download buttons link to.
@@ -132,11 +127,13 @@ MacBook, punches in on clicks, orbits the laptop in 3D and dives into the notch.
 simulated in `video/src/onetake/rig.ts`; render it with
 `npx remotion render LedgeOneTake out/ledge-onetake.mp4`.
 
-## Before selling
+## Contributing
 
-- In Polar, create the $19.99 product with a License Keys benefit limited to 2 activations, then put
-  the organization ID, the benefit ID and the checkout link in `License.swift` and the checkout link
-  in `site/index.html`. Until the organization ID is set, Ledge refuses every key.
+Issues and pull requests are welcome. Run `swift test` before sending a change, and use
+`--snapshot` (see Building) to check how it looks across personas.
+
+## Before the first release
+
 - Add Sparkle for updates.
 - Lyrics come from a crowd-sourced service without a lyrics license.
 - The Claude usage endpoint is undocumented; check Anthropic's terms for this use of Claude Code's login.

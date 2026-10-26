@@ -13,7 +13,7 @@ it" is enough.
 
 Alternative:
 
-> Ledge: music, agent alerts, ports and a file shelf in the MacBook notch. One-time $19.99, 7-day trial
+> Ledge: music, agent alerts, ports and a file shelf in the MacBook notch. Free and open source
 
 ## Post
 
@@ -38,7 +38,7 @@ Alternative:
 > **Privacy:** no account, no analytics. The only network calls are LRCLIB for lyrics and Anthropic
 > for your Claude usage. Clipboard history is memory only and skips password-manager items.
 >
-> **Price:** $19.99 once for two Macs, all 1.x updates included, 7 days free. macOS 14+, Apple Silicon.
+> **Price:** free and open source (MIT), no account or ads. Code on GitHub. macOS 14+, Apple Silicon.
 >
 > **Known rough edges:** now playing and brightness rely on private macOS APIs, so a macOS update can
 > break them until I ship a fix.
@@ -49,9 +49,3 @@ Alternative:
 
 > Download and privacy details: [site link]
 > Privacy page: [site link]/privacy.html
-
-## If someone asks "why pay when X is free?"
-
-> Totally fair. If a free one already does what you need, use it. Ledge is for people who want the
-> developer tools (agents, limits, ports) or the persona setup, and who'd rather pay once than
-> subscribe.

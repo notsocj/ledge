@@ -84,12 +84,6 @@ enum Snapshots {
         }
         app.model.onboarding = nil
 
-        // What the island shows once the trial is over.
-        app.model.locked = true
-        try? await Task.sleep(for: .milliseconds(700))
-        capture(host, "trial-ended", in: folder)
-        app.model.locked = false
-
         // The closed notch: music playing beside it, then each kind of banner.
         app.model.expanded = false
         app.preferences.preview = [.essentials] // no mic or camera indicator in front of the music
