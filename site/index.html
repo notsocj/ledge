@@ -207,8 +207,25 @@
   <p class="credits">© 2026 Ledge. Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
 <script>
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Smooth, weighted scrolling (and footer links that glide to their section). Skipped for people who
+  // ask for less motion, and on touch screens, where native momentum already feels right.
+  if (!reduceMotion && window.Lenis && matchMedia("(pointer: fine)").matches) {
+    const lenis = window.lenis = new Lenis({ lerp: 0.09, smoothWheel: true, autoRaf: true });
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest('a[href^="#"]');
+      if (!link || event.defaultPrevented || event.metaKey || event.ctrlKey) return;
+      const target = link.getAttribute("href") === "#" ? 0 : document.querySelector(link.getAttribute("href"));
+      if (target === null) return;
+      event.preventDefault();
+      // The drawer curve, long enough to read as travel across a one-page site.
+      lenis.scrollTo(target, { duration: 1.4, easing: (t) => 1 - Math.pow(1 - t, 4) });
+      history.pushState(null, "", link.getAttribute("href"));
+    });
+  }
   // Run a callback only while an element is on screen, so loops never play to nobody.
   const whileVisible = (el, onChange) => new IntersectionObserver(([entry]) => onChange(entry.isIntersecting)).observe(el);
 
