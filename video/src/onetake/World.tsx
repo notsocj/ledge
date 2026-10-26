@@ -283,10 +283,9 @@ export const MacBook: React.FC = () => {
   const f = useCurrentFrame();
   const ry = keys(f, [
     [T.orbit, 0],
-    [T.orbit + 30, -26],
-    [T.alerts[0] - 2, -20],
-    [T.alerts[2] + 10, 16],
-    [T.carousel, 10],
+    [T.orbit + 40, -16],
+    [T.alerts[2] + 10, 10],
+    [T.carousel, 6],
     [T.dive - 10, 0],
   ]);
   const rx = keys(f, [

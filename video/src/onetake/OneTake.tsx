@@ -16,7 +16,7 @@ const Camera: React.FC = () => {
     [T.dive - 2, 0],
   ]);
   return (
-    <AbsoluteFill style={{filter: `url(#speed) blur(${dim * 14}px) brightness(${1 - dim * 0.55})`}}>
+    <AbsoluteFill style={{filter: `url(#speed) blur(${dim * 10}px) brightness(${1 - dim * 0.6})`}}>
       <AbsoluteFill style={{background: 'radial-gradient(80% 90% at 50% 60%, #1b2a44 0%, #0b1220 55%, #04070d 100%)'}} />
       <svg width={0} height={0} style={{position: 'absolute'}}>
         <filter id="speed" x="-10%" y="-10%" width="120%" height="120%">
@@ -158,73 +158,92 @@ const PERSONAS = [
   {name: 'Professional', src: 'img/home-professional.png', h: 179},
   {name: 'Essentials', src: 'img/home-essentials.png', h: 179},
 ];
+const STEPS = [584, 596, 608, 620]; // each moves the deck one Home along (Developer → Professional)
+const CARD_W = 1040; // the panel; the island inside is shown at 1.6x
+const ISLAND_W = 559 * 1.6;
 
-/** Every persona's Home on a spinning ring in 3D, which then folds into the notch. */
-const Carousel: React.FC = () => {
+/**
+ * Every persona's Home in a cover flow. Each Home hangs in the dusk panel the website uses, so the
+ * black island reads against the dark; the one in the middle stands forward and carries the name.
+ */
+const Deck: React.FC = () => {
   const f = useCurrentFrame();
+  const {fps} = useVideoConfig();
   if (f < T.carousel || f > T.dive + 8) return null;
-  const spin = keys(f, [
-    [T.carousel, 50],
-    [T.carousel + 18, -40, ease.out],
-    [T.carousel + 40, -230],
-    [T.collapse - 4, -360, ease.out],
-  ]);
-  const appear = interpolate(f, [T.carousel, T.carousel + 18], [0, 1], {...clamp, easing: ease.drawer});
-  const fold = interpolate(f, [T.collapse, T.dive + 6], [0, 1], {...clamp, easing: Easing2});
+  // One value drives both the cards and the name, so they can never disagree.
+  const index = STEPS.reduce((sum, at) => sum + spring({frame: f - at, fps, config: {damping: 200, stiffness: 110}}), 0);
+  const appear = spring({frame: f - T.carousel, fps, config: {damping: 200, stiffness: 90}});
+  const fold = interpolate(f, [T.collapse, T.dive + 6], [0, 1], {...clamp, easing: ease.inOut});
   const notch = toScreen(f, {x: 960, y: 26});
-  const cy = 470 + (notch.y - 470) * fold;
-  const front = ((Math.round(-spin / 60) % 6) + 6) % 6;
-  const W = 620;
+  const centerY = 440 + (notch.y - 440) * fold;
+  const front = Math.round(index);
   return (
-    <AbsoluteFill>
-      <div style={{position: 'absolute', left: 960, top: cy, perspective: 2200}}>
-        <div
-          style={{
-            transformStyle: 'preserve-3d',
-            transform: `scale(${(0.4 + 0.6 * appear) * (1 - fold * 0.97)}) rotateX(-6deg) rotateY(${spin}deg)`,
-            opacity: appear,
-          }}
-        >
-          {PERSONAS.map((p, i) => (
+    <AbsoluteFill style={{perspective: 2400, perspectiveOrigin: '50% 45%'}}>
+      {PERSONAS.map((p, i) => {
+        const pos = i - index;
+        const away = Math.min(Math.abs(pos), 3);
+        const h = p.h * 1.6 + 56;
+        const x = pos * 820 * (1 - fold);
+        const scale = (1 - away * 0.16) * (0.85 + 0.15 * appear) * (1 - fold * 0.9);
+        const opacity = Math.max(0, 1 - away * 0.38) * appear * (1 - fold);
+        if (opacity <= 0.01) return null;
+        return (
+          <div
+            key={p.name}
+            style={{
+              position: 'absolute',
+              left: 960 - CARD_W / 2,
+              top: centerY - h / 2,
+              width: CARD_W,
+              height: h,
+              borderRadius: 30,
+              overflow: 'hidden',
+              background: 'radial-gradient(90% 150% at 50% 135%, #4a73a6 0%, #1f3a62 55%, #0f1d33 100%)',
+              boxShadow: `0 0 0 1px rgba(255,248,239,${0.1 + 0.1 * (1 - away)}), 0 50px 100px rgba(0,0,0,0.55)`,
+              translate: `${x}px 0 ${-away * 180}px`,
+              rotate: `0 1 0 ${-Math.max(-1, Math.min(1, pos)) * 24 * (1 - fold)}deg`,
+              scale: `${scale}`,
+              opacity,
+              zIndex: 100 - Math.round(away * 10),
+            }}
+          >
+            <Img src={staticFile(p.src)} style={{position: 'absolute', left: (CARD_W - ISLAND_W) / 2, top: 0, width: ISLAND_W, height: p.h * 1.6}} />
+            <div style={{position: 'absolute', inset: 0, background: '#04070d', opacity: away * 0.35}} />
+          </div>
+        );
+      })}
+      {/* The name of the Home in the middle, rolling up as the deck moves. */}
+      <div style={{position: 'absolute', left: 0, right: 0, top: 700, height: 84, opacity: appear * (1 - Math.min(1, fold * 4))}}>
+        {PERSONAS.map((p, i) => {
+          const at = Math.max(-1, Math.min(1, i - index));
+          if (Math.abs(at) >= 1 && i !== front) return null;
+          return (
             <div
               key={p.name}
               style={{
                 position: 'absolute',
-                left: -W / 2,
-                top: -(p.h * (W / 559)) / 2,
-                width: W,
-                transform: `rotateY(${i * 60}deg) translateZ(${600 * appear}px)`,
-                backfaceVisibility: 'hidden',
-                filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.6))',
+                inset: 0,
+                textAlign: 'center',
+                fontFamily: FONT,
+                fontWeight: 700,
+                fontSize: 60,
+                lineHeight: '84px',
+                letterSpacing: '-0.025em',
+                color: C.cream,
+                textShadow: shadow,
+                translate: `0 ${at * 24}px`,
+                opacity: Math.max(0, 1 - Math.abs(at) * 2.2),
+                filter: `blur(${Math.abs(at) * 6}px)`,
               }}
             >
-              <Img src={staticFile(p.src)} style={{width: W, height: p.h * (W / 559)}} />
+              {p.name}
             </div>
-          ))}
-        </div>
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 700,
-          textAlign: 'center',
-          fontFamily: FONT,
-          fontWeight: 700,
-          fontSize: 58,
-          letterSpacing: '-0.02em',
-          color: C.mist,
-          textShadow: shadow,
-          opacity: appear * (1 - Math.min(1, fold * 4)),
-        }}
-      >
-        {PERSONAS[front].name}
+          );
+        })}
       </div>
     </AbsoluteFill>
   );
 };
-const Easing2 = (t: number) => t * t * t; // folds accelerate into the notch
 
 /** After the fall into the notch: the icon slams down out of the dark, with light behind it. */
 const EndCard: React.FC = () => {
@@ -353,7 +372,7 @@ export const OneTake: React.FC = () => {
   return (
     <AbsoluteFill style={{background: '#000'}}>
       <Camera />
-      <Carousel />
+      <Deck />
       <EndCard />
 
       <Pop at={20} out={58} y={900} size={120}>See that notch?</Pop>
@@ -404,16 +423,15 @@ export const OneTake: React.FC = () => {
       {T.clicks.map((c, i) => (
         <Sfx key={c} name={`Click ${i + 1}`} at={c - 1} src="audio/click.mp3" volume={0.7} length={10} />
       ))}
-      {T.clicks.map((c, i) => (
-        <Sfx key={`w${c}`} name={`Whip ${i + 1}`} at={c - 14} src="audio/whip.mp3" volume={0.22} length={20} />
-      ))}
       <Sfx name="Orbit" at={T.orbit} src="audio/whoosh.mp3" volume={0.45} />
       {T.alerts.map((a, i) => (
         <Sfx key={a} name={`Alert ${i + 1}`} at={a} src="audio/pop.mp3" volume={0.55} />
       ))}
       <Sfx name="Shoulder tap" at={T.tap - 1} src="audio/click.mp3" volume={0.8} length={10} />
       <Sfx name="Carousel in" at={T.carousel} src="audio/whip.mp3" volume={0.5} />
-      <Sfx name="Spin" at={T.carousel + 22} src="audio/whoosh.mp3" volume={0.4} />
+      {[584, 596, 608, 620].map((at, i) => (
+        <Sfx key={at} name={`Deck step ${i + 1}`} at={at} src="audio/whip.mp3" volume={0.18} length={20} />
+      ))}
       <Sfx name="Fold" at={T.collapse} src="audio/glitch.mp3" volume={0.4} />
       <Sfx name="Fall riser" at={T.dive - 30} src="audio/riser.mp3" volume={0.5} />
       <Sfx name="Bottom drop" at={T.black - 4} src="audio/drop.mp3" volume={0.38} />

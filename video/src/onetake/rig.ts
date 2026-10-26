@@ -48,7 +48,7 @@ const fall = Easing.in(Easing.exp); // falling into the notch accelerates
 const clickX = [tabX(152), tabX(31), tabX(102), tabX(528)];
 export const cursorAt = (f: number) => {
   let x = keys(f, [
-    [T.swoop, 1010],
+    [T.swoop, 760],
     [T.idle - 6, 1010, drawer],
     [T.pullBack, 1010],
     [T.glide, 1290, drawer],
@@ -60,7 +60,7 @@ export const cursorAt = (f: number) => {
     [T.leave + 18, 1420, drawer],
   ]);
   let y = keys(f, [
-    [T.swoop, 960],
+    [T.swoop, 1010],
     [T.idle - 6, 118, drawer],
     [T.pullBack, 118],
     [T.glide, 330, drawer],
@@ -86,20 +86,20 @@ const aim = (f: number) => {
   const follow = keys(f, [
     [0, 1],
     [T.idle, 1],
-    [T.idle + 20, 0.25],
-    [T.pullBack, 0.25],
+    [T.idle + 20, 0.08],
+    [T.pullBack, 0.08],
     [T.pullBack + 20, 0.1],
     [T.glide, 0.45],
     [T.open, 0.2],
-    [T.clicks[0] - 20, 0.55],
-    [T.leave, 0.55],
+    [T.clicks[0] - 20, 0.3],
+    [T.leave, 0.3],
     [T.orbit, 0],
   ]);
   // During the tabs the camera holds its height, so the captions never sit on the island.
   const followY = Math.min(follow, keys(f, [[T.open, 1], [T.clicks[0] - 20, 0], [T.leave, 0], [T.leave + 10, 1]]));
   const fx = keys(f, [[0, 960], [T.end, 960]]);
   const fy = keys(f, [
-    [0, 960],
+    [0, 1010],
     [T.idle, 150],
     [T.pullBack, 150],
     [T.pullBack + 24, 560],
@@ -119,9 +119,8 @@ const aim = (f: number) => {
   return {x: fx + (c.x - fx) * follow, y: fy + (c.y - fy) * followY};
 };
 
-/** Zoom: wide shots, punch-ins on every click, and the fall into the notch. */
+/** Zoom: wide shots, a push in for each alert, and the fall into the notch. */
 const zoomAt = (f: number) => {
-  const punches = T.clicks.reduce((sum, at) => sum + 0.4 * Math.exp(-(((f - at) / 7) ** 2)), 0);
   return (
     keys(f, [
       [0, 4.2],
@@ -142,18 +141,12 @@ const zoomAt = (f: number) => {
       [T.dive - 8, 1.1],
       [T.dive, 1.4],
       [T.black, 60, fall],
-    ]) + punches
+    ])
   );
 };
 
 /** Moments that shake the camera: [frame, strength]. */
-const SHAKES: [number, number][] = [
-  [T.open, 14],
-  [T.alerts[0], 7],
-  [T.tap, 16],
-  [T.alerts[1], 5],
-  [T.alerts[2], 5],
-];
+const SHAKES: [number, number][] = [[T.open, 4]]; // one soft nudge as the island opens
 
 export type Cam = {x: number; y: number; z: number; rot: number; blurX: number; blurY: number};
 
@@ -173,9 +166,9 @@ const simulate = (): Cam[] => {
       // Falling into the notch is exact, not chased.
       vx = a.x - x; vy = a.y - y; x = a.x; y = a.y; vz = 0; z = tz;
     } else {
-      vx += (a.x - x) * 0.12 - vx * 0.42;
-      vy += (a.y - y) * 0.12 - vy * 0.42;
-      vz += (tz - z) * 0.2 - vz * 0.55;
+      vx += (a.x - x) * 0.07 - vx * 0.53;
+      vy += (a.y - y) * 0.07 - vy * 0.53;
+      vz += (tz - z) * 0.1 - vz * 0.63;
       x += vx; y += vy; z += vz;
     }
     let sx = 0, sy = 0, sr = 0;
@@ -191,9 +184,9 @@ const simulate = (): Cam[] => {
       x: x + sx / z,
       y: y + sy / z,
       z,
-      rot: Math.max(-6, Math.min(6, -speedX * 0.035)) + sr,
-      blurX: Math.min(26, Math.abs(speedX) * 0.22),
-      blurY: Math.min(26, Math.abs(speedY) * 0.22),
+      rot: Math.max(-1.5, Math.min(1.5, -speedX * 0.008)) + sr,
+      blurX: Math.min(6, Math.abs(speedX) * 0.06),
+      blurY: Math.min(6, Math.abs(speedY) * 0.06),
     });
   }
   return out;
