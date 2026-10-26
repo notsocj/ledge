@@ -55,9 +55,6 @@ export const EndCard: React.FC = () => {
           <Words text="The notch," frame={f} start={68} gap={6} />{' '}
           <Words text="put to work." frame={f} start={97} gap={5} />
         </div>
-        <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 34, color: 'rgba(255,248,239,0.5)', marginTop: 40}}>
-          <Words text="Free for 7 days. $19.99 once." frame={f} start={124} gap={3} />
-        </div>
       </AbsoluteFill>
     </AbsoluteFill>
   );

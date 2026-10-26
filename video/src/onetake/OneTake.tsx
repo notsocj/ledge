@@ -323,9 +323,6 @@ const EndCard: React.FC = () => {
         <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 66, letterSpacing: '-0.025em', color: C.mist, marginTop: 24}}>
           <Words text="The notch," frame={f} start={720} gap={6} /> <Words text="put to work." frame={f} start={751} gap={5} />
         </div>
-        <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 32, color: 'rgba(255,248,239,0.5)', marginTop: 36}}>
-          <Words text="Free for 7 days. $19.99 once." frame={f} start={790} gap={3} />
-        </div>
       </AbsoluteFill>
     </AbsoluteFill>
   );
