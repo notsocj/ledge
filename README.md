@@ -14,6 +14,7 @@ Ledge is free and open source under the [MIT license](LICENSE).
 Download [Ledge.dmg](https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg), or:
 
 ```sh
+brew tap notsocj/ledge && brew trust notsocj/ledge
 brew install --cask notsocj/ledge/ledge
 ```
 
