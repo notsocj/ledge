@@ -92,7 +92,7 @@ struct StatsView: View {
                     Meter(name: "Battery", fraction: Double(battery.percent) / 100, warnsWhenFull: false,
                           detail: battery.onPower ? "on power" : "", value: "\(battery.percent)%")
                 }
-                Meter(name: "Network", fraction: nil, detail: "↓ \(Self.rate(stats.download))", value: "↑ \(Self.rate(stats.upload))")
+                Meter(name: "Network", fraction: nil, showsBar: false, detail: "↓ \(Self.rate(stats.download))", value: "↑ \(Self.rate(stats.upload))")
             }
             if usage.showsAny {
                 HStack(spacing: 24) {
@@ -122,6 +122,7 @@ struct StatsView: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .binary
         formatter.allowsNonnumericFormatting = false // "0 KB", not "Zero KB"
+        formatter.allowedUnits = [.useKB, .useMB, .useGB] // "0 KB/s", never "0 bytes/s"
         return formatter
     }()
 }
@@ -130,6 +131,8 @@ struct StatsView: View {
 struct Meter: View {
     let name: String
     var fraction: Double?
+    /// Off for readings with no ceiling, like network speed, where an empty bar would say nothing.
+    var showsBar = true
     var warnsWhenFull = true
     var detail = ""
     var value = ""
@@ -163,8 +166,8 @@ struct Meter: View {
                             .frame(width: geometry.size.width * level)
                     }
                 }
-                .frame(height: 3)
-                .opacity(fraction == nil ? 0.5 : 1)
+                .frame(height: 4)
+                .opacity(showsBar ? (fraction == nil ? 0.5 : 1) : 0)
         }
         .frame(maxWidth: .infinity)
         .animation(Motion.easeOut(0.25), value: level)

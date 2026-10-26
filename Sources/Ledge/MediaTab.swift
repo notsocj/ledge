@@ -17,13 +17,13 @@ struct MediaTab: View {
                 }
             }
         } else {
-            EmptyTab(title: "Nothing playing", hint: "Play music in any app and it shows up here.")
+            EmptyTab(symbol: "music-note-linear", title: "Nothing playing", hint: "Play music in any app and it shows up here.")
         }
     }
 
     private var header: some View {
         HStack(spacing: 12) {
-            Artwork(image: nowPlaying.artwork, size: 44, radius: 9)
+            Artwork(image: nowPlaying.artwork, size: 48, radius: Radius.control + 2)
             VStack(alignment: .leading, spacing: 3) {
                 Text(nowPlaying.title)
                     .font(Typeface.title)
@@ -47,23 +47,32 @@ struct MediaTab: View {
     }
 }
 
-/// A tab with nothing to show yet: what it is, and how to fill it.
+/// A tab with nothing to show yet: the tool's symbol, what it is, and how to fill it. Every empty tab
+/// uses this, so an empty island always reads the same way.
 struct EmptyTab: View {
+    let symbol: String
     let title: String
     let hint: String
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text(title)
-                .font(Typeface.title)
-                .foregroundStyle(Palette.paper)
-            Text(hint)
-                .font(Typeface.caption)
-                .foregroundStyle(Palette.ash)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 10) {
+            Icon(name: symbol, size: 18)
+                .foregroundStyle(Palette.graphite)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(Palette.well))
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(Typeface.title)
+                    .foregroundStyle(Palette.paper)
+                Text(hint)
+                    .font(Typeface.caption)
+                    .foregroundStyle(Palette.ash)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 420)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
+        .padding(.vertical, 10)
     }
 }
 
@@ -73,7 +82,7 @@ private struct LyricsView: View {
     let lines: [LyricLine]?
     let time: TimeInterval
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    private let lineHeight: CGFloat = 22
+    private let lineHeight: CGFloat = 24
 
     var body: some View {
         Group {
@@ -110,7 +119,7 @@ private struct LyricsView: View {
     private static func text(_ line: LyricLine) -> String { line.text.isEmpty ? "♪" : line.text }
 }
 
-private struct ProgressRow: View {
+struct ProgressRow: View {
     let time: TimeInterval
     let duration: TimeInterval
     let accent: Color
@@ -126,7 +135,7 @@ private struct ProgressRow: View {
                         Capsule().fill(accent).frame(width: geometry.size.width * progress)
                     }
             }
-            .frame(height: 3)
+            .frame(height: 4)
             Text("-" + Self.format(duration - time))
         }
         .font(Typeface.caption.monospacedDigit())

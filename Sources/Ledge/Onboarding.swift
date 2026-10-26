@@ -233,6 +233,7 @@ private struct ToolChip: View {
 
     var body: some View {
         Button(action: action) {
+            // On: filled and bright. Off: just an outline. The state reads without comparing chips.
             HStack(spacing: 6) {
                 Icon(name: tool.symbol, size: 12)
                 Text(tool.shortTitle).font(Typeface.body).lineLimit(1).minimumScaleFactor(0.85)
@@ -242,8 +243,8 @@ private struct ToolChip: View {
             .padding(.horizontal, 9)
             .frame(height: 28)
             .background {
-                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Palette.rail.opacity(on ? 1 : 0.3))
-                RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Palette.paper.opacity(on ? 0.35 : 0), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous).fill(Palette.rail).opacity(on ? 1 : 0)
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous).strokeBorder(Palette.rail, lineWidth: 1).opacity(on ? 0 : 1)
             }
             .contentShape(Rectangle())
         }
@@ -387,7 +388,7 @@ private struct PermissionRow: View {
                 .foregroundStyle(Palette.graphite)
                 .transition(.opacity)
             } else {
-                Button("Allow", action: allow).buttonStyle(PrimaryStyle())
+                Button("Allow", action: allow).buttonStyle(TintedStyle(height: 26)) // the white button stays the step forward
             }
         }
         .animation(Motion.easeOut(0.2), value: granted)

@@ -27,10 +27,16 @@ final class Usage {
     var showsAny: Bool { showsClaude || showsCodex }
 
     func refresh() {
-        guard Date.now.timeIntervalSince(lastRefresh) > 60 else { return }
+        guard Snapshots.folder == nil, Date.now.timeIntervalSince(lastRefresh) > 60 else { return } // renders use demo limits
         lastRefresh = .now
         if showsCodex { Task { codex = await Task.detached { CodexLimits.read() }.value } }
         if showsClaude { Task { claude = await ClaudeLimits.fetch() } }
+    }
+
+    /// Made-up limits for snapshot renders, so published images never show someone's real usage.
+    func showDemo(claude: Limit, codex: Limit) {
+        self.claude = .limit(claude)
+        self.codex = .limit(codex)
     }
 
     private static func homeFolderExists(_ name: String) -> Bool {

@@ -7,7 +7,7 @@ import SwiftUI
 @Observable @MainActor
 final class License {
     static let shared = License()
-    static let trialDays = 7
+    nonisolated static let trialDays = 7
     // shortcut: 0 accepts a key from any Lemon Squeezy store; set both from the dashboard before selling.
     static let storeID = 0
     static let productID = 0

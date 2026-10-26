@@ -9,24 +9,28 @@ struct HomeView: View {
     @State private var shown = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Widgets on the left, quick actions on the right. No Spacer between them: a Spacer takes the
-            // stack's spacing on both sides, which made the row wider than the island and clipped its edge.
-            // 210 + 20 + 196 + 16 + 60 = 502pt, inside the 512pt the island gives its content.
-            HStack(alignment: .top, spacing: 16) {
-                HStack(alignment: .top, spacing: 20) {
+        VStack(alignment: .leading, spacing: 14) {
+            // The widgets share the width equally; one on its own takes all of it.
+            if !widgets.isEmpty {
+                HStack(alignment: .top, spacing: 24) {
                     ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
                         switch widget {
-                        case .media: MediaWidget(nowPlaying: app.nowPlaying) { open(.media) }.entrance(index, shown)
+                        case .media: MediaWidget(nowPlaying: app.nowPlaying, wide: widgets.count == 1) { open(.media) }.entrance(index, shown)
                         case .week: WeekWidget(agenda: app.agenda).entrance(index, shown)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                QuickColumn(app: app).entrance(2, shown)
             }
-            // Gone entirely when nothing has anything to say, instead of leaving an empty band.
-            if StatusRow.hasChips(app) { StatusRow(app: app, open: open).entrance(3, shown) }
+            // One bar along the bottom: what's going on at the left, things to do at the right.
+            let chips = StatusRow.hasChips(app), actions = QuickActions.hasActions(app)
+            if chips || actions {
+                HStack(spacing: 12) {
+                    if chips { StatusRow(app: app, open: open) } else { Spacer(minLength: 0) }
+                    if actions { QuickActions(app: app) }
+                }
+                .frame(height: 28)
+                .entrance(2, shown)
+            }
         }
         .onAppear { shown = true }
         .task {
@@ -50,7 +54,8 @@ struct HomeView: View {
     }
 }
 
-/// Home's parts settle in one after another as the island opens: a single, short reveal.
+/// Home's parts settle in one after another as the island opens. The island opens dozens of times a
+/// day, so the reveal is short and small enough never to feel like waiting.
 private struct Entrance: ViewModifier {
     let index: Int
     let shown: Bool
@@ -59,8 +64,8 @@ private struct Entrance: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 6)
-            .animation(Motion.easeOut(0.3).delay(Double(index) * 0.05), value: shown)
+            .offset(y: shown || reduceMotion ? 0 : 4)
+            .animation(Motion.easeOut(0.22).delay(Double(index) * 0.04), value: shown)
     }
 }
 
@@ -72,6 +77,8 @@ private extension View {
 
 private struct MediaWidget: View {
     let nowPlaying: NowPlaying
+    /// Alone on Home, the player has room for the song's progress beside its controls.
+    var wide = false
     let openPlayer: () -> Void
 
     var body: some View {
@@ -116,14 +123,22 @@ private struct MediaWidget: View {
                 }
                 Spacer(minLength: 4)
                 if nowPlaying.hasTrack {
-                    HStack(spacing: 0) {
-                        IconButton(symbol: "skip-previous-bold", label: "Previous track", size: 11, box: 26) { nowPlaying.send(.previous) }
-                        IconButton(symbol: nowPlaying.isPlaying ? "pause-bold" : "play-bold", label: nowPlaying.isPlaying ? "Pause" : "Play", size: 14, box: 28) {
-                            nowPlaying.send(.togglePlayPause)
+                    HStack(spacing: 14) {
+                        HStack(spacing: 0) {
+                            IconButton(symbol: "skip-previous-bold", label: "Previous track", size: 11, box: 26) { nowPlaying.send(.previous) }
+                            IconButton(symbol: nowPlaying.isPlaying ? "pause-bold" : "play-bold", label: nowPlaying.isPlaying ? "Pause" : "Play", size: 14, box: 28) {
+                                nowPlaying.send(.togglePlayPause)
+                            }
+                            IconButton(symbol: "skip-next-bold", label: "Next track", size: 11, box: 26) { nowPlaying.send(.next) }
                         }
-                        IconButton(symbol: "skip-next-bold", label: "Next track", size: 11, box: 26) { nowPlaying.send(.next) }
+                        .padding(.leading, -7) // optically align the first icon with the text, not its hover circle
+                        if wide {
+                            TimelineView(.periodic(from: .now, by: 0.5)) { context in
+                                ProgressRow(time: nowPlaying.position(at: context.date), duration: nowPlaying.duration,
+                                            accent: Color(nsColor: nowPlaying.accent))
+                            }
+                        }
                     }
-                    .offset(x: -7) // optically align the first icon with the text, not its hover circle
                 }
             }
             .lineLimit(1)
@@ -131,7 +146,7 @@ private struct MediaWidget: View {
             .animation(Motion.easeOut(0.25), value: nowPlaying.trackKey)
             .frame(height: 64 + 4, alignment: .topLeading)
         }
-        .frame(width: 210, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .animation(Motion.easeOut(0.25), value: nowPlaying.appBundleID)
     }
 
@@ -168,7 +183,7 @@ private struct WeekWidget: View {
                 .id(selected)
                 .transition(.opacity)
         }
-        .frame(width: 196, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder private var dayDetail: some View {
@@ -269,7 +284,7 @@ private struct LinkStyle: ButtonStyle {
 
 // MARK: Quick actions and status
 
-private struct QuickColumn: View {
+private struct QuickActions: View {
     let app: NotchController
 
     /// In order of urgency: muting is the one you reach for in a hurry.
@@ -287,35 +302,39 @@ private struct QuickColumn: View {
         }
     }
 
-    /// At most four, two by two, so the column is never taller than the widgets beside it.
-    private var actions: [Action] { Array(Action.allCases.filter { app.preferences.isOn($0.tool) }.prefix(4)) }
+    private var actions: [Action] { Action.allCases.filter { app.preferences.isOn($0.tool) } }
+
+    static func hasActions(_ app: NotchController) -> Bool {
+        Action.allCases.contains { app.preferences.isOn($0.tool) }
+    }
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.fixed(28), spacing: 4), GridItem(.fixed(28), spacing: 4)], spacing: 4) {
+        HStack(spacing: 4) {
             ForEach(actions, id: \.self) { button(for: $0) }
         }
-        .frame(width: 60)
+        .fixedSize()
     }
 
     @ViewBuilder private func button(for action: Action) -> some View {
         switch action {
         case .mic:
             let muted = app.microphone.isMuted
-            IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 28, active: muted) {
+            IconButton(symbol: muted ? "microphone-bold" : "microphone-linear", label: muted ? "Unmute microphone" : "Mute microphone", size: 12, box: 28, active: muted, plate: true) {
                 app.microphone.toggle()
             }
             .help(muted ? "Microphone muted (⌃⌥M)" : "Mute microphone (⌃⌥M)")
         case .awake:
             let on = app.keepAwake.isOn
-            IconButton(symbol: on ? "cup-hot-bold" : "cup-hot-linear", label: on ? "Let Mac sleep" : "Keep Mac awake", size: 12, box: 28, active: on) {
+            // An open eye: your Mac stays awake while it's lit.
+            IconButton(symbol: on ? "eye-bold" : "eye-linear", label: on ? "Let Mac sleep" : "Keep Mac awake", size: 12, box: 28, active: on, plate: true) {
                 app.keepAwake.toggle()
             }
             .help(on ? "Keeping your Mac awake" : "Keep your Mac awake")
         case .screenshot:
-            IconButton(symbol: "camera-linear", label: "Take a screenshot", size: 12, box: 28) { app.takeScreenshot() }
+            IconButton(symbol: "camera-linear", label: "Take a screenshot", size: 12, box: 28, plate: true) { app.takeScreenshot() }
                 .help("Take a screenshot (⌃⌥S)")
         case .color:
-            IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 28) { app.pickColor() }
+            IconButton(symbol: "pipette-linear", label: "Pick a color", size: 12, box: 28, plate: true) { app.pickColor() }
                 .help("Pick a color on screen (⌃⌥P)")
         case .output:
             OutputMenu(outputs: app.audioOutputs)
@@ -340,7 +359,7 @@ private struct StatusRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 18)
+        .frame(height: 20)
         .clipped()
     }
 
@@ -483,6 +502,7 @@ private struct OutputMenu: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .frame(width: 28, height: 28)
+        .background(Circle().fill(Palette.well))
         .foregroundStyle(Palette.graphite)
         .help("Choose where sound plays")
         .accessibilityLabel("Audio output")

@@ -40,7 +40,11 @@ struct ShelfView: View {
     var body: some View {
         Group {
             if shelf.files.isEmpty {
-                EmptyTab(title: "Drop files here", hint: "Drag files onto the notch to keep them handy, then drag them out wherever you need them.")
+                // An outlined drop zone, so the empty shelf shows where files go before anything is dragged.
+                EmptyTab(symbol: "inbox-linear", title: "Drop files here", hint: "Drag files onto the notch to keep them handy, then drag them out wherever you need them.")
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: Radius.well, style: .continuous)
+                        .strokeBorder(Palette.rail, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -48,8 +52,8 @@ struct ShelfView: View {
                             .foregroundStyle(Palette.graphite)
                         Spacer()
                         Button("Clear") { withAnimation(Motion.easeOut(0.2)) { shelf.clear() } }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Palette.ash)
+                            .buttonStyle(SecondaryStyle())
+                            .padding(.trailing, -10)
                     }
                     .font(Typeface.caption)
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -65,10 +69,10 @@ struct ShelfView: View {
         }
         .frame(maxWidth: .infinity, alignment: .top)
         .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Palette.ash, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            RoundedRectangle(cornerRadius: Radius.well, style: .continuous)
+                .fill(Palette.well)
+                .strokeBorder(Palette.graphite, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
                 .opacity(targeted ? 1 : 0)
-                .padding(-8)
         }
         .animation(Motion.ease(0.15), value: targeted)
         .dropDestination(for: URL.self) { urls, _ in

@@ -147,30 +147,43 @@ struct TimerView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Start a timer")
-                        .font(Typeface.title)
-                        .foregroundStyle(Palette.paper)
-                    Spacer()
-                    if let done = countdown.focus?.completed, done > 0 {
-                        Text(done == 1 ? "1 focus session done" : "\(done) focus sessions done")
-                            .font(Typeface.caption)
-                            .foregroundStyle(Palette.ash)
-                    }
-                }
+                // The main thing this tab is for gets the big target; plain timers sit in one row under it.
                 Button {
                     withAnimation(Motion.easeOut(0.2)) { countdown.startFocus() }
                 } label: {
-                    HStack(spacing: 6) {
-                        Icon(name: "target-linear", size: 13)
-                        Text("Focus \(Int(Countdown.focusMinutes)) min, then a \(Int(Countdown.breakMinutes)) min break")
+                    HStack(spacing: 12) {
+                        Icon(name: "target-linear", size: 17)
+                            .foregroundStyle(.orange)
+                            .frame(width: 38, height: 38)
+                            .background(Circle().fill(Color.orange.opacity(0.16)))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Start a focus session")
+                                .font(Typeface.title)
+                                .foregroundStyle(Palette.paper)
+                            Text("\(Int(Countdown.focusMinutes)) minutes of focus, then a \(Int(Countdown.breakMinutes)) minute break")
+                                .font(Typeface.caption)
+                                .foregroundStyle(Palette.ash)
+                        }
+                        Spacer(minLength: 8)
+                        if let done = countdown.focus?.completed, done > 0 {
+                            Text(done == 1 ? "1 done today" : "\(done) done today")
+                                .font(Typeface.caption)
+                                .foregroundStyle(Palette.graphite)
+                        }
+                        Icon(name: "play-bold", size: 11)
+                            .foregroundStyle(.black)
+                            .frame(width: 26, height: 26)
+                            .background(Circle().fill(Palette.paper))
                     }
                 }
-                .buttonStyle(PresetStyle())
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                .buttonStyle(CardStyle())
+                HStack(spacing: 6) {
                     ForEach(Self.presets, id: \.self) { minutes in
-                        Button("\(Int(minutes)) min") { withAnimation(Motion.easeOut(0.2)) { countdown.start(minutes: minutes) } }
-                            .buttonStyle(PresetStyle())
+                        Button { withAnimation(Motion.easeOut(0.2)) { countdown.start(minutes: minutes) } } label: {
+                            Text("\(Int(minutes)) min").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(TintedStyle(height: 28))
+                        .accessibilityLabel("Start a \(Int(minutes)) minute timer")
                     }
                 }
             }
@@ -178,15 +191,25 @@ struct TimerView: View {
     }
 }
 
-private struct PresetStyle: ButtonStyle {
+/// A whole row that's one button: a quiet well that brightens under the pointer and dips when pressed.
+private struct CardStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Typeface.value)
-            .foregroundStyle(Palette.paper)
-            .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Palette.rail))
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(Motion.easeOut(0.16), value: configuration.isPressed)
+        Card(configuration: configuration)
+    }
+
+    private struct Card: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: Radius.well, style: .continuous).fill(hovering ? Palette.rail : Palette.well))
+                .contentShape(RoundedRectangle(cornerRadius: Radius.well, style: .continuous))
+                .scaleEffect(configuration.isPressed ? 0.98 : 1)
+                .onHover { hovering = $0 }
+                .animation(Motion.ease(0.15), value: hovering)
+                .animation(Motion.easeOut(0.16), value: configuration.isPressed)
+        }
     }
 }

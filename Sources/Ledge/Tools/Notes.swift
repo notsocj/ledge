@@ -44,15 +44,16 @@ struct NotesView: View {
             .scrollContentBackground(.hidden)
             .scrollIndicators(.never)
             .frame(height: 112)
-            .padding(8)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.rail.opacity(0.6)))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: Radius.well, style: .continuous).fill(Palette.well))
             .overlay(alignment: .topLeading) {
                 if notes.text.isEmpty {
                     Text("Jot something down")
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.ash)
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 10)
                         .allowsHitTesting(false)
                 }
             }

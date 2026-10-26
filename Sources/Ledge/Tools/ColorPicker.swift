@@ -86,7 +86,7 @@ struct ColorsView: View {
                     }
                 }
                 .buttonStyle(PrimaryStyle())
-                Text("or press ⌃⌥P anywhere. Click a swatch to copy it again.")
+                Text(picker.colors.isEmpty ? "or press ⌃⌥P anywhere" : "Click a swatch to copy it again")
                     .font(Typeface.caption)
                     .foregroundStyle(Palette.ash)
                 Spacer(minLength: 0)
@@ -96,10 +96,19 @@ struct ColorsView: View {
                 }
             }
             if picker.colors.isEmpty {
-                Text("Colors you pick show up here, newest first.")
-                    .font(Typeface.body)
-                    .foregroundStyle(Palette.ash)
-                    .padding(.vertical, 6)
+                // Empty slots where swatches will land, so the space explains itself.
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        ForEach(0..<6, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: Radius.control + 1, style: .continuous)
+                                .strokeBorder(Palette.rail, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                .frame(height: 30)
+                        }
+                    }
+                    Text("Colors you pick land here, newest first.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(Palette.ash)
+                }
             } else {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 10) {
                     ForEach(picker.colors, id: \.self) { hex in
@@ -136,10 +145,10 @@ private struct Swatch: View {
     var body: some View {
         Button(action: copy) {
             VStack(spacing: 5) {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.control + 1, style: .continuous)
                     .fill(Color(nsColor: ColorPicker.color(hex: hex) ?? .gray))
                     .frame(height: 30)
-                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Palette.rail, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.control + 1, style: .continuous).strokeBorder(Palette.rail, lineWidth: 1))
                 Text(copied ? "Copied" : hex)
                     .font(Typeface.caption.monospacedDigit())
                     .foregroundStyle(copied ? Palette.paper : Palette.graphite)

@@ -52,6 +52,8 @@ enum Snapshots {
         app.model.notchSize = CGSize(width: 185, height: 32) // a 14-inch MacBook Pro's notch, whatever screen this runs on
 
         app.nowPlaying.showDemo(title: "Afterglow", artist: "Northbound", album: "Long Way Home", artwork: demoArtwork(), duration: 214, elapsed: 5)
+        app.usage.showDemo(claude: Limit(percent: 42, resetsAt: .now.addingTimeInterval(3 * 3600 + 20 * 60)),
+                           codex: Limit(percent: 18, resetsAt: .now.addingTimeInterval(4 * 86_400 + 6 * 3600)))
         try? await Task.sleep(for: .seconds(4)) // usage limits load
         app.stats.sample()
         try? await Task.sleep(for: .seconds(1))

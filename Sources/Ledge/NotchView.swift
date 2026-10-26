@@ -274,7 +274,7 @@ private struct BannerView: View {
             switch banner {
             case .level(let symbol, _): Icon(name: symbol, size: 16)
             case .battery(let percent, let charging):
-                Icon(name: charging ? "battery-charge-bold" : "battery-low-bold", size: 17)
+                Icon(name: charging ? "battery-charge-bold" : "battery-low-bold", size: 16)
                     .foregroundStyle(charging ? .green : percent <= 20 ? Palette.warning : Palette.paper)
             case .headphones: Icon(name: "headphones-round-bold", size: 16)
             case .screenshot(let image): Artwork(image: image, size: height - 12, radius: 4)
@@ -286,13 +286,13 @@ private struct BannerView: View {
                     .frame(width: 15, height: 15)
             case .meeting(let title, _):
                 HStack(spacing: 6) {
-                    Icon(name: "calendar-mark-linear", size: 15)
+                    Icon(name: "calendar-mark-linear", size: 16)
                     Text(title).frame(maxWidth: 98, alignment: .leading)
                 }
-            case .mic(let muted): MicIcon(muted: muted, size: 15).foregroundStyle(muted ? .red : Palette.paper)
+            case .mic(let muted): MicIcon(muted: muted, size: 16).foregroundStyle(muted ? .red : Palette.paper)
             case .agent(let name, _, let project):
                 HStack(spacing: 6) {
-                    Icon(name: name == "Claude" ? "claude-logo" : "codex-logo", size: 15)
+                    Icon(name: name == "Claude" ? "claude-logo" : "codex-logo", size: 16)
                     Text(project.isEmpty ? name : project).frame(maxWidth: 98, alignment: .leading)
                 }
             }
@@ -358,12 +358,14 @@ struct Wings<Leading: View, Trailing: View>: View {
 }
 
 /// A round icon button: faint circle on hover, a slight press-down, and symbol morphs on change.
+/// With `plate`, a dim circle shows even at rest, for toolbar buttons that should read as buttons.
 struct IconButton: View {
     let symbol: String
     let label: String
     var size: CGFloat = 15
     var box: CGFloat = 36
     var active = false
+    var plate = false
     let action: () -> Void
     @State private var hovering = false
 
@@ -373,7 +375,7 @@ struct IconButton: View {
                 .id(symbol)
                 .transition(.blurReplace) // play ⇄ pause and similar swaps blur into each other
                 .frame(width: box, height: box)
-                .background(Circle().fill(Palette.rail).opacity(hovering || active ? 1 : 0))
+                .background(Circle().fill(hovering || active ? Palette.rail : Palette.well).opacity(hovering || active || plate ? 1 : 0))
                 .contentShape(Circle())
         }
         .buttonStyle(PressStyle())

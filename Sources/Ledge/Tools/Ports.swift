@@ -77,14 +77,20 @@ struct PortsView: View {
     var body: some View {
         Group {
             if ports.listeners.isEmpty {
-                EmptyTab(title: "Nothing running", hint: "Dev servers you start, like npm run dev, show up here with their port.")
+                EmptyTab(symbol: "server-square-linear", title: "Nothing running", hint: "Dev servers you start, like npm run dev, show up here with their port.")
             } else {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 2) {
-                        ForEach(ports.listeners) { PortRow(listener: $0, stop: { ports.stop($0) }) }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(ports.listeners.count == 1 ? "1 server on localhost" : "\(ports.listeners.count) servers on localhost")
+                        .font(Typeface.caption)
+                        .foregroundStyle(Palette.graphite)
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 2) {
+                            ForEach(ports.listeners) { PortRow(listener: $0, stop: { ports.stop($0) }) }
+                        }
                     }
+                    .frame(height: CGFloat(min(ports.listeners.count, 5)) * 34 - 2)
+                    .padding(.horizontal, -10) // the rows' hover fill reaches past the text, so the dots line up with the header
                 }
-                .frame(height: CGFloat(min(ports.listeners.count, 5)) * 34)
             }
         }
         .animation(Motion.easeOut(0.2), value: ports.listeners)
@@ -101,40 +107,49 @@ private struct PortRow: View {
     let listener: Ports.Listener
     let stop: (Ports.Listener) -> Void
     @State private var confirming = false
+    @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Palette.live)
+                .frame(width: 6, height: 6)
+                .accessibilityLabel("Listening")
             Text(verbatim: ":\(listener.port)") // a port, not a quantity: no thousands separator
                 .font(Typeface.headline.monospacedDigit())
                 .foregroundStyle(Palette.paper)
-                .frame(width: 58, alignment: .leading)
+                .frame(width: 52, alignment: .leading)
             Text(listener.command)
                 .font(Typeface.body)
                 .foregroundStyle(Palette.graphite)
                 .lineLimit(1)
             Spacer(minLength: 8)
-            Button {
+            IconButton(symbol: "arrow-right-up-linear", label: "Open in browser", size: 11, box: 26) {
                 NSWorkspace.shared.open(URL(string: "http://localhost:\(listener.port)")!)
-            } label: {
-                HStack(spacing: 4) {
-                    Icon(name: "arrow-right-up-linear", size: 12)
-                    Text("Open")
-                }
             }
-            .buttonStyle(SecondaryStyle())
+            .help("Open localhost:\(listener.port) in your browser")
             // Stopping ends someone's process, so it takes a second click to confirm.
-            Button(confirming ? "Stop it?" : "Stop") {
-                if confirming { stop(listener) } else { confirming = true }
-            }
-            .buttonStyle(SecondaryStyle())
-            .foregroundStyle(confirming ? Palette.warning : Palette.graphite)
-            .task(id: confirming) {
-                guard confirming else { return }
-                try? await Task.sleep(for: .seconds(3))
-                confirming = false
+            if confirming {
+                Button("Stop it?") { stop(listener) }
+                    .buttonStyle(TintedStyle())
+                    .foregroundStyle(Palette.warning)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .trailing)))
+            } else {
+                IconButton(symbol: "stop-circle-linear", label: "Stop", size: 11, box: 26) { confirming = true }
+                    .help("Stop this server")
             }
         }
+        .padding(.leading, 10)
+        .padding(.trailing, 6)
         .frame(height: 32)
+        .background(RoundedRectangle(cornerRadius: Radius.control + 2, style: .continuous).fill(Palette.well).opacity(hovering || confirming ? 1 : 0))
+        .onHover { hovering = $0 }
+        .task(id: confirming) {
+            guard confirming else { return }
+            try? await Task.sleep(for: .seconds(3))
+            confirming = false
+        }
         .animation(Motion.easeOut(0.15), value: confirming)
+        .animation(Motion.ease(0.15), value: hovering)
     }
 }

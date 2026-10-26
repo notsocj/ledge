@@ -79,15 +79,15 @@ struct ClipboardView: View {
 
     var body: some View {
         if history.entries.isEmpty {
-            EmptyTab(title: "Nothing copied yet", hint: "Text and images you copy show up here. Click one to copy it again.")
+            EmptyTab(symbol: "copy-linear", title: "Nothing copied yet", hint: "Text and images you copy show up here. Click one to copy it again.")
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Click to copy again").foregroundStyle(Palette.graphite)
                     Spacer()
                     Button("Clear") { withAnimation(Motion.easeOut(0.2)) { history.clear() } }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Palette.ash)
+                        .buttonStyle(SecondaryStyle())
+                        .padding(.trailing, -10)
                 }
                 .font(Typeface.caption)
                 ScrollView(showsIndicators: false) {
@@ -136,7 +136,7 @@ private struct ClipRow: View {
             .lineLimit(1)
             .padding(.horizontal, 10)
             .frame(height: 30)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Palette.rail).opacity(hovering ? 1 : 0))
+            .background(RoundedRectangle(cornerRadius: Radius.control + 2, style: .continuous).fill(Palette.well).opacity(hovering ? 1 : 0))
             .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle())

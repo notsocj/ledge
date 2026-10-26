@@ -120,7 +120,7 @@ h1 .rise { display: inline-block; }
 }
 .island .open {
   width: 100%;
-  clip-path: inset(0 25.58% 80.84% 25.58% round 0 0 10px 10px); /* the closed island: 273 x 32 of 559 x 167 */
+  clip-path: inset(0 25.58% 82.12% 25.58% round 0 0 10px 10px); /* the closed island: 273 x 32 of 559 x 179 */
   transition: clip-path 520ms var(--ease-island);
 }
 .island .closed {
