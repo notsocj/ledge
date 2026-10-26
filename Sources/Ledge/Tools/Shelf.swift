@@ -35,16 +35,22 @@ final class Shelf {
 
 struct ShelfView: View {
     let shelf: Shelf
+    /// A file is being dragged somewhere on screen, so the shelf shows where it can land.
+    var dragging = false
     @State private var targeted = false
 
     var body: some View {
         Group {
             if shelf.files.isEmpty {
                 // An outlined drop zone, so the empty shelf shows where files go before anything is dragged.
-                EmptyTab(symbol: "inbox-linear", title: "Drop files here", hint: "Drag files onto the notch to keep them handy, then drag them out wherever you need them.")
+                EmptyTab(symbol: "inbox-linear", title: dragging ? "Drop to keep it here" : "Drop files here",
+                         hint: dragging ? "Let go and it waits on the shelf. Drag it back out whenever you need it."
+                                        : "Drag files onto the notch to keep them handy, then drag them out wherever you need them.")
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: Radius.well, style: .continuous)
-                        .strokeBorder(Palette.rail, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                        .fill(Palette.well.opacity(dragging ? 1 : 0))
+                        .strokeBorder(dragging ? Palette.graphite : Palette.rail, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+                    .animation(Motion.ease(0.2), value: dragging)
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -58,6 +64,7 @@ struct ShelfView: View {
                     .font(Typeface.caption)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
+                            if dragging { DropTile().transition(.opacity.combined(with: .scale(scale: 0.95))) }
                             ForEach(shelf.files, id: \.self) { url in
                                 FileTile(url: url) { withAnimation(Motion.easeOut(0.2)) { shelf.remove(url) } }
                                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
@@ -79,6 +86,25 @@ struct ShelfView: View {
             withAnimation(Motion.easeOut(0.2)) { shelf.add(urls) }
             return true
         } isTargeted: { targeted = $0 }
+    }
+}
+
+/// The space a new file will take, shown at the front of the shelf while one is being dragged.
+private struct DropTile: View {
+    var body: some View {
+        VStack(spacing: 6) {
+            Icon(name: "add-circle-linear", size: 20)
+                .foregroundStyle(Palette.graphite)
+                .frame(width: 48, height: 48)
+            Text("Drop to add")
+                .font(Typeface.caption)
+                .foregroundStyle(Palette.graphite)
+        }
+        .frame(width: 80)
+        .padding(.vertical, 4)
+        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+            .fill(Palette.well)
+            .strokeBorder(Palette.graphite, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
     }
 }
 

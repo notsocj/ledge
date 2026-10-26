@@ -35,10 +35,11 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case banner(Banner), micMuted, inUse, timer, media, nothing
+        case drop, banner(Banner), micMuted, inUse, timer, media, nothing
     }
 
     private var closedContent: Closed {
+        if model.fileDrag != nil { return .drop } // a file on its way: say where it can go
         if let banner = model.banner { return .banner(banner) }
         guard app.license.unlocked else { return .nothing }
         // A muted mic outranks everything: it's what you need to know before you speak.
@@ -58,6 +59,7 @@ struct NotchView: View {
         if model.expanded { return model.expandedSize }
         let wing: CGFloat = switch closedContent {
         case .banner(.meeting), .banner(.agent): 124
+        case .drop: 104
         case .inUse: 64
         case .banner: 96
         case .micMuted: 64
@@ -72,6 +74,13 @@ struct NotchView: View {
 
     @ViewBuilder private var closed: some View {
         switch closedContent {
+        case .drop:
+            Wings(height: model.notchSize.height) {
+                DropHint()
+            } trailing: {
+                Text("Drop here")
+            }
+            .accessibilityLabel("Drop files on the notch to keep them on the shelf")
         case .banner(let banner):
             BannerView(banner: banner, height: model.notchSize.height)
         case .micMuted:
@@ -172,6 +181,13 @@ struct NotchView: View {
                 .frame(maxWidth: .infinity, alignment: .top)
         }
         .frame(width: NotchModel.width, height: model.expandedSize.height, alignment: .top)
+        .contentShape(Rectangle())
+        .dropDestination(for: URL.self) { urls, _ in
+            guard app.preferences.isOn(.shelf) else { return false }
+            withAnimation(Motion.easeOut(0.2)) { app.shelf.add(urls) }
+            if model.tab != .shelf { select(.shelf) }
+            return true
+        }
         .onPreferenceChange(TabHeights.self) { app.measured($0) }
     }
 
@@ -186,7 +202,7 @@ struct NotchView: View {
         switch model.tab {
         case .home: HomeView(app: app)
         case .media: MediaTab(nowPlaying: nowPlaying, lyrics: lyrics)
-        case .shelf: ShelfView(shelf: app.shelf)
+        case .shelf: ShelfView(shelf: app.shelf, dragging: model.fileDrag != nil)
         case .colorPicker: ColorsView(picker: app.colorPicker) { app.pickColor() }
         case .ports: PortsView(ports: app.ports)
         case .clipboard: ClipboardView(history: app.clipboard)
@@ -318,6 +334,19 @@ private struct BannerView: View {
             case .mic(let muted): Text(muted ? "Muted" : "Mic on")
             case .agent(_, let waiting, _): Text(waiting ? "Needs you" : "Done").foregroundStyle(waiting ? .orange : Palette.paper)
             }
+        }
+    }
+}
+
+/// The tray beside the notch while a file is dragged: it bobs gently, so the eye finds where to drop.
+private struct DropHint: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            Icon(name: "inbox-linear", size: 16)
+                .offset(y: reduceMotion ? 0 : sin(t * 5) * 1.5)
         }
     }
 }

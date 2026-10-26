@@ -109,6 +109,17 @@ enum Snapshots {
             try? await Task.sleep(for: .milliseconds(700))
             capture(host, "closed-\(name)", in: folder)
         }
+
+        // A file being dragged: the hint beside the closed notch, then the shelf opened to catch it.
+        app.model.fileDrag = .far
+        try? await Task.sleep(for: .milliseconds(700))
+        capture(host, "closed-drop", in: folder)
+        app.preferences.preview = [.designer]
+        app.model.tab = .shelf
+        app.model.fileDrag = .near
+        app.model.expanded = true
+        try? await Task.sleep(for: .milliseconds(900))
+        capture(host, "shelf-drop", in: folder)
         NSApp.terminate(nil)
     }
 
