@@ -121,6 +121,12 @@ staples the ticket and checks that Gatekeeper accepts it. It needs, once:
 Builds are signed with the Developer ID whenever the certificate is present, with the hardened runtime
 and the calendar entitlement in `Ledge.entitlements`.
 
+## Showreel
+
+`video/` is a Remotion project for a 42-second motion showreel, voiced and scored with ElevenLabs
+(voice: Justin Case). Preview it with `cd video && npm i && npm run dev`; render it with
+`npx remotion render LedgeShowreel out/ledge-showreel.mp4`. The island images come from `site/assets`.
+
 ## Before selling
 
 - In Polar, create the $19.99 product with a License Keys benefit limited to 2 activations, then put

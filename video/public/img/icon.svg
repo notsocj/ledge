@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+  </defs>
+  <!-- macOS icon grid: an 824pt rounded square centred on a 1024 canvas, in one light dusk blue. -->
+  <g clip-path="url(#tile)">
+    <rect x="100" y="100" width="824" height="824" fill="#A3BBDC"/>
+    <!-- The notch: wide and shallow like a MacBook's, with concave shoulders flaring into the top edge. -->
+    <path d="M232 100 Q 272 100 272 140 L 272 196 Q 272 268 344 268 L 680 268 Q 752 268 752 196 L 752 140 Q 752 100 792 100 Z" fill="#0E1118"/>
+  </g>
+</svg>

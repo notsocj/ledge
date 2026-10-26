@@ -4,8 +4,29 @@
     {
       "name": "site",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4321", "--directory", "site"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4321",
+        "--directory",
+        "site"
+      ],
       "port": 4321
+    },
+    {
+      "name": "video",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "video",
+        "run",
+        "dev",
+        "--",
+        "--no-open",
+        "--port",
+        "3333"
+      ],
+      "port": 3333
     }
   ]
 }
