@@ -127,6 +127,11 @@ and the calendar entitlement in `Ledge.entitlements`.
 (voice: Justin Case). Preview it with `cd video && npm i && npm run dev`; render it with
 `npx remotion render LedgeShowreel out/ledge-showreel.mp4`. The island images come from `site/assets`.
 
+`LedgeOneTake` is a 29-second, higher-energy cut: one continuous camera that chases a cursor across a
+MacBook, punches in on clicks, orbits the laptop in 3D and dives into the notch. Its camera is
+simulated in `video/src/onetake/rig.ts`; render it with
+`npx remotion render LedgeOneTake out/ledge-onetake.mp4`.
+
 ## Before selling
 
 - In Polar, create the $19.99 product with a License Keys benefit limited to 2 activations, then put
