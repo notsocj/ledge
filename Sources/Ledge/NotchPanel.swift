@@ -132,7 +132,7 @@ final class NotchController {
             let banner: Banner = switch finish {
             case .timer: .message(symbol: "stopwatch-bold", text: "Time's up")
             case .focusDone: .message(symbol: "leaf-linear", text: "Break time")
-            case .breakOver: .message(symbol: "target-linear", text: "Back to focus")
+            case .breakOver: .message(symbol: "brain-linear", text: "Back to focus")
             }
             self?.model.show(banner, seconds: 4)
         }

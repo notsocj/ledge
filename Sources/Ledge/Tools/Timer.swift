@@ -152,7 +152,7 @@ struct TimerView: View {
                     withAnimation(Motion.easeOut(0.2)) { countdown.startFocus() }
                 } label: {
                     HStack(spacing: 12) {
-                        Icon(name: "target-linear", size: 17)
+                        Icon(name: "brain-linear", size: 17)
                             .foregroundStyle(.orange)
                             .frame(width: 38, height: 38)
                             .background(Circle().fill(Color.orange.opacity(0.16)))
