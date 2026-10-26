@@ -20,11 +20,11 @@ For the AI-dev outlets, lead with the developer angle (agent alerts and limits),
 
 ## Pitch email
 
-**Subject:** Kestrel: the MacBook notch, set up around what you do
+**Subject:** Ledge: the MacBook notch, set up around what you do
 
 > Hi [name],
 >
-> I'm [your name], and I make Kestrel, a Mac app that turns the space around the notch into the tools
+> I'm [your name], and I make Ledge, a Mac app that turns the space around the notch into the tools
 > you use all day. It launches on [date].
 >
 > Hover the notch and it opens into a small island: what's playing with synced lyrics, your week, a

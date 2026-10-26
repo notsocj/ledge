@@ -1,11 +1,11 @@
 import SwiftUI
 
 @main
-struct KestrelApp: App {
+struct LedgeApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
 
     init() {
-        Migration.fromIslet() // before anything reads settings
+        Migration.fromKestrel() // before anything reads settings
     }
 
     var body: some Scene {
@@ -14,7 +14,7 @@ struct KestrelApp: App {
                 .keyboardShortcut(",")
             Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
             if !License.shared.licensed {
-                Button("Buy Kestrel…") { NSWorkspace.shared.open(License.buyURL) }
+                Button("Buy Ledge…") { NSWorkspace.shared.open(License.buyURL) }
             }
             if Preferences.shared.isOn(.menuBarHider) {
                 // macOS 26+ draws every app's menu bar icon itself, so choosing which show is a system setting.
@@ -23,10 +23,10 @@ struct KestrelApp: App {
                 }
             }
             Divider()
-            Button("Quit Kestrel") { NSApp.terminate(nil) }
+            Button("Quit Ledge") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
         } label: {
-            if let icon = Icon.image("kestrel-mark") { Image(nsImage: icon) } else { Text("Kestrel") }
+            if let icon = Icon.image("ledge-mark") { Image(nsImage: icon) } else { Text("Ledge") }
         }
         Settings {
             SettingsView(preferences: .shared)

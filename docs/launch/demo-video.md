@@ -18,8 +18,8 @@ recorded from the real app.
 - Music: play a track you have the rights to, or a royalty-free one, with your own artwork. Real
   album art and lyrics can't go in a public video. The demo song from the snapshots ("Afterglow" by
   "Northbound") only exists in snapshot mode.
-- Use a fresh setup so the persona step can be recorded: quit Kestrel, run
-  `defaults delete com.kestrel.Kestrel onboarded`, and open it again.
+- Use a fresh setup so the persona step can be recorded: quit Ledge, run
+  `defaults delete com.ledge.Ledge onboarded`, and open it again.
 
 ## Record
 
@@ -39,10 +39,10 @@ them together; it's easier to retake one shot than the whole thing.
 | 6 | 5s | In a terminal, Claude Code finishes. "Needs you" banner appears beside the notch. | Agent alerts |
 | 7 | 4s | ⌃⌥ ← snaps a window to the left half, ⌃⌥ P picks a colour. | Everywhere else |
 | 8 | 4s | Drag a file onto the notch; it lands on the shelf. | Shelf |
-| 9 | 3s | End card: icon, "Kestrel", "The notch, put to work." | |
+| 9 | 3s | End card: icon, "Ledge", "The notch, put to work." | |
 
 For shot 6 without waiting on a real agent, run the alert directly:
-`open -g "kestrel://agent/claude/waiting?project=kestrel"` ("done" instead of "waiting" shows the
+`open -g "ledge://agent/claude/waiting?project=ledge"` ("done" instead of "waiting" shows the
 finished banner).
 
 ## Edit and export

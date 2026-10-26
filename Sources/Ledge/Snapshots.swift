@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// `Kestrel --snapshot <folder>` renders the island off-screen for each persona, some mixes, every tab,
+/// `Ledge --snapshot <folder>` renders the island off-screen for each persona, some mixes, every tab,
 /// each setup step and the closed-notch states, writes them as PNGs, and quits. Layouts are shown
 /// through `Preferences.preview`, so nothing you've set is changed. For reviewing the design.
 @MainActor
@@ -94,7 +94,7 @@ enum Snapshots {
         try? await Task.sleep(for: .milliseconds(900))
         capture(host, "closed-media", in: folder)
         let banners: [(String, Banner)] = [
-            ("agent-waiting", .agent(name: "Claude", waiting: true, project: "kestrel")),
+            ("agent-waiting", .agent(name: "Claude", waiting: true, project: "ledge")),
             ("agent-done", .agent(name: "Codex", waiting: false, project: "website")),
             ("meeting", .meeting(title: "Design review", startsAt: .now.addingTimeInterval(110))),
             ("volume", .level(symbol: "volume-loud-bold", value: 0.6)),

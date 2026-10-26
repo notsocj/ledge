@@ -8,7 +8,7 @@ posts say "7 days free, then $19.99 once", and none of that is built yet).
 
 ## Name
 
-Kestrel
+Ledge
 
 ## Tagline (60 characters max)
 
@@ -20,7 +20,7 @@ Alternatives:
 
 ## Description (260 characters max)
 
-> Hover the notch and Kestrel opens: what's playing, your week, your files, Claude and Codex usage.
+> Hover the notch and Ledge opens: what's playing, your week, your files, Claude and Codex usage.
 > While it's closed, small alerts slide out beside it. Tell it what you do (developer, designer,
 > student…) and it sets itself up around that. $19.99 once.
 
@@ -45,7 +45,7 @@ into a dark gallery.
 
 > Hi Product Hunt 👋
 >
-> The notch on my MacBook was the one part of the screen doing nothing, so I built Kestrel to put it
+> The notch on my MacBook was the one part of the screen doing nothing, so I built Ledge to put it
 > to work.
 >
 > Hover it and it opens into a small island: what's playing (with synced lyrics), your week, a file
@@ -67,7 +67,7 @@ into a dark gallery.
 ## Replies to have ready
 
 - **"How is this different from NotchNook / Boring Notch / Alcove?"** Those are great at media and
-  files. Kestrel sets itself up around what you do, and it goes further for developers: Claude and
+  files. Ledge sets itself up around what you do, and it goes further for developers: Claude and
   Codex limits, agent alerts, ports.
 - **"Does it work on Macs without a notch?"** Yes, it sits at the top of the screen as a pill.
 - **"Why does it need Accessibility?"** For window snapping and to show volume and brightness in the

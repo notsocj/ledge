@@ -160,7 +160,7 @@ final class NotchController {
                 self?.startOnboarding()
             }
         } else if case .trial(let days) = license.state, days <= 2 {
-            model.show(.message(symbol: "kestrel-mark", text: days == 1 ? "Last trial day" : "2 days left"), seconds: 4)
+            model.show(.message(symbol: "ledge-mark", text: days == 1 ? "Last trial day" : "2 days left"), seconds: 4)
         }
     }
 
@@ -188,7 +188,7 @@ final class NotchController {
         preferences.onboarded = true
         setExpanded(false)
         model.onboarding = nil
-        model.show(.message(symbol: "kestrel-mark", text: "Hover here"), seconds: 3) // where to find it from now on
+        model.show(.message(symbol: "ledge-mark", text: "Hover here"), seconds: 3) // where to find it from now on
     }
 
     func measuredPage(_ height: CGFloat) {
@@ -214,9 +214,9 @@ final class NotchController {
         if !model.expanded { setExpanded(true) }
     }
 
-    /// `kestrel://agent/<claude|codex>/<done|waiting>?project=<folder>`, sent by the agent alert script.
+    /// `ledge://agent/<claude|codex>/<done|waiting>?project=<folder>`, sent by the agent alert script.
     func open(_ url: URL) {
-        guard url.scheme == "kestrel", url.host == "agent", preferences.isOn(.agentAlerts), license.unlocked else { return }
+        guard url.scheme == "ledge", url.host == "agent", preferences.isOn(.agentAlerts), license.unlocked else { return }
         let parts = url.pathComponents.filter { $0 != "/" }
         guard parts.count >= 2, let agent = AgentAlerts.Agent(rawValue: parts[0]) else { return }
         let waiting = parts[1] == "waiting"

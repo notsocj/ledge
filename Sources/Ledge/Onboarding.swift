@@ -39,8 +39,8 @@ struct OnboardingStrip: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 6) {
-                Icon(name: "kestrel-mark", size: 13)
-                Text("Kestrel").font(Typeface.label)
+                Icon(name: "ledge-mark", size: 13)
+                Text("Ledge").font(Typeface.label)
             }
             .foregroundStyle(Palette.paper)
             Spacer()
@@ -87,7 +87,7 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text("Welcome to Kestrel")
+                Text("Welcome to Ledge")
                     .font(Typeface.heading)
                     .foregroundStyle(Palette.paper)
                 Text("Your everyday tools, right in the notch. Tell it what you do and it sets itself up around you.")
@@ -108,7 +108,7 @@ struct OnboardingView: View {
     }
 
     private var personas: some View {
-        Page(title: "What do you do?", subtitle: "Pick one or more. Kestrel puts the tools you'll use most closest to hand.") {
+        Page(title: "What do you do?", subtitle: "Pick one or more. Ledge puts the tools you'll use most closest to hand.") {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                 ForEach(Persona.allCases) { persona in
                     PersonaCard(persona: persona, selected: flow.personas.contains(persona)) {
@@ -139,7 +139,7 @@ struct OnboardingView: View {
     }
 
     private var done: some View {
-        Page(title: "You're all set", subtitle: "Hover the notch any time to open Kestrel. Everything here can be changed in Settings.") {
+        Page(title: "You're all set", subtitle: "Hover the notch any time to open Ledge. Everything here can be changed in Settings.") {
             OpenAtLoginRow()
         } footer: {
             footer(back: .permissions, next: "Finish", enabled: true) { app.finishOnboarding() }
@@ -399,7 +399,7 @@ private struct OpenAtLoginRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Icon(name: "kestrel-mark", size: 14)
+            Icon(name: "ledge-mark", size: 14)
                 .foregroundStyle(Palette.paper)
                 .frame(width: 28, height: 28)
                 .background(Circle().fill(Palette.rail))

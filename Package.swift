@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "Kestrel",
+    name: "Ledge",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "Kestrel"),
-        .testTarget(name: "KestrelTests", dependencies: ["Kestrel"]),
+        .executableTarget(name: "Ledge"),
+        .testTarget(name: "LedgeTests", dependencies: ["Ledge"]),
     ],
     swiftLanguageModes: [.v5]
 )

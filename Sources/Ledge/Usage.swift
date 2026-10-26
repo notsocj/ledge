@@ -21,7 +21,7 @@ final class Usage {
     @ObservationIgnored private var lastRefresh = Date.distantPast
 
     // A tool counts as installed once it has made its home folder; meters only show for installed tools.
-    // shortcut: checked once at launch, so installing one later needs an Kestrel relaunch.
+    // shortcut: checked once at launch, so installing one later needs a Ledge relaunch.
     let showsClaude = Usage.homeFolderExists(".claude")
     let showsCodex = Usage.homeFolderExists(".codex")
     var showsAny: Bool { showsClaude || showsCodex }

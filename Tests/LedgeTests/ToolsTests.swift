@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 @MainActor @Test func findsMeetingLinksAndIgnoresOtherURLs() {
     #expect(Agenda.meetingLink(in: "Notes: join https://us02web.zoom.us/j/123456?pwd=abc please")?.absoluteString == "https://us02web.zoom.us/j/123456?pwd=abc")

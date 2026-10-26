@@ -1,4 +1,4 @@
-/* Kestrel: the website. Colours come from the app icon's dusk sky; type is SF Pro, like the app. */
+/* Ledge: the website. Colours come from the app icon's dusk sky; type is SF Pro, like the app. */
 :root {
   --night: #070e1a;
   --dusk: #10203a;
@@ -277,7 +277,7 @@ kbd {
 .closing img { width: 96px; height: 96px; scale: 0.9; transition: scale 900ms var(--ease-island) 120ms, translate 300ms var(--ease-out); }
 .closing.is-in img { scale: 1; }
 @media (hover: hover) and (pointer: fine) {
-  .closing img:hover { translate: 0 -6px; } /* it hovers, like its namesake */
+  .closing img:hover { translate: 0 -6px; } /* a small lift, like the island opening */
 }
 
 /* The page's only navigation lives here, at the end of the read. */

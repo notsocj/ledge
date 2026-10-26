@@ -1,15 +1,15 @@
-# Kestrel
+# Ledge
 
-Kestrel turns the MacBook notch into a small, quiet island of everyday tools. Hover the notch and it
+Ledge turns the MacBook notch into a small, quiet island of everyday tools. Hover the notch and it
 opens: what's playing, your week, quick actions, and a single status row for everything else. Brief
 alerts (volume, battery, a meeting starting, an AI agent waiting on you) slide out beside the notch
 while it's closed. On Macs without a notch it sits at the top of the screen as a pill.
 
-On first launch you tell Kestrel what you do, and it arranges itself around that.
+On first launch you tell Ledge what you do, and it arranges itself around that.
 
 ## What you do decides what you get
 
-Pick one or more in setup (or later in Settings). Each persona ranks the tools; Kestrel switches on
+Pick one or more in setup (or later in Settings). Each persona ranks the tools; Ledge switches on
 what fits, puts your most-used tabs nearest the notch, and chooses what Home and the closed notch show.
 
 | Persona | Leads with |
@@ -45,15 +45,15 @@ awake · Screenshots · Audio output switching · World clock · Menu bar icon s
 ## Privacy
 
 Everything stays on the Mac. Clipboard history is kept in memory only, and items password managers
-mark as secret are skipped. Notes are a file in `~/Library/Application Support/Kestrel`. Calendar
+mark as secret are skipped. Notes are a file in `~/Library/Application Support/Ledge`. Calendar
 events are read through macOS's own calendar access and never leave the Mac.
 
 Two things go over the network: synced lyrics are looked up on [LRCLIB](https://lrclib.net) by song
 title and artist, and the Claude usage meter asks Anthropic's API using the login Claude Code already
-saved in your Keychain (read only; Kestrel never refreshes or changes it).
+saved in your Keychain (read only; Ledge never refreshes or changes it).
 
 Agent alerts, when you connect them in Settings, add a small command to `~/.claude/settings.json`
-and `~/.codex/config.toml`. Kestrel asks first, saves a backup of each file next to it, and keeps an
+and `~/.codex/config.toml`. Ledge asks first, saves a backup of each file next to it, and keeps an
 existing Codex `notify` command working by running it afterwards. Disconnect removes it again.
 
 ## Building
@@ -61,24 +61,24 @@ existing Codex `notify` command working by running it afterwards. Disconnect rem
 Requires macOS 14 or later, Apple Silicon, Xcode (Swift 6) and CMake.
 
 ```bash
-./build.sh && open build/Kestrel.app
+./build.sh && open build/Ledge.app
 ```
 
 `build.sh` fetches and builds [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter),
-builds the app, and assembles `build/Kestrel.app`. Tests: `swift test`.
+builds the app, and assembles `build/Ledge.app`. Tests: `swift test`.
 
 Builds are signed ad hoc, for the Mac they're built on. macOS treats each build as a new app, so after
-rebuilding, remove and re-add Kestrel under System Settings › Privacy & Security › Accessibility.
+rebuilding, remove and re-add Ledge under System Settings › Privacy & Security › Accessibility.
 
-To review the design without clicking through it, `open build/Kestrel.app --args --snapshot <folder>`
+To review the design without clicking through it, `open build/Ledge.app --args --snapshot <folder>`
 renders every persona, tab, setup step and closed-notch banner to PNGs and quits. It previews layouts
 without changing your settings.
 
 ## Layout
 
 ```
-Sources/Kestrel/
-  KestrelApp.swift       app entry, menu bar item, Settings window
+Sources/Ledge/
+  LedgeApp.swift       app entry, menu bar item, Settings window
   NotchPanel.swift       the island window, hover, banners, tool wiring
   NotchView.swift        island shell: closed states, tab pills, open layout
   Design.swift           colours, type scale, motion, notch shape, icons, buttons
@@ -88,7 +88,7 @@ Sources/Kestrel/
   MediaTab.swift, NowPlaying.swift, Lyrics.swift, Usage.swift
   Tools/                 one file per tool
 Icons/                   Solar icons (SVG) and the Claude and Codex marks
-Tests/KestrelTests/
+Tests/LedgeTests/
 ```
 
 ## Credits
@@ -102,12 +102,12 @@ Tests/KestrelTests/
 
 ## Trial and license
 
-Kestrel is free for 7 days, then needs a [Lemon Squeezy](https://www.lemonsqueezy.com) license key
+Ledge is free for 7 days, then needs a [Lemon Squeezy](https://www.lemonsqueezy.com) license key
 (two Macs per key). Once the trial ends the island shows how to buy and every tool stops; Settings ›
 License takes the key. The trial start and key live in the login keychain. `License.swift` holds the
 store and product IDs and the checkout link; the site's Buy button uses the same link.
 
-`./build.sh dmg` also packs `site/Kestrel.dmg`, which the site's Download buttons link to.
+`./build.sh dmg` also packs `site/Ledge.dmg`, which the site's Download buttons link to.
 
 ## Before selling
 
@@ -118,4 +118,4 @@ store and product IDs and the checkout link; the site's Buy button uses the same
 - Lyrics come from a crowd-sourced service without a lyrics license.
 - The Claude usage endpoint is undocumented; check Anthropic's terms for this use of Claude Code's login.
 - Now playing and brightness use private macOS APIs that can change in updates.
-- Confirm the Kestrel name with a trademark search.
+- Confirm the Ledge name with a trademark search.

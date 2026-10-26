@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 @Test func codexPicksTightestWindowAndZeroesResetOnes() {
     let now = Date(timeIntervalSince1970: 1_000)

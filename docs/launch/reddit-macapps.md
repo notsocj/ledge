@@ -9,15 +9,15 @@ it" is enough.
 
 ## Title
 
-> I made Kestrel, a notch app that sets itself up around what you do (dev, design, study…)
+> I made Ledge, a notch app that sets itself up around what you do (dev, design, study…)
 
 Alternative:
 
-> Kestrel: music, agent alerts, ports and a file shelf in the MacBook notch. One-time $19.99, 7-day trial
+> Ledge: music, agent alerts, ports and a file shelf in the MacBook notch. One-time $19.99, 7-day trial
 
 ## Post
 
-> Hi r/macapps, I'm the developer of Kestrel, so take this with that in mind.
+> Hi r/macapps, I'm the developer of Ledge, so take this with that in mind.
 >
 > **What it is:** a notch app. Hover the notch and it opens into a small island; move away and it
 > closes. While it's closed, short alerts slide out beside the notch instead of covering your screen.
@@ -52,6 +52,6 @@ Alternative:
 
 ## If someone asks "why pay when X is free?"
 
-> Totally fair. If a free one already does what you need, use it. Kestrel's for people who want the
+> Totally fair. If a free one already does what you need, use it. Ledge is for people who want the
 > developer tools (agents, limits, ports) or the persona setup, and who'd rather pay once than
 > subscribe.

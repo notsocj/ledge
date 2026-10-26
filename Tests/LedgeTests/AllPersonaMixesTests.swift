@@ -1,6 +1,6 @@
 import CoreGraphics
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 /// Every non-empty mix of personas, each with every member as the first pick (192 layouts).
 private let mixes: [[Persona]] = {

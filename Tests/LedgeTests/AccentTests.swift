@@ -1,6 +1,6 @@
 import AppKit
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 private func solid(_ color: NSColor) -> NSImage {
     NSImage(size: NSSize(width: 4, height: 4), flipped: false) { rect in

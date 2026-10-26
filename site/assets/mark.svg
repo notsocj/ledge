@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 29 472 472">
-  <!-- A kestrel hovering, seen from below: long pointed wings raised in a shallow V, slim body, narrow fanned tail. -->
-  <path fill="currentColor" d="M256 152 C 268 152 276 161 276 172 C 276 181 272 187 267 191 L 276 202 C 330 188 410 156 480 116 C 452 196 368 266 282 292 L 276 326 L 292 404 Q 256 414 220 404 L 236 326 L 230 292 C 144 266 60 196 32 116 C 102 156 182 188 236 202 L 245 191 C 240 187 236 181 236 172 C 236 161 244 152 256 152 Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+  <!-- Ledge's mark: the app icon in one colour, a rounded screen with the notch hanging from its top edge. -->
+  <rect x="3" y="4" width="18" height="16" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+  <path fill="currentColor" d="M7.6 4 H16.4 Q15.9 4 15.9 4.6 V6.4 Q15.9 8.4 13.9 8.4 H10.1 Q8.1 8.4 8.1 6.4 V4.6 Q8.1 4 7.6 4 Z"/>
 </svg>

@@ -8,7 +8,7 @@ final class Notes {
     }
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     @ObservationIgnored private let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appending(path: "Kestrel/notes.txt")
+        .appending(path: "Ledge/notes.txt")
 
     init() {
         text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
@@ -20,7 +20,7 @@ final class Notes {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try text.write(to: url, atomically: true, encoding: .utf8)
         } catch {
-            print("Kestrel: couldn't save notes: \(error)")
+            print("Ledge: couldn't save notes: \(error)")
         }
     }
 

@@ -12,7 +12,7 @@ final class License {
     static let storeID = 0
     static let productID = 0
     // Replace with the product's checkout link from Lemon Squeezy (Products › Share).
-    static let buyURL = URL(string: "https://kestrel.lemonsqueezy.com/buy")!
+    static let buyURL = URL(string: "https://ledge.lemonsqueezy.com/buy")!
 
     enum State: Equatable { case trial(daysLeft: Int), expired, licensed }
 
@@ -27,17 +27,24 @@ final class License {
 
     private init() {
         guard Snapshots.folder == nil else { return } // renders show the full app
-        key = Keychain.read("licenseKey")
-        instance = Keychain.read("instance")
+        // A license or trial from when the app was called Kestrel carries over.
+        let old = Migration.oldBundleID
+        key = Keychain.read("licenseKey") ?? Keychain.read("licenseKey", service: old)
+        instance = Keychain.read("instance") ?? Keychain.read("instance", service: old)
+        if key != nil, instance != nil {
+            Keychain.write("licenseKey", key)
+            Keychain.write("instance", instance)
+        }
         // Kept in both places, earliest wins: deleting the app's preferences doesn't restart the trial.
-        let saved = [Keychain.read("trialStart").flatMap(Double.init), UserDefaults.standard.object(forKey: "trialStart") as? Double]
+        let saved = [Keychain.read("trialStart"), Keychain.read("trialStart", service: old)].map { $0.flatMap(Double.init) }
+            + [UserDefaults.standard.object(forKey: "trialStart") as? Double]
         trialStart = saved.compactMap { $0 }.min().map(Date.init(timeIntervalSince1970:)) ?? .now
         Keychain.write("trialStart", String(trialStart.timeIntervalSince1970))
         UserDefaults.standard.set(trialStart.timeIntervalSince1970, forKey: "trialStart")
         refresh()
         Task { [weak self] in
             await self?.check()
-            while !Task.isCancelled { // so the trial ends on time while Kestrel keeps running
+            while !Task.isCancelled { // so the trial ends on time while Ledge keeps running
                 try? await Task.sleep(for: .seconds(3600))
                 self?.refresh()
             }
@@ -145,9 +152,9 @@ final class License {
 
 /// Generic passwords in the login keychain: they survive deleting the app, unlike its preferences.
 private enum Keychain {
-    private static let service = "com.kestrel.Kestrel"
+    private static let service = "com.ledge.Ledge"
 
-    static func read(_ account: String) -> String? {
+    static func read(_ account: String, service: String = service) -> String? {
         let query: [CFString: Any] = [kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: account, kSecReturnData: true]
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess, let data = item as? Data else { return nil }
@@ -176,7 +183,7 @@ struct TrialEndedView: View {
                 Text("Your free week is up")
                     .font(Typeface.heading)
                     .foregroundStyle(Palette.paper)
-                Text("Buy Kestrel once to keep using it on this Mac and one more. Everything you set up is still here.")
+                Text("Buy Ledge once to keep using it on this Mac and one more. Everything you set up is still here.")
                     .font(Typeface.body)
                     .foregroundStyle(Palette.graphite)
                     .multilineTextAlignment(.center)
@@ -188,7 +195,7 @@ struct TrialEndedView: View {
                     openSettings()
                 }
                 .buttonStyle(SecondaryStyle())
-                Button("Buy Kestrel, $19.99") { NSWorkspace.shared.open(License.buyURL) }
+                Button("Buy Ledge, $19.99") { NSWorkspace.shared.open(License.buyURL) }
                     .buttonStyle(PrimaryStyle())
             }
         }
@@ -208,16 +215,16 @@ struct LicenseSettings: View {
     var body: some View {
         Section {
             if license.licensed {
-                LabeledContent("Kestrel", value: "Licensed on this Mac")
+                LabeledContent("Ledge", value: "Licensed on this Mac")
                 Button("Deactivate on this Mac…") { confirmDeactivate = true }
                     .disabled(working)
-                    .confirmationDialog("Deactivate Kestrel on this Mac?", isPresented: $confirmDeactivate) {
+                    .confirmationDialog("Deactivate Ledge on this Mac?", isPresented: $confirmDeactivate) {
                         Button("Deactivate") { run { await license.deactivate() } }
                     } message: {
                         Text("This frees one of your key's two Macs. You'll need the key from your receipt email to activate again.")
                     }
             } else {
-                LabeledContent("Kestrel", value: status)
+                LabeledContent("Ledge", value: status)
                 HStack {
                     TextField("License key", text: $key, prompt: Text("Paste the key from your receipt"))
                         .labelsHidden()
@@ -225,7 +232,7 @@ struct LicenseSettings: View {
                     Button(working ? "Activating…" : "Activate", action: activate)
                         .disabled(working || key.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                Link("Buy Kestrel, $19.99", destination: License.buyURL)
+                Link("Buy Ledge, $19.99", destination: License.buyURL)
             }
         } header: {
             Text("License")

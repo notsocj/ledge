@@ -1,5 +1,5 @@
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 @Test func noPersonaKeepsEverythingAsBefore() {
     #expect(Layout.merging([]) == .standard)

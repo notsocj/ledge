@@ -13,7 +13,7 @@ final class KeepAwake {
 
     func on() {
         guard !isOn else { return }
-        isOn = IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString, IOPMAssertionLevel(kIOPMAssertionLevelOn), "Kestrel: Keep awake" as CFString, &assertion) == kIOReturnSuccess
+        isOn = IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString, IOPMAssertionLevel(kIOPMAssertionLevelOn), "Ledge: Keep awake" as CFString, &assertion) == kIOReturnSuccess
     }
 
     func off() {

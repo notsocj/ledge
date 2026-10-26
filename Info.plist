@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>Kestrel</string>
+	<string>Ledge</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.kestrel.Kestrel</string>
+	<string>com.ledge.Ledge</string>
 	<key>CFBundleName</key>
-	<string>Kestrel</string>
+	<string>Ledge</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -22,18 +22,18 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.kestrel.Kestrel</string>
+			<string>com.ledge.Ledge</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>kestrel</string>
+				<string>ledge</string>
 			</array>
 		</dict>
 	</array>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Kestrel shows today's events and Join buttons for your meetings in the notch.</string>
+	<string>Ledge shows today's events and Join buttons for your meetings in the notch.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Kestrel shows your headphones' battery in the notch when they connect.</string>
+	<string>Ledge shows your headphones' battery in the notch when they connect.</string>
 </dict>
 </plist>

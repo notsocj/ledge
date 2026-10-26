@@ -5,7 +5,7 @@ import Observation
 ///
 /// Connecting installs a tiny script and points each agent at it: Claude Code through two hooks in
 /// ~/.claude/settings.json, Codex through `notify` in ~/.codex/config.toml. The script opens an
-/// `kestrel://agent/<agent>/<event>` link in the background, which Kestrel turns into a banner.
+/// `ledge://agent/<agent>/<event>` link in the background, which Ledge turns into a banner.
 /// Both files get a backup next to them before the first change, and disconnecting undoes it.
 @Observable @MainActor
 final class AgentAlerts {
@@ -21,10 +21,10 @@ final class AgentAlerts {
     private let home = FileManager.default.homeDirectoryForCurrentUser
     private var claudeSettings: URL { home.appending(path: ".claude/settings.json") }
     private var codexConfig: URL { home.appending(path: ".codex/config.toml") }
-    private var support: URL { FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Kestrel") }
-    var script: URL { support.appending(path: "kestrel-agent") }
+    private var support: URL { FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Ledge") }
+    var script: URL { support.appending(path: "ledge-agent") }
     /// The script's name now, and before the app was renamed, so older hooks are still recognised as ours.
-    nonisolated static let scriptNames = ["kestrel-agent", "islet-agent"]
+    nonisolated static let scriptNames = ["ledge-agent", "kestrel-agent", "islet-agent"]
     nonisolated static func isOurs(_ command: String) -> Bool { scriptNames.contains { command.contains($0) } }
     private var codexOriginal: URL { support.appending(path: "codex-notify-original.txt") }
 
@@ -38,7 +38,7 @@ final class AgentAlerts {
             if let line = Self.codexNotifyLine(in: text), Self.isOurs(line) {
                 codex = .connected
             } else if let line = Self.codexNotifyLine(in: text), !Self.chainable(line) {
-                codex = .blocked("Codex's notify setting is written in a way Kestrel can't safely change.")
+                codex = .blocked("Codex's notify setting is written in a way Ledge can't safely change.")
             } else {
                 codex = .disconnected
             }
@@ -84,7 +84,7 @@ final class AgentAlerts {
 
     private func connectClaude() throws {
         if FileManager.default.fileExists(atPath: claudeSettings.path), readJSON(claudeSettings) == nil {
-            throw Failure("~/.claude/settings.json isn't valid JSON, so Kestrel didn't change it.")
+            throw Failure("~/.claude/settings.json isn't valid JSON, so Ledge didn't change it.")
         }
         backUp(claudeSettings)
         var settings = Self.removingClaudeHooks(from: readJSON(claudeSettings) ?? [:])
@@ -104,9 +104,9 @@ final class AgentAlerts {
         var command = [script.path, "codex", "done"]
         if let line = Self.codexNotifyLine(in: text), !Self.isOurs(line) {
             guard let original = Self.notifyArguments(line) else {
-                throw Failure("Codex's notify setting is written in a way Kestrel can't safely change.")
+                throw Failure("Codex's notify setting is written in a way Ledge can't safely change.")
             }
-            // Codex runs one notify program, so Kestrel's script passes the event on to yours afterwards.
+            // Codex runs one notify program, so Ledge's script passes the event on to yours afterwards.
             try FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
             try line.write(to: codexOriginal, atomically: true, encoding: .utf8)
             command += ["--then"] + original
@@ -121,12 +121,12 @@ final class AgentAlerts {
         try FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         let body = """
         #!/bin/sh
-        # Installed by Kestrel: tells Kestrel that a coding agent finished or is waiting on you.
-        # Usage: kestrel-agent <claude|codex> <done|waiting> [--then <program> <args>...]
+        # Installed by Ledge: tells Ledge that a coding agent finished or is waiting on you.
+        # Usage: ledge-agent <claude|codex> <done|waiting> [--then <program> <args>...]
         # Anything after --then runs afterwards with the remaining arguments (Codex adds its event JSON last).
         agent="$1"; event="$2"; shift 2
         project=$(basename "${CLAUDE_PROJECT_DIR:-$PWD}" | sed 's/%/%25/g; s/ /%20/g; s/&/%26/g; s/#/%23/g')
-        open -g "kestrel://agent/$agent/$event?project=$project" >/dev/null 2>&1
+        open -g "ledge://agent/$agent/$event?project=$project" >/dev/null 2>&1
         if [ "$1" = "--then" ]; then shift; exec "$@"; fi
         exit 0
         """
@@ -138,7 +138,7 @@ final class AgentAlerts {
 
     /// The first change keeps a copy of the file as it was, next to it.
     private func backUp(_ file: URL) {
-        let backup = file.appendingPathExtension("kestrel-backup")
+        let backup = file.appendingPathExtension("ledge-backup")
         guard FileManager.default.fileExists(atPath: file.path), !FileManager.default.fileExists(atPath: backup.path) else { return }
         try? FileManager.default.copyItem(at: file, to: backup)
     }

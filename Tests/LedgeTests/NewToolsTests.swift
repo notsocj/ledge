@@ -1,7 +1,7 @@
 import AppKit
 import EventKit
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 @MainActor @Test func focusRollsIntoABreakThenWaitsForTheNextSession() {
     let countdown = Countdown()

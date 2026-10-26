@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Privacy · Kestrel</title>
-  <meta name="description" content="What Kestrel keeps on your Mac, the two things it sends over the network, and why it asks for each permission.">
+  <title>Privacy · Ledge</title>
+  <meta name="description" content="What Ledge keeps on your Mac, the two things it sends over the network, and why it asks for each permission.">
   <meta name="theme-color" content="#070e1a">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
@@ -12,64 +12,64 @@
 <body>
 
 <main class="doc">
-  <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Kestrel</a>
+  <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Ledge</a>
   <h1>Privacy</h1>
   <p class="updated">Last updated October 26, 2026</p>
 
-  <p>Kestrel has no account, no analytics and no server of its own. What it shows you is read on your Mac and stays there. This page lists every exception.</p>
+  <p>Ledge has no account, no analytics and no server of its own. What it shows you is read on your Mac and stays there. This page lists every exception.</p>
 
   <h2>What stays on your Mac</h2>
   <ul>
-    <li><strong>Clipboard history</strong> is kept in memory only and is gone when Kestrel quits. Items that password managers mark as secret are never saved.</li>
-    <li><strong>Notes</strong> are a plain file in <code>~/Library/Application Support/Kestrel</code>.</li>
-    <li><strong>Files on the shelf</strong> are references to files you dropped there. Kestrel doesn't copy or upload them.</li>
+    <li><strong>Clipboard history</strong> is kept in memory only and is gone when Ledge quits. Items that password managers mark as secret are never saved.</li>
+    <li><strong>Notes</strong> are a plain file in <code>~/Library/Application Support/Ledge</code>.</li>
+    <li><strong>Files on the shelf</strong> are references to files you dropped there. Ledge doesn't copy or upload them.</li>
     <li><strong>Calendar events</strong> are read through macOS's own calendar access to show your week and warn you before meetings.</li>
     <li><strong>Codex usage</strong> is read from the session files Codex already writes in <code>~/.codex/sessions</code>.</li>
-    <li><strong>Settings</strong> live in Kestrel's standard macOS preferences.</li>
+    <li><strong>Settings</strong> live in Ledge's standard macOS preferences.</li>
   </ul>
 
   <h2>What goes over the network</h2>
   <p>Two features talk to the internet, and only while they're switched on. Licensing is the third, described below.</p>
   <ul>
-    <li><strong>Synced lyrics.</strong> When a song plays, Kestrel looks it up on <a href="https://lrclib.net">LRCLIB</a> by title, artist, album and length. Nothing else is sent. Switch off Now playing in Settings and the lookups stop.</li>
-    <li><strong>Claude usage.</strong> To show your Claude limits, Kestrel asks Anthropic's API for your usage, signed in with the login Claude Code already saved in your Keychain. Kestrel only reads that login. It never refreshes, changes or sends it anywhere else. If Claude Code isn't installed, nothing is sent.</li>
+    <li><strong>Synced lyrics.</strong> When a song plays, Ledge looks it up on <a href="https://lrclib.net">LRCLIB</a> by title, artist, album and length. Nothing else is sent. Switch off Now playing in Settings and the lookups stop.</li>
+    <li><strong>Claude usage.</strong> To show your Claude limits, Ledge asks Anthropic's API for your usage, signed in with the login Claude Code already saved in your Keychain. Ledge only reads that login. It never refreshes, changes or sends it anywhere else. If Claude Code isn't installed, nothing is sent.</li>
   </ul>
   <h2>Your license</h2>
-  <p>Purchases are handled by <a href="https://www.lemonsqueezy.com">Lemon Squeezy</a>, which sees your name, email and payment details when you buy. When you activate a key, Kestrel sends the key and your Mac's name to Lemon Squeezy, so you can see and free your two Macs. Each time Kestrel opens, it checks the key is still valid. The key and the trial's start date are kept in your Mac's keychain.</p>
+  <p>Purchases are handled by <a href="https://www.lemonsqueezy.com">Lemon Squeezy</a>, which sees your name, email and payment details when you buy. When you activate a key, Ledge sends the key and your Mac's name to Lemon Squeezy, so you can see and free your two Macs. Each time Ledge opens, it checks the key is still valid. The key and the trial's start date are kept in your Mac's keychain.</p>
 
-  <p>Kestrel doesn't check for updates or send crash reports today. If that changes, this page will say so first.</p>
+  <p>Ledge doesn't check for updates or send crash reports today. If that changes, this page will say so first.</p>
 
   <h2>Permissions, and why</h2>
-  <p>macOS asks you before Kestrel can use any of these. Each one is optional; the tools that need it simply stay off without it.</p>
+  <p>macOS asks you before Ledge can use any of these. Each one is optional; the tools that need it simply stay off without it.</p>
   <ul>
     <li><strong>Accessibility</strong>, to snap windows with ⌃⌥ and the arrow keys and to show volume and brightness in the notch instead of the big square on screen.</li>
     <li><strong>Calendars</strong>, for your week on Home and the meeting countdown.</li>
     <li><strong>Bluetooth</strong>, to show the battery of your AirPods when they connect.</li>
     <li><strong>Screen Recording</strong>, for area screenshots with ⌃⌥S. Screenshots are saved to your Mac, copied, and put on the shelf.</li>
   </ul>
-  <p>Kestrel notices when your microphone or camera is in use by asking macOS whether the devices are running. It never records from them.</p>
+  <p>Ledge notices when your microphone or camera is in use by asking macOS whether the devices are running. It never records from them.</p>
 
   <h2>Claude Code and Codex alerts</h2>
-  <p>Agent alerts are off until you connect them in Settings. Connecting adds one small command to <code>~/.claude/settings.json</code> and <code>~/.codex/config.toml</code> so the agents can tell Kestrel when they finish or need you. Kestrel asks before changing either file, saves a backup next to each one, and keeps any existing Codex <code>notify</code> command working by running it afterwards. Disconnect removes the command again.</p>
+  <p>Agent alerts are off until you connect them in Settings. Connecting adds one small command to <code>~/.claude/settings.json</code> and <code>~/.codex/config.toml</code> so the agents can tell Ledge when they finish or need you. Ledge asks before changing either file, saves a backup next to each one, and keeps any existing Codex <code>notify</code> command working by running it afterwards. Disconnect removes the command again.</p>
 
   <h2>Removing everything</h2>
-  <p>Quit Kestrel, disconnect agent alerts first if you connected them, then delete the app and the <code>~/Library/Application Support/Kestrel</code> folder.</p>
+  <p>Quit Ledge, disconnect agent alerts first if you connected them, then delete the app and the <code>~/Library/Application Support/Ledge</code> folder.</p>
 
   <h2>Questions</h2>
   <!-- Replace with the support address before launch. -->
-  <p>Email <a href="mailto:privacy@example.com">privacy@example.com</a> and you'll hear back from the person who makes Kestrel.</p>
+  <p>Email <a href="mailto:privacy@example.com">privacy@example.com</a> and you'll hear back from the person who makes Ledge.</p>
 </main>
 
 <footer>
-  <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Kestrel</a>
+  <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Ledge</a>
   <nav class="footer-links" aria-label="Site">
     <a href="index.html#what-you-do">Features</a>
     <a href="index.html#pricing">Pricing</a>
     <a href="index.html#questions">Questions</a>
     <a href="privacy.html">Privacy</a>
-    <a href="Kestrel.dmg" download>Download</a>
+    <a href="Ledge.dmg" download>Download</a>
   </nav>
-  <p class="credits">© 2026 Kestrel. Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</p>
+  <p class="credits">© 2026 Ledge. Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</p>
 </footer>
 
 </body>

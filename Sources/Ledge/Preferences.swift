@@ -111,7 +111,7 @@ enum Tool: String, CaseIterable, Identifiable {
         case .volumeHUD: "Shows volume and brightness changes in the notch. Needs Accessibility."
         case .alerts: "Battery when you plug in or run low, and headphone battery when they connect."
         case .windowSnapping: "Drag a window to a screen edge, or ⌃⌥ + arrow keys or Return. Needs Accessibility."
-        case .menuBarHider: "Adds Choose Menu Bar Icons… to Kestrel's menu, which opens macOS's settings for which apps show icons."
+        case .menuBarHider: "Adds Choose Menu Bar Icons… to Ledge's menu, which opens macOS's settings for which apps show icons."
         case .colorPicker: "⌃⌥P, or the pipette on Home: pick any color on screen. It's copied as hex and kept in the Colors tab."
         case .meetingAlerts: "A heads-up beside the notch two minutes before each meeting. Uses your calendar."
         case .worldClock: "Up to three cities' times in Home's status row. Choose them below."
@@ -128,7 +128,7 @@ enum Tool: String, CaseIterable, Identifiable {
 
 extension Notification.Name {
     /// Runs setup again inside the island, from Settings or the menu bar.
-    static let startOnboarding = Notification.Name("KestrelStartOnboarding")
+    static let startOnboarding = Notification.Name("LedgeStartOnboarding")
 }
 
 /// Which tools are on. Stores the switched-off ones, so tools added in updates start switched on.
@@ -221,7 +221,7 @@ struct SettingsView: View {
             } header: {
                 Text("What do you do?")
             } footer: {
-                Text("Pick one or more. Kestrel switches on the tools that fit and puts the ones you'll use most closest to hand. You can still change any tool below.")
+                Text("Pick one or more. Ledge switches on the tools that fit and puts the ones you'll use most closest to hand. You can still change any tool below.")
                     .foregroundStyle(.secondary)
             }
             Section("In the island") {
@@ -321,7 +321,7 @@ private struct AgentSettings: View {
         } header: {
             Text("Coding agents")
         } footer: {
-            Text("Kestrel adds a small command to each agent's settings, saving a backup of the file first. Disconnect removes it again.")
+            Text("Ledge adds a small command to each agent's settings, saving a backup of the file first. Disconnect removes it again.")
                 .foregroundStyle(.secondary)
         }
         .onAppear { agents.refresh() }
@@ -334,8 +334,8 @@ private struct AgentSettings: View {
             Button("Cancel", role: .cancel) { confirming = nil }
         } message: {
             Text(confirming == .claude
-                 ? "Kestrel will add a Stop and a Notification hook to ~/.claude/settings.json. A backup is saved as settings.json.kestrel-backup."
-                 : "Kestrel will set notify in ~/.codex/config.toml. If you already have one, it keeps running after Kestrel's. A backup is saved as config.toml.kestrel-backup.")
+                 ? "Ledge will add a Stop and a Notification hook to ~/.claude/settings.json. A backup is saved as settings.json.ledge-backup."
+                 : "Ledge will set notify in ~/.codex/config.toml. If you already have one, it keeps running after Ledge's. A backup is saved as config.toml.ledge-backup.")
         }
     }
 

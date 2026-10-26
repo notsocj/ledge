@@ -13,7 +13,7 @@ enum HotKeys {
         var ref: EventHotKeyRef?
         let hotKeyID = EventHotKeyID(signature: OSType(0x4B53_5452), id: id) // "KSTR"
         guard RegisterEventHotKey(UInt32(key), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &ref) == noErr, let ref else {
-            print("Kestrel: shortcut \(id) is taken by another app")
+            print("Ledge: shortcut \(id) is taken by another app")
             return
         }
         refs[id] = ref

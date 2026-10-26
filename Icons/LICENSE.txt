@@ -1,4 +1,4 @@
 Icons: Solar icon set by 480 Design (https://www.figma.com/community/file/1166831539721848736),
 via Iconify (https://iconify.design). Licensed under CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
 
-kestrel-mark.svg is Kestrel's own mark (Branding/). claude-logo.svg and codex-logo.png are Anthropic's and OpenAI's marks.
+ledge-mark.svg is Ledge's own mark (Branding/). claude-logo.svg and codex-logo.png are Anthropic's and OpenAI's marks.

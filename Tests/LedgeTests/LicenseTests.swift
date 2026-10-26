@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Kestrel
+@testable import Ledge
 
 @Test func trialCountsDownSevenDaysThenEnds() {
     let start = Date(timeIntervalSince1970: 1_800_000_000)
@@ -18,7 +18,7 @@ import Testing
     {"activated": true, "error": null,
      "license_key": {"id": 1, "status": "active", "key": "abc", "activation_limit": 2, "activation_usage": 1},
      "instance": {"id": "f90ec370-fd83-46a5-8bbd-44a241e78665", "name": "Mac"},
-     "meta": {"store_id": 11, "order_id": 2, "product_id": 44, "product_name": "Kestrel", "customer_email": "a@b.c"}}
+     "meta": {"store_id": 11, "order_id": 2, "product_id": 44, "product_name": "Ledge", "customer_email": "a@b.c"}}
     """
     let response = try #require(License.decode(Data(activated.utf8)))
     #expect(response.activated == true)
