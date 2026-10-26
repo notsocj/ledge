@@ -14,22 +14,12 @@
 </head>
 <body>
 
-<nav class="nav" aria-label="Main">
-  <a class="brand" href="#"><img src="assets/icon.svg" alt="">Kestrel</a>
-  <div class="nav-links">
-    <a href="#what-you-do">Features</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#questions">Questions</a>
-    <a class="button small" href="Kestrel.dmg" download>Download</a>
-  </div>
-</nav>
-
 <header class="hero">
   <div class="hero-copy">
-    <h1>The notch,<br>put to work.</h1>
-    <p class="lede">Kestrel turns the space around your MacBook's notch into the tools you reach for all day, and arranges them around what you do.</p>
-    <a class="button" href="Kestrel.dmg" download id="download">Download for Mac</a>
-    <p class="fineprint">Free for 7 days, then $19.99 once. macOS 14 or later.</p>
+    <h1><span class="rise" style="--i: 0">The notch,</span><br><span class="rise" style="--i: 1">put to work.</span></h1>
+    <p class="lede rise" style="--i: 2">Kestrel turns the space around your MacBook's notch into the tools you reach for all day, and arranges them around what you do.</p>
+    <a class="button rise" style="--i: 3" href="Kestrel.dmg" download id="download">Download for Mac</a>
+    <p class="fineprint rise" style="--i: 4">Free for 7 days, then $19.99 once. macOS 14 or later.</p>
   </div>
 
   <div class="stage" aria-label="Kestrel opening out of the notch">
@@ -41,6 +31,7 @@
       <div class="island" id="island">
         <img class="open" src="assets/hero-open.png" width="559" height="167" alt="Kestrel open: now playing, this week's calendar, quick actions and a status row with Claude and Codex usage">
         <img class="closed" src="assets/hero-closed.png" width="273" height="32" alt="">
+        <img class="banner" src="assets/banner-agent.png" width="433" height="32" alt="">
         <div class="hotspot" id="hotspot" aria-hidden="true"></div>
       </div>
     </div>
@@ -57,6 +48,7 @@
   </div>
   <div class="personas reveal">
     <div class="persona-list" role="tablist" aria-label="Personas">
+      <span class="persona-indicator" aria-hidden="true"></span>
       <button class="persona" role="tab" aria-selected="true" data-persona="developer"><span class="icon" style="--icon: url(assets/code-linear.svg)"></span>Developer</button>
       <button class="persona" role="tab" aria-selected="false" data-persona="designer"><span class="icon" style="--icon: url(assets/pallete-2-linear.svg)"></span>Designer</button>
       <button class="persona" role="tab" aria-selected="false" data-persona="creator"><span class="icon" style="--icon: url(assets/videocamera-record-linear.svg)"></span>Creator</button>
@@ -83,7 +75,7 @@
     <h2>Quiet, until<br>something needs you.</h2>
     <p class="lede">Closed, Kestrel is just the notch. When something happens, it says so right beside it, then gets out of the way.</p>
   </div>
-  <div class="moments">
+  <div class="moments" data-stagger>
     <div class="moment reveal"><div class="bar"><img src="assets/banner-agent.png" width="433" height="32" alt="Claude needs you in the kestrel project"></div><p><strong>An agent needs you</strong>Claude Code or Codex is waiting on your answer.</p></div>
     <div class="moment reveal"><div class="bar"><img src="assets/banner-meeting.png" width="433" height="32" alt="Design review in 2 minutes"></div><p><strong>A meeting's about to start</strong>Two minutes' warning, once per meeting.</p></div>
     <div class="moment reveal"><div class="bar"><img src="assets/banner-mic.png" width="377" height="32" alt="Microphone muted"></div><p><strong>Your mic is muted</strong>It stays there, so you never talk into the void.</p></div>
@@ -137,7 +129,7 @@
     <h2>And everywhere else.</h2>
     <p class="lede">The small things you'd otherwise install five apps for.</p>
   </div>
-  <div class="keys reveal">
+  <div class="keys" data-stagger>
     <div class="key"><span>Snap a window to half the screen</span><kbd>⌃⌥ ← → ↑ ↓</kbd></div>
     <div class="key"><span>Fill the screen</span><kbd>⌃⌥ ↩</kbd></div>
     <div class="key"><span>Screenshot an area</span><kbd>⌃⌥ S</kbd></div>
@@ -155,7 +147,7 @@
       <h2>It stays on<br>your Mac.</h2>
       <p class="lede">No accounts, no analytics, no tracking.</p>
     </div>
-    <ul class="points">
+    <ul class="points" data-stagger>
       <li><strong>Your clipboard is kept in memory only,</strong> and anything a password manager marks as secret is skipped.</li>
       <li><strong>Notes, files and colors stay in your Mac's own folders.</strong> Calendar events are read through macOS and never leave it.</li>
       <li><strong>Two things go online:</strong> lyrics are looked up by song and artist, and the Claude meter asks Anthropic for your usage with the login Claude Code already saved.</li>
@@ -167,7 +159,7 @@
 <section id="pricing">
   <div class="price reveal">
     <h2>One price, once.</h2>
-    <div class="amount">$19.99<small>one time</small></div>
+    <div class="amount"><span class="digits" aria-label="$19.99">$19.99</span><small>one time</small></div>
     <ul>
       <li>Two Macs</li>
       <li>Every 1.x update</li>
@@ -204,26 +196,54 @@
 </main>
 
 <footer>
-  <span>© 2026 Kestrel</span>
-  <span><a href="privacy.html">Privacy</a> &nbsp; Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</span>
+  <a class="brand" href="#"><img src="assets/icon.svg" alt="">Kestrel</a>
+  <nav class="footer-links" aria-label="Site">
+    <a href="#what-you-do">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#questions">Questions</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="Kestrel.dmg" download>Download</a>
+  </nav>
+  <p class="credits">© 2026 Kestrel. Icons by <a href="https://www.figma.com/community/file/1166831539721848736">480 Design</a> (CC BY 4.0). Claude and Codex are trademarks of Anthropic and OpenAI.</p>
 </footer>
 
 <script>
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Run a callback only while an element is on screen, so loops never play to nobody.
+  const whileVisible = (el, onChange) => new IntersectionObserver(([entry]) => onChange(entry.isIntersecting)).observe(el);
 
-  // The island: opens once on its own so you see what it does, then follows the pointer.
+  // The island acts out its day on a loop (resting, an alert, opened) until you take over by hovering.
   const island = document.getElementById("island");
   const hotspot = document.getElementById("hotspot");
   const hint = document.getElementById("hint");
-  let hovering = false;
-  const setOpen = (open) => island.classList.toggle("is-open", open);
-  setTimeout(() => {
-    setOpen(true);
-    setTimeout(() => { if (!hovering) setOpen(false); }, 3400);
-  }, reduceMotion ? 400 : 1100);
-  hotspot.addEventListener("mouseenter", () => { hovering = true; setOpen(true); hint.style.opacity = 0; });
-  island.addEventListener("mouseleave", () => { hovering = false; setOpen(false); });
-  island.addEventListener("click", () => setOpen(!island.classList.contains("is-open"))); // touch screens
+  const show = (state) => {
+    island.classList.toggle("is-open", state === "open");
+    island.classList.toggle("is-banner", state === "banner");
+  };
+  const script = [["rest", 1400], ["banner", 2800], ["rest", 900], ["open", 3600]];
+  let beat = 0, beatTimer, hovering = false, heroVisible = true;
+  const play = () => {
+    clearTimeout(beatTimer);
+    if (hovering || !heroVisible) return;
+    const [state, hold] = script[beat];
+    show(state);
+    beat = (beat + 1) % script.length;
+    beatTimer = setTimeout(play, hold);
+  };
+  if (reduceMotion) {
+    setTimeout(() => show("open"), 400); // one look at it open, without the loop
+  } else {
+    beatTimer = setTimeout(play, 1700); // after the hero has risen into place
+    whileVisible(island, (visible) => { heroVisible = visible; if (visible) play(); else clearTimeout(beatTimer); });
+  }
+  hotspot.addEventListener("mouseenter", () => { hovering = true; clearTimeout(beatTimer); show("open"); hint.style.opacity = 0; });
+  island.addEventListener("mouseleave", () => {
+    hovering = false;
+    show("rest");
+    beat = 0;
+    if (!reduceMotion) beatTimer = setTimeout(play, 2400);
+  });
+  island.addEventListener("click", () => { hovering = true; clearTimeout(beatTimer); show(island.classList.contains("is-open") ? "rest" : "open"); }); // touch screens
 
   // Personas: each shows its own Home, as Kestrel lays it out.
   const notes = {
@@ -234,20 +254,69 @@
     professional: "Meeting countdowns with Join, mic mute, three world clocks, and your notes.",
     essentials: "Music, your week, a shelf and the clipboard. Nothing else in the way.",
   };
-  document.querySelectorAll(".persona").forEach((button) => {
-    button.addEventListener("click", () => {
-      const persona = button.dataset.persona;
-      document.querySelectorAll(".persona").forEach((b) => b.setAttribute("aria-selected", b === button));
-      document.querySelectorAll(".persona-frame img").forEach((img) => img.classList.toggle("is-active", img.dataset.persona === persona));
-      document.getElementById("persona-note").textContent = notes[persona];
-    });
+  const personaButtons = [...document.querySelectorAll(".persona")];
+  const indicator = document.querySelector(".persona-indicator");
+  const note = document.getElementById("persona-note");
+  // The pill sits behind the chosen persona and slides to the next one.
+  const placeIndicator = (button, animate) => {
+    indicator.style.transition = animate ? "" : "none";
+    indicator.style.width = `${button.offsetWidth}px`;
+    indicator.style.height = `${button.offsetHeight}px`;
+    indicator.style.transform = `translate(${button.offsetLeft}px, ${button.offsetTop}px)`;
+  };
+  const choose = (button) => {
+    const persona = button.dataset.persona;
+    personaButtons.forEach((b) => b.setAttribute("aria-selected", b === button));
+    placeIndicator(button, true);
+    document.querySelectorAll(".persona-frame img").forEach((img) => img.classList.toggle("is-active", img.dataset.persona === persona));
+    note.textContent = notes[persona];
+    if (!reduceMotion) note.animate([{ opacity: 0, translate: "0 6px" }, { opacity: 1, translate: "0 0" }], { duration: 320, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+  };
+  // Until someone picks one, the personas take turns so the section shows what it's for.
+  let personaTimer, personaPicked = false;
+  personaButtons.forEach((button) => button.addEventListener("click", () => {
+    personaPicked = true;
+    clearInterval(personaTimer);
+    choose(button);
+  }));
+  placeIndicator(personaButtons[0], false);
+  addEventListener("resize", () => placeIndicator(personaButtons.find((b) => b.getAttribute("aria-selected") === "true"), false));
+  if (!reduceMotion) whileVisible(document.querySelector(".personas"), (visible) => {
+    clearInterval(personaTimer);
+    if (visible && !personaPicked) personaTimer = setInterval(() => {
+      const current = personaButtons.findIndex((b) => b.getAttribute("aria-selected") === "true");
+      choose(personaButtons[(current + 1) % personaButtons.length]);
+    }, 3200);
   });
 
-  // Sections fade up once as they arrive.
+  // Groups arrive one item after another, 70ms apart.
+  document.querySelectorAll("[data-stagger]").forEach((group) => {
+    [...group.children].forEach((child, i) => { child.classList.add("reveal"); child.style.setProperty("--i", i); });
+  });
+
+  // The price rolls up a character at a time.
+  const digits = document.querySelector(".amount .digits");
+  digits.innerHTML = [...digits.textContent].map((c, i) => `<span aria-hidden="true" style="--i: ${i}">${c}</span>`).join("");
+
+  // Everything arrives once, as it scrolls into view.
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add("is-in"); observer.unobserve(entry.target); } });
   }, { rootMargin: "0px 0px -10% 0px" });
   document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+
+  // The agent banners take turns growing out of the notch, like they do on a real Mac.
+  const agentBanners = [...document.querySelectorAll(".agent-banners img")];
+  let agentTurn = 0, agentTimer;
+  agentBanners[0].classList.add("is-shown");
+  if (!reduceMotion) whileVisible(document.querySelector(".agents"), (visible) => {
+    clearInterval(agentTimer);
+    if (visible) agentTimer = setInterval(() => {
+      agentBanners[agentTurn].classList.remove("is-shown");
+      agentTurn = (agentTurn + 1) % agentBanners.length;
+      setTimeout(() => agentBanners[agentTurn].classList.add("is-shown"), 260); // the last one tucks away first
+    }, 3000);
+  });
 </script>
 </body>
 </html>

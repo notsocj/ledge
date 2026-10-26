@@ -35,21 +35,8 @@ h3 { font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 65
 p { margin: 0; }
 .lede { color: var(--mist); font-size: clamp(17px, 1.6vw, 20px); max-width: 40ch; }
 
-/* Navigation */
-/* A frosted bar across the full width; its contents line up with the page. */
-.nav {
-  position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px max(20px, (100% - 1080px) / 2);
-  background: rgba(7, 14, 26, 0.72);
-  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border-bottom: 1px solid rgba(255, 248, 239, 0.06);
-}
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: -0.01em; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: -0.01em; }
 .brand img { width: 26px; height: 26px; }
-.nav-links { display: flex; align-items: center; gap: 28px; font-size: 15px; }
-.nav-links a { text-decoration: none; color: var(--mist); transition: color 150ms ease; }
-.nav-links a:hover { color: var(--cream); }
 
 .button {
   display: inline-flex; align-items: center; gap: 8px;
@@ -58,18 +45,17 @@ p { margin: 0; }
   font-weight: 650; font-size: 16px; text-decoration: none;
   transition: transform 160ms var(--ease-out), background 150ms ease;
 }
-.button:hover { background: #fff; }
+@media (hover: hover) and (pointer: fine) { .button:hover { background: #fff; } }
 .button:active { transform: scale(0.97); }
 .button.small { padding: 8px 16px; font-size: 14px; }
 .button.quiet { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1px rgba(255, 248, 239, 0.22); }
-.button.quiet:hover { background: rgba(255, 248, 239, 0.08); }
+@media (hover: hover) and (pointer: fine) { .button.quiet:hover { background: rgba(255, 248, 239, 0.08); } }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-.nav .button { color: #0b1424; }
 
 /* Hero: a dusk sky and the top of a MacBook screen */
 .hero {
   position: relative; overflow: hidden;
-  padding: 72px 0 120px;
+  padding: 128px 0 120px;
   background:
     radial-gradient(120% 70% at 50% 110%, rgba(143, 178, 218, 0.35), transparent 60%),
     linear-gradient(180deg, var(--night) 0%, var(--dusk) 42%, #24467a 82%, var(--horizon) 100%);
@@ -88,6 +74,21 @@ p { margin: 0; }
 }
 .hero-copy { width: var(--page); margin: 0 auto; text-align: center; display: grid; justify-items: center; gap: 22px; position: relative; }
 .hero-copy .lede { margin: 0 auto; }
+h1 .rise { display: inline-block; }
+
+/* The page's one orchestrated moment: the headline rises line by line, then the screen comes up under it. */
+.rise { animation: rise 900ms var(--ease-out) both; animation-delay: calc(100ms + var(--i, 0) * 90ms); }
+@keyframes rise { from { opacity: 0; translate: 0 28px; filter: blur(8px); } }
+.stage { animation: stage-rise 1100ms var(--ease-island) 520ms both; }
+@keyframes stage-rise { from { opacity: 0; translate: 0 64px; scale: 0.96; } }
+
+/* Scrolling away, the screen sinks back and the stars drift up, so the hero hands over instead of cutting off. */
+@supports (animation-timeline: view()) {
+  .screen { animation: recede linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+  @keyframes recede { to { scale: 0.92; opacity: 0.35; } }
+  .hero::before { animation: drift linear both; animation-timeline: scroll(); animation-range: 0 100vh; }
+  @keyframes drift { to { translate: 0 -80px; } }
+}
 .fineprint { color: var(--ash); font-size: 14px; }
 
 .stage { width: min(900px, 100% - 32px); margin: 56px auto 0; position: relative; }
@@ -127,7 +128,14 @@ p { margin: 0; }
   transition: opacity 140ms ease 60ms;
 }
 .island.is-open .open { clip-path: inset(0 0 0 0 round 0 0 30px 30px); }
-.island.is-open .closed { opacity: 0; transition-delay: 0ms; }
+.island.is-open .closed, .island.is-banner .closed { opacity: 0; transition-delay: 0ms; }
+/* An alert grows sideways out of the notch: it starts exactly the width of the closed island (273 of 433). */
+.island .banner {
+  position: absolute; top: 0; left: 11.27%; width: 77.46%; /* 433 / 559, centred */
+  opacity: 0; clip-path: inset(0 18.48% 0 18.48% round 0 0 10px 10px);
+  transition: clip-path 520ms var(--ease-island), opacity 140ms ease;
+}
+.island.is-banner .banner { opacity: 1; clip-path: inset(0 0 0 0 round 0 0 12px 12px); }
 .hotspot { position: absolute; top: 0; left: 24%; width: 52%; height: 22%; cursor: pointer; }
 .hint { text-align: center; color: var(--ash); font-size: 13px; margin-top: 18px; transition: opacity 300ms ease; }
 
@@ -139,16 +147,24 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
 
 /* Personas */
 .personas { display: grid; grid-template-columns: 240px 1fr; gap: 48px; align-items: center; }
-.persona-list { display: grid; gap: 4px; }
+.persona-list { display: grid; gap: 4px; position: relative; }
+.persona-indicator {
+  position: absolute; top: 0; left: 0; border-radius: 12px; background: var(--rail); pointer-events: none;
+  transition: transform 380ms var(--ease-island);
+}
 .persona {
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 12px 14px; border: 0; border-radius: 12px;
   background: transparent; color: var(--mist); text-align: left;
   font: inherit; font-weight: 600; cursor: pointer;
+  position: relative; /* above the sliding pill */
   transition: background 150ms ease, color 150ms ease;
 }
-.persona:hover { color: var(--cream); background: var(--rail); }
-.persona[aria-selected="true"] { background: var(--rail); color: var(--cream); }
+.persona:active { scale: 0.98; }
+@media (hover: hover) and (pointer: fine) {
+  .persona:hover { color: var(--cream); background: rgba(255, 248, 239, 0.04); }
+}
+.persona[aria-selected="true"] { color: var(--cream); }
 .icon { width: 18px; height: 18px; flex: none; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
 .persona-view { display: grid; gap: 22px; }
 /* A slice of screen: dusk wallpaper with the island hanging from its top edge, where it really lives. */
@@ -158,8 +174,12 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
   padding: 0 6% 7%;
 }
 .persona-frame { position: relative; display: grid; align-items: start; }
-.persona-frame img { grid-area: 1 / 1; width: 100%; opacity: 0; transition: opacity 220ms ease; }
-.persona-frame img.is-active { opacity: 1; }
+/* Swapping personas: the old Home softens away as the new one sharpens in, so it reads as one island changing. */
+.persona-frame img {
+  grid-area: 1 / 1; width: 100%; opacity: 0; scale: 0.985; filter: blur(6px);
+  transition: opacity 320ms var(--ease-out), scale 420ms var(--ease-out), filter 320ms var(--ease-out);
+}
+.persona-frame img.is-active { opacity: 1; scale: 1; filter: none; }
 .persona-note { color: var(--mist); min-height: 3.2em; }
 
 /* Closed-notch moments */
@@ -171,6 +191,9 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
 }
 .moment .bar { position: relative; display: grid; justify-items: center; padding-bottom: 26px; background: rgba(8, 14, 26, 0.28); }
 .moment .bar img { width: 88%; max-width: 433px; height: auto; } /* banners shrink to their card, pinned to the top like on screen */
+/* Each card's alert grows out of the notch as the card arrives, the way it does on screen. */
+.moment .bar img { clip-path: inset(0 32% 0 32% round 0 0 10px 10px); transition: clip-path 620ms var(--ease-island) calc(240ms + var(--i, 0) * 70ms); }
+.moment.is-in .bar img { clip-path: inset(0 0 0 0 round 0 0 12px 12px); }
 .moment p { padding: 16px 18px 18px; color: var(--mist); font-size: 15px; }
 .moment strong { color: var(--cream); font-weight: 650; display: block; margin-bottom: 2px; }
 
@@ -179,6 +202,11 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
 .row { display: grid; grid-template-columns: 1.25fr 1fr; gap: 56px; align-items: center; }
 .row:nth-child(even) .row-image { order: 2; }
 .row-image img { width: 100%; }
+/* A tab opens downward from the notch, like hovering the real one. */
+.row-image img { clip-path: inset(0 27% 82% 27% round 0 0 10px 10px); transition: clip-path 900ms var(--ease-island) 160ms; }
+.row.is-in .row-image img { clip-path: inset(0 0 0 0 round 0 0 28px 28px); }
+.row-copy { opacity: 0; translate: 0 12px; transition: opacity 600ms var(--ease-out) 320ms, translate 600ms var(--ease-out) 320ms; }
+.row.is-in .row-copy { opacity: 1; translate: 0 0; }
 .row-copy { display: grid; gap: 12px; }
 .row-copy p { color: var(--mist); max-width: 38ch; }
 
@@ -188,8 +216,14 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
   padding: 56px; border-radius: 28px; border: 1px solid var(--rail);
   background: radial-gradient(120% 120% at 0% 0%, rgba(67, 104, 154, 0.35), transparent 60%), #0b1628;
 }
-.agent-banners { display: grid; gap: 14px; justify-items: center; }
-.agent-banners img { height: 32px; width: auto; max-width: none; }
+.agent-banners { display: grid; justify-items: center; }
+/* One notch, two agents: the banners share a spot and take turns. */
+.agent-banners img {
+  grid-area: 1 / 1; width: min(433px, 100%); height: auto;
+  opacity: 0; clip-path: inset(0 32% 0 32% round 0 0 10px 10px);
+  transition: clip-path 520ms var(--ease-island), opacity 160ms ease;
+}
+.agent-banners img.is-shown { opacity: 1; clip-path: inset(0 0 0 0 round 0 0 12px 12px); }
 .agent-copy { display: grid; gap: 14px; }
 .agent-copy p { color: var(--mist); }
 
@@ -197,17 +231,29 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
 .keys { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 48px; }
 .key { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--rail); }
 .key span { color: var(--mist); }
-kbd { font: 600 15px -apple-system, system-ui, sans-serif; color: var(--cream); white-space: nowrap; }
+kbd {
+  font: 600 15px -apple-system, system-ui, sans-serif; color: var(--cream); white-space: nowrap;
+  padding: 4px 10px; border-radius: 8px; background: rgba(255, 248, 239, 0.06);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35), 0 0 0 1px var(--rail);
+  transition: translate 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .key:hover kbd { translate: 0 1px; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 0 0 1px var(--rail); } /* the key goes down */
+}
 
 /* Privacy, pricing, FAQ */
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
 .points { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; }
 .points li { color: var(--mist); padding-left: 22px; position: relative; }
-.points li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 8px; border-radius: 50%; background: var(--horizon); }
+.points li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 8px; border-radius: 50%; background: var(--horizon); scale: 0.5; transition: scale 500ms var(--ease-out) calc(200ms + var(--i, 0) * 70ms); }
+.points li.is-in::before { scale: 1; }
 .points strong { color: var(--cream); font-weight: 650; }
 
 .price { text-align: center; display: grid; justify-items: center; gap: 18px; }
 .price .amount { font: 700 clamp(64px, 10vw, 120px)/1 -apple-system, "SF Pro Display", system-ui, sans-serif; letter-spacing: -0.05em; }
+.price .amount .digits { display: inline-flex; overflow: hidden; padding: 0.04em 0.02em; }
+.price .amount .digits span { display: inline-block; translate: 0 105%; transition: translate 800ms var(--ease-island) calc(150ms + var(--i, 0) * 55ms); }
+.price.is-in .amount .digits span { translate: 0 0; }
 .price .amount small { font-size: 0.32em; letter-spacing: -0.01em; color: var(--mist); font-weight: 600; margin-left: 6px; }
 .price ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; list-style: none; padding: 0; margin: 4px 0 8px; color: var(--mist); }
 
@@ -218,26 +264,63 @@ kbd { font: 600 15px -apple-system, system-ui, sans-serif; color: var(--cream); 
 .faq summary::after { content: "+"; color: var(--mist); font-weight: 400; transition: rotate 200ms var(--ease-out); }
 .faq details[open] summary::after { rotate: 45deg; }
 .faq details p { color: var(--mist); padding: 0 0 22px; max-width: 62ch; }
+/* Answers open smoothly where the browser can animate to auto height, and instantly elsewhere. */
+@supports selector(::details-content) {
+  .faq { interpolate-size: allow-keywords; }
+  .faq details::details-content { block-size: 0; overflow: clip; transition: block-size 300ms var(--ease-out), content-visibility 300ms allow-discrete; }
+  .faq details[open]::details-content { block-size: auto; }
+  .faq details p { opacity: 0; translate: 0 -4px; transition: opacity 240ms var(--ease-out), translate 240ms var(--ease-out); }
+  .faq details[open] p { opacity: 1; translate: 0 0; }
+}
 
 .closing { text-align: center; padding: 140px 0 120px; display: grid; justify-items: center; gap: 22px; }
-.closing img { width: 96px; height: 96px; }
+.closing img { width: 96px; height: 96px; scale: 0.9; transition: scale 900ms var(--ease-island) 120ms, translate 300ms var(--ease-out); }
+.closing.is-in img { scale: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .closing img:hover { translate: 0 -6px; } /* it hovers, like its namesake */
+}
 
-footer { width: var(--page); margin: 0 auto; padding: 32px 0 48px; border-top: 1px solid var(--rail); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; color: var(--ash); font-size: 13px; }
-footer a { color: var(--mist); }
+/* The page's only navigation lives here, at the end of the read. */
+footer { width: var(--page); margin: 0 auto; padding: 40px 0 56px; border-top: 1px solid var(--rail); display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 24px 32px; }
+.footer-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 28px; font-size: 15px; }
+.footer-links a {
+  color: var(--mist); text-decoration: none; padding-bottom: 2px;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: color 150ms ease, background-size 260ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .footer-links a:hover { color: var(--cream); background-size: 100% 1px; }
+}
+footer .credits { grid-column: 1 / -1; margin: 0; color: var(--ash); font-size: 13px; }
+footer .credits a { color: var(--mist); }
+.doc > .brand { margin-bottom: 40px; }
 
-/* A single reveal as each section arrives; nothing moves for people who'd rather it didn't. */
-.reveal { opacity: 0; translate: 0 16px; transition: opacity 600ms var(--ease-out), translate 600ms var(--ease-out); }
-.reveal.is-in { opacity: 1; translate: 0 0; }
+/* Each block arrives once as it scrolls in; groups follow one item at a time. Headings sharpen out of a blur. */
+.reveal {
+  opacity: 0; translate: 0 24px;
+  transition: opacity 700ms var(--ease-out), translate 700ms var(--ease-out), filter 700ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.reveal:is(.section-head, .closing) { filter: blur(6px); }
+.reveal.is-in { opacity: 1; translate: 0 0; filter: none; }
 
+/* Reduced motion keeps the fades that explain a change and drops everything that travels, scales or loops. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .reveal { opacity: 1; translate: none; transition: none; }
-  .island .open, .island .closed { transition: none; }
-  .persona-frame img { transition: opacity 120ms ease; }
+  .rise, .stage, .screen, .hero::before { animation: none; }
+  .reveal, .row-copy { translate: none; filter: none; transition: opacity 200ms ease; }
+  .moment .bar img, .row-image img, .agent-banners img { clip-path: none; transition: opacity 200ms ease; }
+  .island .open, .island .closed, .island .banner { transition: none; }
+  .persona-indicator, .persona-frame img { transition: opacity 150ms ease; scale: 1; filter: none; }
+  .price .amount .digits span { translate: none; transition: none; }
+  .points li::before { scale: 1; transition: none; }
+  .closing img { scale: 1; transition: none; }
+  .faq details::details-content, .faq details p { transition: none; }
 }
 
 @media (max-width: 860px) {
-  .nav-links a:not(.button) { display: none; }
+  footer { grid-template-columns: 1fr; }
+  .footer-links { justify-content: flex-start; }
   .personas, .row, .agents, .split { grid-template-columns: 1fr; gap: 28px; }
   .row:nth-child(even) .row-image { order: 0; }
   .persona-list { grid-template-columns: repeat(3, 1fr); }
