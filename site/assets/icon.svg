@@ -1,22 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <!-- Soft paper: warm white at the top, a breath of blue toward the bottom. -->
-    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FBFAF7"/>
-      <stop offset="1" stop-color="#E6EBF2"/>
-    </linearGradient>
-    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6385B4"/>
-      <stop offset="1" stop-color="#3E5F8E"/>
-    </linearGradient>
     <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
   </defs>
-  <!-- macOS icon grid: an 824pt rounded square centred on a 1024 canvas. -->
+  <!-- macOS icon grid: an 824pt rounded square centred on a 1024 canvas, in one light dusk blue. -->
   <g clip-path="url(#tile)">
-    <rect x="100" y="100" width="824" height="824" fill="url(#paper)"/>
-    <!-- The notch, hanging from the top edge with the real one's flared shoulders. -->
-    <path d="M372 100 Q 400 100 400 128 L 400 142 Q 400 178 436 178 L 588 178 Q 624 178 624 142 L 624 128 Q 624 100 652 100 Z" fill="#161A22"/>
+    <rect x="100" y="100" width="824" height="824" fill="#A3BBDC"/>
+    <!-- The notch: wide and shallow like a MacBook's, with concave shoulders flaring into the top edge. -->
+    <path d="M232 100 Q 272 100 272 140 L 272 196 Q 272 268 344 268 L 680 268 Q 752 268 752 196 L 752 140 Q 752 100 792 100 Z" fill="#0E1118"/>
   </g>
-  <!-- The kestrel from kestrel-mark.svg, its corners rounded by a matching stroke. -->
-  <path transform="translate(230 250) scale(1.1)" fill="url(#ink)" stroke="url(#ink)" stroke-width="16" stroke-linejoin="round" d="M256 152 C 268 152 276 161 276 172 C 276 181 272 187 267 191 L 276 202 C 330 188 410 156 480 116 C 452 196 368 266 282 292 L 276 326 L 292 404 Q 256 414 220 404 L 236 326 L 230 292 C 144 266 60 196 32 116 C 102 156 182 188 236 202 L 245 191 C 240 187 236 181 236 172 C 236 161 244 152 256 152 Z"/>
 </svg>
