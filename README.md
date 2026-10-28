@@ -22,7 +22,7 @@
   &nbsp;·&nbsp;
   <a href="#build-it-yourself">Build it yourself</a>
   &nbsp;·&nbsp;
-  <a href="https://tryledge.vercel.app">Website</a>
+  <a href="https://tryledge-blue.vercel.app">Website</a>
 </p>
 
 <p align="center">
