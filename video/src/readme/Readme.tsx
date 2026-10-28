@@ -147,7 +147,7 @@ export const ReadmePersonas: React.FC = () => (
     {PERSONAS.map((p) => (
       <div key={p.name}>
         <Still s={shot(p.src, 1118, p.h)} width={1240} height={410} />
-        <div style={{...caption, marginBottom: 50}}>
+        <div style={{...caption, fontSize: 50, marginBottom: 50}}>
           <span style={label}>{p.name}</span> <span style={{color: C.mist}}>{p.leads}</span>
         </div>
       </div>
@@ -155,4 +155,4 @@ export const ReadmePersonas: React.FC = () => (
   </AbsoluteFill>
 );
 export const PERSONAS_WIDTH = 2 * 1240 + 40 + 2 * PAD;
-export const PERSONAS_HEIGHT = 3 * (410 + 116) - 50 + 2 * PAD;
+export const PERSONAS_HEIGHT = 3 * (410 + 138) - 50 + 2 * PAD; // caption: 50px type at 1.35, 20 above, 50 below

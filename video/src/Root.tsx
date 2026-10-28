@@ -8,7 +8,7 @@ export const RemotionRoot: React.FC = () => {
     <>
       <Composition id="LedgeShowreel" component={Showreel} durationInFrames={1260} fps={30} width={1920} height={1080} />
       <Composition id="LedgeOneTake" component={OneTake} durationInFrames={870} fps={30} width={1920} height={1080} />
-      <Composition id="ReadmeLoop" component={ReadmeLoop} durationInFrames={LOOP_FRAMES} fps={30} width={1280} height={500} />
+      <Composition id="ReadmeLoop" component={ReadmeLoop} durationInFrames={LOOP_FRAMES} fps={30} width={1280} height={440} />
       <Composition id="ReadmeMoments" component={ReadmeMoments} durationInFrames={1} fps={30} width={MOMENTS_WIDTH} height={MOMENTS_HEIGHT} />
       <Composition id="ReadmePersonas" component={ReadmePersonas} durationInFrames={1} fps={30} width={PERSONAS_WIDTH} height={PERSONAS_HEIGHT} />
     </>
