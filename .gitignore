@@ -2,3 +2,5 @@
 build/
 vendor/
 site/Ledge.dmg
+.vercel
+.env*
