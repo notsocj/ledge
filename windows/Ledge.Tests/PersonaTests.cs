@@ -9,11 +9,11 @@ public class LayoutTests
         Assert.Equal(Enum.GetValues<Tool>(), Layout.Merging([]).Tools);
 
     [Fact]
-    public void DeveloperLeadsWithPorts()
+    public void DeveloperLeadsWithAgentsThenPorts()
     {
         var layout = Layout.Merging([Persona.Developer]);
-        Assert.Equal([Tool.Ports, Tool.KeepAwake, Tool.Timer, Tool.Media], layout.Tools);
-        Assert.Equal([Tool.Ports, Tool.Timer], layout.Tabs);
+        Assert.Equal([Tool.AgentAlerts, Tool.Ports], layout.Tools.Take(2));
+        Assert.Equal(Tool.Ports, layout.Tabs[0]);
     }
 
     [Fact]
@@ -28,9 +28,9 @@ public class LayoutTests
     [Fact]
     public void MergingTurnsOnWhatAnyPersonaWantsAtItsBestRank()
     {
-        // Designer ranks media first; Developer ranks ports first. Both are rank 0, so the first pick wins the tie.
-        Assert.Equal(Tool.Media, Layout.Merging([Persona.Designer, Persona.Developer]).Tools[0]);
-        Assert.Equal(Tool.Ports, Layout.Merging([Persona.Developer, Persona.Designer]).Tools[0]);
+        // Designer ranks the color picker first; Developer ranks agent alerts first. Both are rank 0, so the first pick wins the tie.
+        Assert.Equal(Tool.ColorPicker, Layout.Merging([Persona.Designer, Persona.Developer]).Tools[0]);
+        Assert.Equal(Tool.AgentAlerts, Layout.Merging([Persona.Developer, Persona.Designer]).Tools[0]);
         Assert.Contains(Tool.Ports, Layout.Merging([Persona.Designer, Persona.Developer]).Tools);
     }
 
