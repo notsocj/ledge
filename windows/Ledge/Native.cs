@@ -44,17 +44,17 @@ static partial class Native
     public static partial bool GetCursorPos(out POINT point);
 
     [LibraryImport("user32.dll")]
-    static partial nint MonitorFromPoint(POINT point, uint flags);
+    private static partial nint MonitorFromPoint(POINT point, uint flags);
 
     [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    static partial bool GetMonitorInfo(nint monitor, ref MONITORINFO info);
+    private static partial bool GetMonitorInfo(nint monitor, ref MONITORINFO info);
 
     [LibraryImport("shcore.dll")]
-    static partial int GetDpiForMonitor(nint monitor, int type, out uint dpiX, out uint dpiY);
+    private static partial int GetDpiForMonitor(nint monitor, int type, out uint dpiX, out uint dpiY);
 
     [LibraryImport("shell32.dll")]
-    static partial int SHQueryUserNotificationState(out int state);
+    private static partial int SHQueryUserNotificationState(out int state);
 
     /// <summary>The primary monitor's usable area (minus a taskbar docked at the top) and its scale.</summary>
     public static (RECT Work, double Scale) PrimaryMonitor()
