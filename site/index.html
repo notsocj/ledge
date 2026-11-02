@@ -335,6 +335,23 @@
       setTimeout(() => agentBanners[agentTurn].classList.add("is-shown"), 260); // the last one tucks away first
     }, 3000);
   });
+  // Visitors on Windows get the Windows installer, once a Windows release exists. Its releases aren't
+  // marked latest (that's the Mac one), so the newest windows-v* release is looked up instead.
+  if (/Windows/.test(navigator.userAgent)) {
+    fetch("https://api.github.com/repos/notsocj/ledge/releases?per_page=30")
+      .then((response) => response.json())
+      .then((releases) => {
+        const setup = releases.find((release) => release.tag_name.startsWith("windows-v"))
+          ?.assets.find((asset) => asset.name.endsWith("-Setup.exe"));
+        if (!setup) return;
+        for (const link of document.querySelectorAll('a[href$="Ledge.dmg"]')) {
+          link.href = setup.browser_download_url;
+          if (link.textContent === "Download for Mac") link.textContent = "Download for Windows";
+        }
+        for (const note of document.querySelectorAll(".fineprint")) note.textContent = note.textContent.replace("macOS 14", "Windows 10");
+      })
+      .catch(() => {}); // GitHub unreachable: the Mac links stay
+  }
 </script>
 </body>
 </html>

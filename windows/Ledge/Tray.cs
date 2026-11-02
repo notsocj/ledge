@@ -7,8 +7,16 @@ sealed class Tray : IDisposable
 {
     readonly Forms.NotifyIcon icon;
 
-    public Tray(IslandWindow island)
+    public Tray(IslandWindow island, Updates updates)
     {
+        var update = new Forms.ToolStripMenuItem { Visible = false };
+        update.Click += (_, _) => updates.Restart();
+        updates.Ready += version =>
+        {
+            update.Text = $"Restart to update to {version}";
+            update.Visible = true;
+            island.ShowBanner("Update ready", $"Ledge {version}, from the tray menu", 6);
+        };
         var startAtLogin = new Forms.ToolStripMenuItem("Start Ledge when you sign in") { CheckOnClick = true };
         startAtLogin.Click += (_, _) => StartAtLogin.IsOn = startAtLogin.Checked;
         var menu = new Forms.ContextMenuStrip();
@@ -18,6 +26,7 @@ sealed class Tray : IDisposable
         menu.Items.Add("Show a test alert", null, (_, _) => island.ShowBanner("Test alert", "Ledge is running"));
         menu.Items.Add(startAtLogin);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(update);
         menu.Items.Add("Quit Ledge", null, (_, _) => System.Windows.Application.Current.Shutdown());
 
         using var stream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Ledge.ico")).Stream;

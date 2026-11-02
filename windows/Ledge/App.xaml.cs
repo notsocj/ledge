@@ -1,4 +1,5 @@
 using System.Windows;
+using Velopack;
 
 namespace Ledge;
 
@@ -6,6 +7,28 @@ public partial class App : Application
 {
     Mutex? running;
     Tray? tray;
+    Updates? updates;
+
+    [STAThread]
+    static void Main()
+    {
+        // The installer runs Ledge with its own arguments while installing, updating and uninstalling;
+        // Run() handles those and exits. Otherwise it returns at once.
+        VelopackApp.Build().OnBeforeUninstallFastCallback(_ => Uninstalling()).Run();
+        var app = new App();
+        app.InitializeComponent();
+        app.Run();
+    }
+
+    /// <summary>Leaves nothing pointing at a Ledge that's gone: no sign-in entry, no agent hooks.</summary>
+    static void Uninstalling()
+    {
+        StartAtLogin.IsOn = false;
+        var agents = new AgentAlerts();
+        agents.Refresh();
+        if (agents.Claude == AgentAlerts.Status.Connected) agents.Disconnect(AgentAlerts.Agent.Claude);
+        if (agents.Codex == AgentAlerts.Status.Connected) agents.Disconnect(AgentAlerts.Agent.Codex);
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -27,13 +50,16 @@ public partial class App : Application
         var island = new IslandWindow();
         MainWindow = island;
         island.Show();
-        tray = new Tray(island);
+        updates = new Updates();
+        tray = new Tray(island, updates);
+        updates.Start();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         tray?.Dispose();
         running?.Dispose();
+        updates?.ApplyOnExit();
         base.OnExit(e);
     }
 }

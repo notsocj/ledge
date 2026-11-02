@@ -2,6 +2,7 @@ name: Windows
 
 on:
   push:
+    branches: ['**'] # tags go to windows-release.yml
     paths: ['windows/**', '.github/workflows/windows.yml']
   pull_request:
     paths: ['windows/**', '.github/workflows/windows.yml']
@@ -24,3 +25,14 @@ jobs:
         with:
           name: Ledge-${{ matrix.rid }}
           path: out/Ledge.exe
+      # The installer too, so packaging problems show up before a release is tagged.
+      - if: matrix.rid == 'win-x64'
+        shell: bash
+        run: |
+          dotnet tool install -g vpk --version 1.2.161
+          vpk pack --packId Ledge --packVersion 0.1.0 --packDir out --mainExe Ledge.exe --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico --shortcuts StartMenuRoot --outputDir releases
+      - if: matrix.rid == 'win-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ledge-win-Setup
+          path: releases/*-Setup.exe

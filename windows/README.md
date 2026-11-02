@@ -1,6 +1,14 @@
 # Ledge for Windows
 
-Early work on a Windows version of Ledge. Windows laptops have no notch, so the island floats as a pill
+Download `Ledge-win-Setup.exe` from the newest
+[Windows release](https://github.com/notsocj/ledge/releases) and run it. It installs for you only (no
+admin rights) into `%LOCALAPPDATA%\Ledge`, adds Ledge to the Start menu, and keeps itself up to date
+from GitHub: a new version downloads quietly and goes in when Ledge quits, or straight away from
+**Restart to update** in the notification-area menu. Uninstall from Settings > Apps; that also removes
+the sign-in entry and any coding agent hooks. The installer isn't code-signed yet, so Windows may show
+"Windows protected your PC": choose **More info**, then **Run anyway**.
+
+The Windows version of Ledge. Windows laptops have no notch, so the island floats as a pill
 at the top centre of the screen. Rest the pointer on it, push the pointer against the top edge above it,
 or tap it to open it. Ledge's icon in the notification area has the menu: a test alert, start at sign-in,
 and Quit.
@@ -35,6 +43,8 @@ adds two hooks to `~/.claude/settings.json` and a `notify` line to `~/.codex/con
 keeps running after Ledge's, and disconnecting removes only what Ledge added. If you move `Ledge.exe`,
 the hooks follow it the next time it starts.
 
+## Build it yourself
+
 Needs Windows 10 (2004) or later and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
 
 ```powershell
@@ -43,4 +53,12 @@ dotnet test windows/Ledge.Tests
 ```
 
 Every push that touches `windows/` is built on GitHub Actions for x64 and Arm64; the builds are
-attached to the run as artifacts.
+attached to the run as artifacts. A copy run straight from a build never updates itself.
+
+## Releasing
+
+Push a tag named `windows-v` and the version, for example `windows-v0.1.0`. The
+[Windows release workflow](../.github/workflows/windows-release.yml) runs the tests, builds the installer
+with [Velopack](https://velopack.io) and publishes a GitHub release with it. Windows releases are never
+marked latest, so the Mac download links and the Homebrew tap keep pointing at the Mac release. The
+website finds the newest `windows-v` release on its own and offers it to visitors on Windows.
