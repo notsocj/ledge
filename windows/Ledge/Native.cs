@@ -56,6 +56,12 @@ static partial class Native
     [LibraryImport("shell32.dll")]
     private static partial int SHQueryUserNotificationState(out int state);
 
+    [LibraryImport("kernel32.dll")]
+    public static partial uint SetThreadExecutionState(uint flags);
+
+    [LibraryImport("iphlpapi.dll")]
+    public static partial uint GetExtendedTcpTable(nint table, ref int size, int sort, int addressFamily, int tableClass, uint reserved);
+
     /// <summary>The primary monitor's usable area (minus a taskbar docked at the top) and its scale.</summary>
     public static (RECT Work, double Scale) PrimaryMonitor()
     {

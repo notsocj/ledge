@@ -10,25 +10,32 @@ namespace Ledge;
 
 public partial class IslandWindow : Window
 {
-    static readonly Size ClosedSize = new(180, 32), BannerSize = new(380, 32), OpenSize = new(560, 200);
+    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), BannerSize = new(380, 32), OpenSize = new(560, 220);
     /// <summary>The open island's corner. Closed, the corner is half the height, which makes it a pill.</summary>
     const double OpenCorner = 28;
 
+    readonly Tools tools;
     readonly Spring width = new(ClosedSize.Width), height = new(ClosedSize.Height);
     readonly HoverIntent hover = new();
     readonly Stopwatch clock = Stopwatch.StartNew();
     readonly DispatcherTimer pointerTimer = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(100) };
     readonly DispatcherTimer fullScreenTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    readonly DispatcherTimer batteryTimer = new() { Interval = TimeSpan.FromSeconds(30) };
+    readonly DispatcherTimer countdownTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     readonly DispatcherTimer bannerTimer = new();
+    readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
-    bool animating, expanded;
+    bool animating, expanded, hasWings;
     /// <summary>Top of the usable screen, in screen pixels; below a taskbar docked at the top.</summary>
     double screenTop;
 
     public IslandWindow()
     {
         InitializeComponent();
+        tools = new Tools(Dispatcher);
+        OpenView.Attach(tools);
         Apply();
+
         SourceInitialized += (_, _) =>
         {
             MakeUnobtrusive();
@@ -36,13 +43,39 @@ public partial class IslandWindow : Window
         };
         DpiChanged += (_, _) => Place();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
-        Closed += (_, _) => SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+        SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        Closed += (_, _) =>
+        {
+            SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+            SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
+
         pointerTimer.Tick += (_, _) => FollowPointer();
         pointerTimer.Start();
         fullScreenTimer.Tick += (_, _) => GetOutOfFullScreenApps();
         fullScreenTimer.Start();
         bannerTimer.Tick += (_, _) => EndBanner();
+
+        tools.NowPlaying.Changed += () =>
+        {
+            OpenView.RefreshMedia();
+            RefreshWings();
+        };
+        _ = tools.NowPlaying.StartAsync();
+
+        tools.Battery.Changed += OpenView.RefreshBattery;
+        tools.Battery.Alert += (title, detail) => ShowBanner(title, detail);
+        batteryTimer.Tick += (_, _) => tools.Battery.Check();
+        batteryTimer.Start();
+        tools.Battery.Check();
+
+        countdownTimer.Tick += (_, _) => TickCountdown();
+        OpenView.Changed += () =>
+        {
+            if (tools.Countdown.IsRunning) countdownTimer.Start();
+            TickCountdown();
+        };
     }
 
     /// <summary>Slides an alert out of the closed island for a few seconds.</summary>
@@ -51,18 +84,16 @@ public partial class IslandWindow : Window
         if (expanded) return; // the open island already has the user's attention
         BannerTitle.Text = title;
         BannerDetail.Text = detail;
-        MoveTo(BannerSize);
-        Fade(BannerContent, true);
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
+        UpdateShape();
     }
 
     void EndBanner()
     {
         bannerTimer.Stop();
-        Fade(BannerContent, false);
-        if (!expanded) MoveTo(ClosedSize);
+        UpdateShape();
     }
 
     void SetExpanded(bool open)
@@ -70,9 +101,53 @@ public partial class IslandWindow : Window
         if (expanded == open) return;
         expanded = open;
         hover.Reset();
-        if (open && bannerTimer.IsEnabled) EndBanner();
-        MoveTo(open ? OpenSize : ClosedSize);
-        Fade(OpenContent, open);
+        bannerTimer.Stop();
+        OpenView.SetOpen(open);
+        UpdateShape();
+    }
+
+    /// <summary>The one place that decides the island's shape and which content shows.</summary>
+    void UpdateShape()
+    {
+        var banner = bannerTimer.IsEnabled && !expanded;
+        var wings = hasWings && !expanded && !banner;
+        MoveTo(expanded ? OpenSize : banner ? BannerSize : wings ? WingsSize : ClosedSize);
+        Fade(OpenView, expanded);
+        OpenView.IsHitTestVisible = expanded;
+        Fade(BannerContent, banner);
+        Fade(Wings, wings);
+    }
+
+    // Closed island
+
+    void TickCountdown()
+    {
+        var countdown = tools.Countdown;
+        if (countdown.Tick()) ShowBanner("Timer done", $"{(int)countdown.Total.TotalMinutes} min");
+        if (!countdown.IsRunning) countdownTimer.Stop(); // paused, cancelled or done: nothing to count
+        OpenView.RefreshTimer();
+        RefreshWings();
+    }
+
+    /// <summary>A timer takes the sides over what's playing; music shows only while it plays.</summary>
+    void RefreshWings()
+    {
+        var countdown = tools.Countdown;
+        var media = tools.NowPlaying;
+        var art = !countdown.IsActive && media.IsPlaying ? media.Artwork : null;
+        WingArt.Background = art is null ? null : new ImageBrush(art) { Stretch = Stretch.UniformToFill };
+        WingGlyph.Text = countdown.IsActive ? "" : art is null ? "" : "";
+        WingText.Text = countdown.IsActive ? Countdown.Format(countdown.Remaining) : "";
+        WingRightGlyph.Visibility = !countdown.IsActive && media.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
+        var wings = countdown.IsActive || media.IsPlaying;
+        if (wings == hasWings) return;
+        hasWings = wings;
+        UpdateShape();
+    }
+
+    void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
+    {
+        if (e.Mode == PowerModes.StatusChange) Dispatcher.BeginInvoke(new Action(tools.Battery.Check)); // plugged in or out
     }
 
     // Motion
@@ -80,6 +155,7 @@ public partial class IslandWindow : Window
     /// <summary>Opening and alerts get a spring with a little bounce; shrinking is quicker and doesn't bounce.</summary>
     void MoveTo(Size size)
     {
+        if (size.Width == width.Target && size.Height == height.Target) return;
         if (!SystemParameters.ClientAreaAnimation) // Windows' "Animation effects" setting is off
         {
             width.Snap(size.Width);
@@ -118,8 +194,10 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>Content fades in just after the island starts to grow, and out quickly as it shrinks.</summary>
-    static void Fade(UIElement element, bool show)
+    void Fade(UIElement element, bool show)
     {
+        if (shown.TryGetValue(element, out var was) && was == show) return;
+        shown[element] = show;
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(show ? 1 : 0, TimeSpan.FromMilliseconds(show ? 200 : 100))
         {
             BeginTime = TimeSpan.FromMilliseconds(show ? 80 : 0),

@@ -1,3 +1,91 @@
 <Application x:Class="Ledge.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"/>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Application.Resources>
+    <!-- The island is pure black; everything on it is white at a few fixed strengths, as on the Mac.
+         The quieter text strengths keep at least 4.5:1 contrast on black. -->
+    <SolidColorBrush x:Key="Graphite" Color="#A3FFFFFF"/>
+    <SolidColorBrush x:Key="Ash" Color="#75FFFFFF"/>
+    <SolidColorBrush x:Key="Rail" Color="#24FFFFFF"/>
+    <SolidColorBrush x:Key="Well" Color="#12FFFFFF"/>
+    <SolidColorBrush x:Key="Live" Color="#30D158"/>
+    <SolidColorBrush x:Key="Warning" Color="#FF9F0A"/>
+    <FontFamily x:Key="Glyphs">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <Style x:Key="Glyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Glyphs}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- No chrome until hovered, and a slight press-down when clicked. Never takes keyboard focus,
+         since the island never takes focus from your app. -->
+    <Style x:Key="Quiet" TargetType="ButtonBase">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ButtonBase">
+            <Border x:Name="Plate" Background="{TemplateBinding Background}" CornerRadius="14" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Rail}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A round button holding a glyph. -->
+    <Style x:Key="Icon" TargetType="ButtonBase" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Width" Value="28"/>
+      <Setter Property="Height" Value="28"/>
+    </Style>
+
+    <!-- A labelled button on a faint plate. -->
+    <Style x:Key="Pill" TargetType="ButtonBase" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Background" Value="{StaticResource Well}"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="14,0"/>
+      <Setter Property="Margin" Value="6,0,0,0"/>
+    </Style>
+
+    <Style x:Key="Tab" TargetType="RadioButton" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Foreground" Value="{StaticResource Ash}"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="12,0"/>
+      <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Foreground" Value="White"/>
+          <Setter Property="Background" Value="{StaticResource Rail}"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Toggle" TargetType="ToggleButton" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Background" Value="{StaticResource Well}"/>
+      <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+      <Setter Property="Padding" Value="14,0"/>
+      <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Background" Value="{StaticResource Rail}"/>
+          <Setter Property="Foreground" Value="White"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+  </Application.Resources>
+</Application>
