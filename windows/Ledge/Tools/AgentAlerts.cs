@@ -168,7 +168,7 @@ public sealed class AgentAlerts
                 if (await reader.ReadLineAsync() is { } line && line.Split('\t') is [var agent, var kind, var project])
                 {
                     var which = agent == "codex" ? Agent.Codex : Agent.Claude;
-                    dispatcher.BeginInvoke(new Action(() => Event?.Invoke(which, kind == "waiting", project)));
+                    _ = dispatcher.BeginInvoke(new Action(() => Event?.Invoke(which, kind == "waiting", project)));
                 }
             }
             catch (Exception)
