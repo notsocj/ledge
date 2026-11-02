@@ -21,6 +21,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Reads calendar links (ICS), including repeating meetings and time zones. MIT licensed. -->
+    <PackageReference Include="Ical.Net" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Windows Forms' global usings would clash with WPF's Application, Point and Size. -->
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />

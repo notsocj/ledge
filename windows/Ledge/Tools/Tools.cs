@@ -14,4 +14,5 @@ public sealed class Tools(Dispatcher dispatcher)
     public Shelf Shelf { get; } = new();
     public ColorPicker ColorPicker { get; } = new();
     public InUse InUse { get; } = new();
+    public CalendarFeed Calendar { get; } = new();
 }

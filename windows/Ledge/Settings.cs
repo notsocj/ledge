@@ -17,6 +17,8 @@ public sealed class Settings
     public List<Persona> Personas { get; set; } = [];
     /// <summary>Tools your personas include that you switched off in setup.</summary>
     public List<Tool> Off { get; set; } = [];
+    /// <summary>Your calendar's private ICS address. It stays in this file on this PC.</summary>
+    public string? CalendarLink { get; set; }
 
     [JsonIgnore] public Layout Layout => Layout.Merging(Personas);
 
