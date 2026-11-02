@@ -10,4 +10,6 @@ public sealed class Tools(Dispatcher dispatcher)
     public KeepAwake KeepAwake { get; } = new();
     public Countdown Countdown { get; } = new(() => DateTime.UtcNow);
     public AgentAlerts Agents { get; } = new();
+    public ClipboardHistory Clipboard { get; } = new();
+    public Shelf Shelf { get; } = new();
 }

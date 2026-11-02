@@ -56,6 +56,10 @@ static partial class Native
     [LibraryImport("shell32.dll")]
     private static partial int SHQueryUserNotificationState(out int state);
 
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool AddClipboardFormatListener(nint hwnd);
+
     [LibraryImport("kernel32.dll")]
     public static partial uint SetThreadExecutionState(uint flags);
 

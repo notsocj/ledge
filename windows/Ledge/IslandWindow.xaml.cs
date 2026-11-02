@@ -49,6 +49,28 @@ public partial class IslandWindow : Window
         {
             MakeUnobtrusive();
             Place();
+            tools.Clipboard.Listen(Handle);
+        };
+        ApplyToolSwitches();
+
+        // Files dragged onto the island go on the shelf; it opens on the shelf to show where they'll land.
+        Island.AllowDrop = true;
+        Island.DragEnter += (_, e) =>
+        {
+            if (!AcceptsDrop(e)) return;
+            SetExpanded(true);
+            OpenView.ShowTab(Tool.Shelf);
+        };
+        Island.DragOver += (_, e) =>
+        {
+            e.Effects = AcceptsDrop(e) ? DragDropEffects.Link : DragDropEffects.None;
+            e.Handled = true;
+        };
+        Island.Drop += (_, e) =>
+        {
+            if (!AcceptsDrop(e) || e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
+            var added = tools.Shelf.Add(files);
+            ShowBanner("Shelf", added == 1 ? "1 file added" : $"{added} files added");
         };
         DpiChanged += (_, _) => Place();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
@@ -125,9 +147,20 @@ public partial class IslandWindow : Window
         else SetExpanded(true);
     }
 
+    bool AcceptsDrop(DragEventArgs e) => settings.IsOn(Tool.Shelf) && e.Data.GetDataPresent(DataFormats.FileDrop);
+
+    /// <summary>Tools that work in the background stop when they're switched off.</summary>
+    void ApplyToolSwitches()
+    {
+        tools.Clipboard.Enabled = settings.IsOn(Tool.Clipboard);
+        if (!tools.Clipboard.Enabled) tools.Clipboard.Clear();
+        if (!settings.IsOn(Tool.Shelf)) tools.Shelf.Clear();
+    }
+
     void FinishSetup(Settings chosen)
     {
         settings = chosen;
+        ApplyToolSwitches();
         try
         {
             settings.Save(Settings.DefaultPath);

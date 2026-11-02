@@ -16,6 +16,8 @@ public partial class OpenPanel : UserControl
     bool open, portsShown;
     IReadOnlyList<Ports.Listener> listeners = [];
     readonly DispatcherTimer portsTimer = new() { Interval = TimeSpan.FromSeconds(3) };
+    /// <summary>Each tool with a tab of its own, and its page.</summary>
+    readonly Dictionary<Tool, (RadioButton Tab, FrameworkElement Page)> pages;
 
     /// <summary>The user changed something the closed island shows too, like starting a timer.</summary>
     public event Action? Changed;
@@ -24,11 +26,20 @@ public partial class OpenPanel : UserControl
     {
         InitializeComponent();
         portsTimer.Tick += async (_, _) => await RefreshPorts();
+        pages = new()
+        {
+            [Tool.Timer] = (TimerTab, TimerPage),
+            [Tool.Ports] = (PortsTab, PortsPage),
+            [Tool.Clipboard] = (ClipboardTab, ClipboardView),
+            [Tool.Shelf] = (ShelfTab, ShelfView),
+        };
     }
 
     public void Attach(Tools tools, Settings settings)
     {
         this.tools = tools;
+        ClipboardView.Attach(tools.Clipboard);
+        ShelfView.Attach(tools.Shelf);
         HomeTab.IsChecked = true;
         Apply(settings);
         RefreshBattery();
@@ -39,15 +50,13 @@ public partial class OpenPanel : UserControl
     public void Apply(Settings settings)
     {
         this.settings = settings;
-        var tabs = new Dictionary<Tool, RadioButton> { [Tool.Timer] = TimerTab, [Tool.Ports] = PortsTab };
         Tabs.Children.Clear();
         Tabs.Children.Add(HomeTab);
-        foreach (var (tool, tab) in tabs)
+        foreach (var (tool, (tab, _)) in pages)
         {
-            if (settings.IsOn(tool)) continue;
-            if (tab.IsChecked == true) HomeTab.IsChecked = true;
+            if (!settings.IsOn(tool) && tab.IsChecked == true) HomeTab.IsChecked = true;
         }
-        foreach (var tool in settings.Layout.Tabs.Where(settings.IsOn)) Tabs.Children.Add(tabs[tool]);
+        foreach (var tool in settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool))) Tabs.Children.Add(pages[tool].Tab);
         if (!settings.IsOn(Tool.KeepAwake) && tools.KeepAwake.IsOn) KeepAwake_Click(this, new RoutedEventArgs());
         KeepAwakeToggle.Visibility = settings.IsOn(Tool.KeepAwake) ? Visibility.Visible : Visibility.Collapsed;
         RefreshMedia();
@@ -66,9 +75,15 @@ public partial class OpenPanel : UserControl
     {
         if (tools is null) return; // during InitializeComponent
         HomePage.Visibility = HomeTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        TimerPage.Visibility = TimerTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        PortsPage.Visibility = PortsTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var (tab, page) in pages.Values) page.Visibility = tab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (ShelfTab.IsChecked == true) tools.Shelf.Prune();
         _ = UpdatePortsWatch();
+    }
+
+    /// <summary>Switches to a tool's tab, as when files are dragged onto the island.</summary>
+    public void ShowTab(Tool tool)
+    {
+        if (pages.TryGetValue(tool, out var page) && Tabs.Children.Contains(page.Tab)) page.Tab.IsChecked = true;
     }
 
     // Now playing
