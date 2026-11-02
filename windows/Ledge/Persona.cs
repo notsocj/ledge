@@ -1,7 +1,7 @@
 namespace Ledge;
 
 /// <summary>Tools you can switch off. Home and the battery alerts are always there.</summary>
-public enum Tool { Media, Timer, Ports, KeepAwake }
+public enum Tool { Media, Timer, Ports, KeepAwake, AgentAlerts, Clipboard, Shelf, ColorPicker, InUse, Calendar }
 
 /// <summary>What shows beside the closed island when more than one thing is live.</summary>
 public enum ClosedActivity { Timer, Media }
@@ -16,12 +16,12 @@ public static class Personas
 
     public static string Blurb(this Persona persona) => persona switch
     {
-        Persona.Developer => "Localhost ports, keep awake and a timer.",
-        Persona.Designer => "Your music while you work, and a timer.",
-        Persona.Creator => "Music first, a timer, and keep awake for long renders.",
-        Persona.Student => "A study timer, your music and keep awake.",
-        Persona.Professional => "A timer for calls and keep awake for presentations.",
-        _ => "Music and a timer. Nothing more.",
+        Persona.Developer => "Agent alerts, localhost ports and the clipboard.",
+        Persona.Designer => "A color picker, a shelf for assets and the clipboard.",
+        Persona.Creator => "Music, timers, a shelf for clips and what's using your mic.",
+        Persona.Student => "Timers, your class calendar and music.",
+        Persona.Professional => "Your meetings, what's using your mic and camera, and the clipboard.",
+        _ => "Music, shelf, clipboard and calendar. Nothing more.",
     };
 
     /// <summary>Segoe Fluent Icons glyphs.</summary>
@@ -38,12 +38,12 @@ public static class Personas
     /// <summary>Most important first. Tools left out are off for this persona.</summary>
     public static Tool[] Ranking(this Persona persona) => persona switch
     {
-        Persona.Developer => [Tool.Ports, Tool.KeepAwake, Tool.Timer, Tool.Media],
-        Persona.Designer => [Tool.Media, Tool.Timer],
-        Persona.Creator => [Tool.Media, Tool.Timer, Tool.KeepAwake],
-        Persona.Student => [Tool.Timer, Tool.Media, Tool.KeepAwake],
-        Persona.Professional => [Tool.Timer, Tool.KeepAwake, Tool.Media],
-        _ => [Tool.Media, Tool.Timer],
+        Persona.Developer => [Tool.AgentAlerts, Tool.Ports, Tool.Clipboard, Tool.Shelf, Tool.Calendar, Tool.Media, Tool.Timer, Tool.KeepAwake],
+        Persona.Designer => [Tool.ColorPicker, Tool.Shelf, Tool.Clipboard, Tool.Media, Tool.Calendar, Tool.Timer],
+        Persona.Creator => [Tool.Media, Tool.Timer, Tool.Shelf, Tool.KeepAwake, Tool.InUse],
+        Persona.Student => [Tool.Timer, Tool.Calendar, Tool.Media, Tool.Clipboard, Tool.KeepAwake],
+        Persona.Professional => [Tool.Calendar, Tool.InUse, Tool.Clipboard, Tool.Timer, Tool.Shelf, Tool.Media, Tool.KeepAwake],
+        _ => [Tool.Media, Tool.Shelf, Tool.Clipboard, Tool.Calendar, Tool.KeepAwake, Tool.Timer],
     };
 
     public static ClosedActivity[] ClosedOrder(this Persona persona) =>
@@ -54,7 +54,13 @@ public static class Personas
         Tool.Media => "Now playing",
         Tool.Timer => "Timer",
         Tool.Ports => "Ports",
-        _ => "Keep awake",
+        Tool.KeepAwake => "Keep awake",
+        Tool.AgentAlerts => "Agent alerts",
+        Tool.Clipboard => "Clipboard",
+        Tool.Shelf => "Shelf",
+        Tool.ColorPicker => "Color picker",
+        Tool.InUse => "Mic and camera",
+        _ => "Calendar",
     };
 
     public static string Glyph(this Tool tool) => tool switch
@@ -62,7 +68,13 @@ public static class Personas
         Tool.Media => "",
         Tool.Timer => "",
         Tool.Ports => "",
-        _ => "",
+        Tool.KeepAwake => "",
+        Tool.AgentAlerts => "",
+        Tool.Clipboard => "",
+        Tool.Shelf => "",
+        Tool.ColorPicker => "",
+        Tool.InUse => "",
+        _ => "",
     };
 }
 

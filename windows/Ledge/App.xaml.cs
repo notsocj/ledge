@@ -9,6 +9,13 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // A coding agent's hook started this copy: hand the event to the running Ledge and quit.
+        if (e.Args is ["--agent", ..])
+        {
+            AgentAlerts.Forward(e.Args);
+            Shutdown();
+            return;
+        }
         // One Ledge at a time: starting it again (say, from the Start menu while it's already running) just exits.
         running = new Mutex(true, @"Local\Ledge", out var first);
         if (!first)

@@ -31,6 +31,8 @@ public partial class IslandWindow : Window
     /// <summary>Top of the usable screen, in screen pixels; below a taskbar docked at the top.</summary>
     double screenTop;
 
+    public Tools Tools => tools;
+
     public IslandWindow()
     {
         InitializeComponent();
@@ -77,6 +79,16 @@ public partial class IslandWindow : Window
         batteryTimer.Start();
         tools.Battery.Check();
 
+        tools.Agents.FollowIfMoved();
+        tools.Agents.Event += (agent, waiting, project) =>
+        {
+            if (!settings.IsOn(Tool.AgentAlerts)) return;
+            var name = agent == AgentAlerts.Agent.Claude ? "Claude" : "Codex";
+            ShowBanner(project.Length > 0 ? $"{name} · {project}" : name, waiting ? "Needs you" : "Done", waiting ? 10 : 6,
+                waiting ? (Brush)FindResource("Warning") : Brushes.White);
+        };
+        _ = tools.Agents.ListenAsync(Dispatcher);
+
         countdownTimer.Tick += (_, _) => TickCountdown();
         OpenView.Changed += () =>
         {
@@ -86,11 +98,12 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>Slides an alert out of the closed island for a few seconds.</summary>
-    public void ShowBanner(string title, string detail, double seconds = 2.5)
+    public void ShowBanner(string title, string detail, double seconds = 2.5, Brush? detailColor = null)
     {
         if (expanded) return; // the open island already has the user's attention
         BannerTitle.Text = title;
         BannerDetail.Text = detail;
+        BannerDetail.Foreground = detailColor ?? (Brush)FindResource("Graphite");
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
