@@ -26,6 +26,9 @@ public partial class IslandWindow : Window
     readonly DispatcherTimer countdownTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     readonly DispatcherTimer bannerTimer = new();
     readonly DispatcherTimer inUseTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    readonly DispatcherTimer calendarFetchTimer = new() { Interval = TimeSpan.FromMinutes(15) };
+    readonly DispatcherTimer meetingTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    readonly HashSet<string> announcedMeetings = [];
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
     bool animating, expanded, hasWings, settingUp;
@@ -124,6 +127,22 @@ public partial class IslandWindow : Window
             (Brush)FindResource(device == InUse.Device.Microphone ? "Warning" : "Live"));
         inUseTimer.Tick += (_, _) => tools.InUse.Check();
 
+        OpenView.CalendarTabPage.LinkChanged += link =>
+        {
+            settings.CalendarLink = link;
+            SaveSettings();
+            OpenView.Apply(settings);
+            _ = tools.Calendar.RefreshAsync(link);
+        };
+        calendarFetchTimer.Tick += (_, _) => FetchCalendar();
+        meetingTimer.Tick += (_, _) =>
+        {
+            OpenView.RefreshNextMeeting();
+            if (CalendarFeed.DueForAlert(tools.Calendar.Meetings, DateTime.Now, announcedMeetings) is not { } meeting) return;
+            announcedMeetings.Add(meeting.Key);
+            ShowBanner(meeting.Title, $"at {meeting.Start:t}", 8, (Brush)FindResource("Warning"));
+        };
+
         countdownTimer.Tick += (_, _) => TickCountdown();
         OpenView.Changed += () =>
         {
@@ -167,6 +186,17 @@ public partial class IslandWindow : Window
     /// <summary>Tools that work in the background stop when they're switched off.</summary>
     void ApplyToolSwitches()
     {
+        if (settings.IsOn(Tool.Calendar))
+        {
+            calendarFetchTimer.Start();
+            meetingTimer.Start();
+            FetchCalendar();
+        }
+        else
+        {
+            calendarFetchTimer.Stop();
+            meetingTimer.Stop();
+        }
         tools.InUse.Reset(); // learns what's already on without announcing it
         if (settings.IsOn(Tool.InUse)) inUseTimer.Start();
         else inUseTimer.Stop();
@@ -177,16 +207,10 @@ public partial class IslandWindow : Window
 
     void FinishSetup(Settings chosen)
     {
+        chosen.CalendarLink = settings.CalendarLink; // setup doesn't ask for it again
         settings = chosen;
         ApplyToolSwitches();
-        try
-        {
-            settings.Save(Settings.DefaultPath);
-        }
-        catch (Exception)
-        {
-            // Couldn't write to %APPDATA%: keep the choices for this session, and setup shows again next time.
-        }
+        SaveSettings();
         OpenView.Apply(settings);
         settingUp = false;
         SetExpanded(false);
@@ -248,6 +272,24 @@ public partial class IslandWindow : Window
     void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
     {
         if (e.Mode == PowerModes.StatusChange) Dispatcher.BeginInvoke(new Action(tools.Battery.Check)); // plugged in or out
+        if (e.Mode == PowerModes.Resume) Dispatcher.BeginInvoke(new Action(FetchCalendar)); // the day moved on while it slept
+    }
+
+    void FetchCalendar()
+    {
+        if (settings.IsOn(Tool.Calendar)) _ = tools.Calendar.RefreshAsync(settings.CalendarLink);
+    }
+
+    void SaveSettings()
+    {
+        try
+        {
+            settings.Save(Settings.DefaultPath);
+        }
+        catch (Exception)
+        {
+            // Couldn't write to %APPDATA%: keep the choices for this session, and setup shows again next time.
+        }
     }
 
     // Motion

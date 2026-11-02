@@ -23,6 +23,7 @@ public partial class OpenPanel : UserControl
     public event Action? Changed;
 
     public ColorPage ColorTabPage => ColorView;
+    public CalendarPage CalendarTabPage => CalendarView;
 
     public OpenPanel()
     {
@@ -35,6 +36,7 @@ public partial class OpenPanel : UserControl
             [Tool.Clipboard] = (ClipboardTab, ClipboardView),
             [Tool.Shelf] = (ShelfTab, ShelfView),
             [Tool.ColorPicker] = (ColorTab, ColorView),
+            [Tool.Calendar] = (CalendarTab, CalendarView),
         };
     }
 
@@ -44,6 +46,8 @@ public partial class OpenPanel : UserControl
         ClipboardView.Attach(tools.Clipboard);
         ShelfView.Attach(tools.Shelf);
         ColorView.Attach(tools.ColorPicker);
+        CalendarView.Attach(tools.Calendar, settings.CalendarLink is not null);
+        tools.Calendar.Changed += RefreshNextMeeting;
         HomeTab.IsChecked = true;
         Apply(settings);
         RefreshBattery();
@@ -63,7 +67,9 @@ public partial class OpenPanel : UserControl
         foreach (var tool in settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool))) Tabs.Children.Add(pages[tool].Tab);
         if (!settings.IsOn(Tool.KeepAwake) && tools.KeepAwake.IsOn) KeepAwake_Click(this, new RoutedEventArgs());
         KeepAwakeToggle.Visibility = settings.IsOn(Tool.KeepAwake) ? Visibility.Visible : Visibility.Collapsed;
+        CalendarView.SetHasLink(settings.CalendarLink is not null);
         RefreshMedia();
+        RefreshNextMeeting();
     }
 
     /// <summary>Ports are only looked up while you can see them.</summary>
@@ -109,6 +115,21 @@ public partial class OpenPanel : UserControl
     void PlayPause_Click(object sender, RoutedEventArgs e) => _ = tools.NowPlaying.PlayPause();
     void Next_Click(object sender, RoutedEventArgs e) => _ = tools.NowPlaying.Next();
     void Previous_Click(object sender, RoutedEventArgs e) => _ = tools.NowPlaying.Previous();
+
+    // Calendar
+
+    /// <summary>Home's "next up" card: the next timed meeting today, if the calendar is on.</summary>
+    public void RefreshNextMeeting()
+    {
+        var now = DateTime.Now;
+        var next = settings.IsOn(Tool.Calendar)
+            ? tools.Calendar.Meetings.FirstOrDefault(meeting => !meeting.AllDay && meeting.End > now && meeting.Start.Date == now.Date)
+            : null;
+        NextMeetingCard.Visibility = next is null ? Visibility.Collapsed : Visibility.Visible;
+        if (next is null) return;
+        NextMeetingWhen.Text = next.Start <= now ? "Now" : $"Next at {next.Start:t}";
+        NextMeetingTitle.Text = next.Title;
+    }
 
     // Battery and keep awake
 

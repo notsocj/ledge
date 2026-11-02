@@ -11,6 +11,7 @@
       <RadioButton x:Name="ClipboardTab" Content="Clipboard" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
       <RadioButton x:Name="ShelfTab" Content="Shelf" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
       <RadioButton x:Name="ColorTab" Content="Color" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+      <RadioButton x:Name="CalendarTab" Content="Calendar" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
     </StackPanel>
 
     <Grid>
@@ -54,6 +55,12 @@
                    Foreground="{StaticResource Graphite}" Margin="0,4,24,0"/>
 
         <StackPanel Grid.Column="1">
+          <Border x:Name="NextMeetingCard" Background="{StaticResource Well}" CornerRadius="14" Padding="14,8" Margin="0,0,0,8" Visibility="Collapsed">
+            <StackPanel>
+              <TextBlock x:Name="NextMeetingWhen" FontSize="12" Foreground="{StaticResource Graphite}"/>
+              <TextBlock x:Name="NextMeetingTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </Border>
           <Border x:Name="BatteryCard" Background="{StaticResource Well}" CornerRadius="14" Padding="14,8" Margin="0,0,0,8">
             <StackPanel>
               <TextBlock Text="Battery" FontSize="12" Foreground="{StaticResource Graphite}"/>
@@ -106,6 +113,7 @@
       <local:ClipboardPage x:Name="ClipboardView" Visibility="Collapsed"/>
       <local:ShelfPage x:Name="ShelfView" Visibility="Collapsed"/>
       <local:ColorPage x:Name="ColorView" Visibility="Collapsed"/>
+      <local:CalendarPage x:Name="CalendarView" Visibility="Collapsed"/>
     </Grid>
   </DockPanel>
 </UserControl>
