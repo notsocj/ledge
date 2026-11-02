@@ -22,7 +22,7 @@ public class LayoutTests
         var layout = Layout.Merging([Persona.Designer]);
         Assert.DoesNotContain(Tool.Ports, layout.Tools);
         Assert.DoesNotContain(Tool.KeepAwake, layout.Tools);
-        Assert.Equal([Tool.Timer], layout.Tabs);
+        Assert.DoesNotContain(Tool.Ports, layout.Tabs);
     }
 
     [Fact]

@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Ledge.Tests;
 
 public class CountdownTests
@@ -92,4 +94,57 @@ public class PortsTests
     [InlineData(8080, null, false)] // couldn't look at the process: not yours
     public void ShowsOnlyYourOwnServers(int port, string? path, bool shown) =>
         Assert.Equal(shown, Ports.IsYours(port, path, Windows));
+}
+
+public class ClipboardHistoryTests
+{
+    [Fact]
+    public void NewestFirstWithoutDuplicates()
+    {
+        var history = new ClipboardHistory();
+        history.Remember("a");
+        history.Remember("b");
+        history.Remember("a");
+        Assert.Equal(["a", "b"], history.Items);
+    }
+
+    [Fact]
+    public void KeepsTheLastTwentyAndSkipsBlanksAndHugeCopies()
+    {
+        var history = new ClipboardHistory();
+        for (var i = 0; i < 25; i++) history.Remember($"copy {i}");
+        history.Remember("   ");
+        history.Remember(new string('x', 10_001));
+        Assert.Equal(20, history.Items.Count);
+        Assert.Equal("copy 24", history.Items[0]);
+    }
+}
+
+public class ShelfTests
+{
+    [Fact]
+    public void AddsEachFileOnceWhateverItsCase()
+    {
+        var shelf = new Shelf();
+        Assert.Equal(2, shelf.Add([@"C:\a.txt", @"C:\b.png"]));
+        Assert.Equal(0, shelf.Add([@"c:\A.TXT"]));
+        Assert.Equal(2, shelf.Files.Count);
+    }
+
+    [Fact]
+    public void ForgetsFilesThatAreGone()
+    {
+        var real = Path.GetTempFileName();
+        try
+        {
+            var shelf = new Shelf();
+            shelf.Add([real, Path.Combine(Path.GetTempPath(), $"gone-{Guid.NewGuid()}.txt")]);
+            shelf.Prune();
+            Assert.Equal([real], shelf.Files);
+        }
+        finally
+        {
+            File.Delete(real);
+        }
+    }
 }
