@@ -11,15 +11,29 @@ most important first. Switch off anything you won't use, then choose whether it 
 Your choices are saved in `%APPDATA%\Ledge\settings.json`; run setup again from the notification-area
 icon (**Change what Ledge shows…**).
 
-Open, it has up to three tabs:
+Open, Home shows what's playing (previous, play/pause, next), your next meeting, the battery and Keep
+awake. The tabs your personas switch on sit beside it:
 
-- **Home**: what's playing in any app that reports to Windows' media controls, with previous, play/pause
-  and next; the battery; and Keep awake, which stops the screen turning off.
+- **Calendar**: today's and tomorrow's meetings with Join buttons for Teams, Zoom, Meet and Webex links.
+  Windows has no calendar API like the Mac's, so Ledge reads your calendar's private ICS link: copy it
+  from Outlook (Publish a calendar) or Google Calendar (Secret address in iCal format) and press
+  **Paste calendar link**. It refreshes every 15 minutes and the link stays in your settings file.
 - **Timer**: 5, 15 or 25 minutes, with pause, +1 min and cancel. It counts down in the closed island too.
 - **Ports**: dev servers listening on localhost, with Open in browser and Stop (click twice).
+- **Clipboard**: the last 20 things you copied as text, in memory only. Copies that password managers
+  mark as private are never kept.
+- **Shelf**: drag files onto the island to keep them handy, then drag them out again. Nothing is copied.
+- **Color**: pick a color from anywhere on screen; its hex code is copied.
 
-Closed, the island shows a running timer or what's playing, and alerts slide out of it when you plug in,
-when the battery drops to 20% and 10%, and when a timer ends.
+Alerts slide out of the closed island when you plug in, when the battery drops to 20% and 10%, when a
+timer ends, two minutes before a meeting, when an app turns on the microphone or camera, and when Claude
+Code or Codex finishes or needs you.
+
+**Coding agent alerts** are connected from the notification-area icon (**Coding agent alerts**). Ledge
+adds two hooks to `~/.claude/settings.json` and a `notify` line to `~/.codex/config.toml`, each running
+`Ledge.exe --agent …`; both files are backed up first (`.ledge-backup`), an existing Codex notify program
+keeps running after Ledge's, and disconnecting removes only what Ledge added. If you move `Ledge.exe`,
+the hooks follow it the next time it starts.
 
 Needs Windows 10 (2004) or later and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
 

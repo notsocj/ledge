@@ -48,11 +48,22 @@ public partial class SetupView : UserControl
             Step.Welcome => ("Welcome to Ledge", "Your everyday tools, at the top of your screen. Tell it what you do and it sets itself up around you.", "Get started"),
             Step.Personas => ("What do you do?", "Pick one or more. The first one you pick decides what comes first.", "Next"),
             Step.Tools => ("Here's your Ledge", "Switch off anything you won't use. You can run setup again from Ledge's icon in the notification area.", "Next"),
-            _ => ("You're all set", "Rest the pointer at the top centre of your screen, or push it against the top edge, to open Ledge.", "Done"),
+            _ => ("You're all set", DoneText(), "Done"),
         };
         if (step == Step.Personas) BuildPersonaCards();
         if (step == Step.Tools) BuildToolChips();
         NextButton.IsEnabled = step != Step.Personas || picked.Count > 0;
+    }
+
+    /// <summary>How to open Ledge, plus the one extra step a couple of tools need.</summary>
+    string DoneText()
+    {
+        var layout = Layout.Merging(picked);
+        bool On(Tool tool) => layout.Tools.Contains(tool) && !off.Contains(tool);
+        var text = "Rest the pointer at the top centre of your screen, or push it against the top edge, to open Ledge.";
+        if (On(Tool.Calendar)) text += " Add your calendar from the Calendar tab.";
+        if (On(Tool.AgentAlerts)) text += " Connect Claude Code or Codex from Ledge's icon in the notification area.";
+        return text;
     }
 
     void Back_Click(object sender, RoutedEventArgs e) => Show(step - 1);
