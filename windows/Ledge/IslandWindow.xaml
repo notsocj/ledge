@@ -27,6 +27,8 @@
       </Grid>
       <local:OpenPanel x:Name="OpenView" Opacity="0" IsHitTestVisible="False" Width="560" Height="220"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
+      <local:SetupView x:Name="Setup" Opacity="0" IsHitTestVisible="False" Width="560" Height="290"
+                       HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
   </Border>
 </Window>

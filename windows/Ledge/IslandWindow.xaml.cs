@@ -10,11 +10,13 @@ namespace Ledge;
 
 public partial class IslandWindow : Window
 {
-    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), BannerSize = new(380, 32), OpenSize = new(560, 220);
+    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), BannerSize = new(380, 32), OpenSize = new(560, 220),
+        SetupSize = new(560, 290);
     /// <summary>The open island's corner. Closed, the corner is half the height, which makes it a pill.</summary>
     const double OpenCorner = 28;
 
     readonly Tools tools;
+    Settings settings = Settings.Load(Settings.DefaultPath);
     readonly Spring width = new(ClosedSize.Width), height = new(ClosedSize.Height);
     readonly HoverIntent hover = new();
     readonly Stopwatch clock = Stopwatch.StartNew();
@@ -25,7 +27,7 @@ public partial class IslandWindow : Window
     readonly DispatcherTimer bannerTimer = new();
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
-    bool animating, expanded, hasWings;
+    bool animating, expanded, hasWings, settingUp;
     /// <summary>Top of the usable screen, in screen pixels; below a taskbar docked at the top.</summary>
     double screenTop;
 
@@ -33,8 +35,13 @@ public partial class IslandWindow : Window
     {
         InitializeComponent();
         tools = new Tools(Dispatcher);
-        OpenView.Attach(tools);
+        OpenView.Attach(tools, settings);
+        Setup.Finished += FinishSetup;
         Apply();
+        ContentRendered += (_, _) =>
+        {
+            if (!settings.SetupDone) StartSetup();
+        };
 
         SourceInitialized += (_, _) =>
         {
@@ -96,9 +103,36 @@ public partial class IslandWindow : Window
         UpdateShape();
     }
 
+    /// <summary>Opens the island on setup, and keeps it open until you finish.</summary>
+    public void StartSetup()
+    {
+        Setup.Begin(settings);
+        settingUp = true;
+        if (expanded) UpdateShape();
+        else SetExpanded(true);
+    }
+
+    void FinishSetup(Settings chosen)
+    {
+        settings = chosen;
+        try
+        {
+            settings.Save(Settings.DefaultPath);
+        }
+        catch (Exception)
+        {
+            // Couldn't write to %APPDATA%: keep the choices for this session, and setup shows again next time.
+        }
+        OpenView.Apply(settings);
+        settingUp = false;
+        SetExpanded(false);
+        UpdateShape();
+        RefreshWings();
+    }
+
     void SetExpanded(bool open)
     {
-        if (expanded == open) return;
+        if (expanded == open || settingUp && !open) return;
         expanded = open;
         hover.Reset();
         bannerTimer.Stop();
@@ -111,9 +145,11 @@ public partial class IslandWindow : Window
     {
         var banner = bannerTimer.IsEnabled && !expanded;
         var wings = hasWings && !expanded && !banner;
-        MoveTo(expanded ? OpenSize : banner ? BannerSize : wings ? WingsSize : ClosedSize);
-        Fade(OpenView, expanded);
-        OpenView.IsHitTestVisible = expanded;
+        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : banner ? BannerSize : wings ? WingsSize : ClosedSize);
+        Fade(OpenView, expanded && !settingUp);
+        OpenView.IsHitTestVisible = expanded && !settingUp;
+        Fade(Setup, expanded && settingUp);
+        Setup.IsHitTestVisible = expanded && settingUp;
         Fade(BannerContent, banner);
         Fade(Wings, wings);
     }
@@ -215,6 +251,7 @@ public partial class IslandWindow : Window
         // The pointer is usually nowhere near the island: look less often until it comes close.
         var interval = TimeSpan.FromMilliseconds(expanded || pointer.Y < island.Bottom + 200 * hover.Scale ? 16 : 100);
         if (pointerTimer.Interval != interval) pointerTimer.Interval = interval;
+        if (settingUp) return; // setup stays open until you finish it
         switch (hover.Update(pointer, clock.Elapsed.TotalSeconds, island, screenTop, expanded))
         {
             case HoverIntent.Decision.Open: SetExpanded(true); break;

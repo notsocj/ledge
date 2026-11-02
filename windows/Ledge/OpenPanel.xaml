@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Foreground="White" FontSize="13">
   <DockPanel Margin="16,12,16,16">
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="-4,0,0,12">
+    <StackPanel x:Name="Tabs" DockPanel.Dock="Top" Orientation="Horizontal" Margin="-4,0,0,12">
       <RadioButton x:Name="HomeTab" Content="Home" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
       <RadioButton x:Name="TimerTab" Content="Timer" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
       <RadioButton x:Name="PortsTab" Content="Ports" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
@@ -45,6 +45,9 @@
           <TextBlock Text="Play something in Spotify, your browser or any media app and it shows up here."
                      TextWrapping="Wrap" Foreground="{StaticResource Graphite}" Margin="0,4,0,0"/>
         </StackPanel>
+
+        <TextBlock x:Name="ToolsAbove" Visibility="Collapsed" Text="Your tools are in the tabs above."
+                   Foreground="{StaticResource Graphite}" Margin="0,4,24,0"/>
 
         <StackPanel Grid.Column="1">
           <Border x:Name="BatteryCard" Background="{StaticResource Well}" CornerRadius="14" Padding="14,8" Margin="0,0,0,8">

@@ -5,7 +5,13 @@ at the top centre of the screen. Rest the pointer on it, push the pointer agains
 or tap it to open it. Ledge's icon in the notification area has the menu: a test alert, start at sign-in,
 and Quit.
 
-Open, it has three tabs:
+The first time it runs, setup opens inside the island: pick what you do (Developer, Designer, Creator,
+Student, Professional or Essentials, as many as fit) and Ledge switches on the tools for it and puts the
+most important first. Switch off anything you won't use, then choose whether it starts when you sign in.
+Your choices are saved in `%APPDATA%\Ledge\settings.json`; run setup again from the notification-area
+icon (**Change what Ledge shows…**).
+
+Open, it has up to three tabs:
 
 - **Home**: what's playing in any app that reports to Windows' media controls, with previous, play/pause
   and next; the battery; and Keep awake, which stops the screen turning off.

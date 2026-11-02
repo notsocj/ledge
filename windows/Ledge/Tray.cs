@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using Forms = System.Windows.Forms;
 
 namespace Ledge;
@@ -6,14 +5,15 @@ namespace Ledge;
 /// <summary>Ledge's icon in the notification area, with its menu. It's how you quit, since the island never takes focus.</summary>
 sealed class Tray : IDisposable
 {
-    const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     readonly Forms.NotifyIcon icon;
 
     public Tray(IslandWindow island)
     {
-        var startAtLogin = new Forms.ToolStripMenuItem("Start Ledge when you sign in") { Checked = StartsAtLogin, CheckOnClick = true };
-        startAtLogin.CheckedChanged += (_, _) => SetStartsAtLogin(startAtLogin.Checked);
+        var startAtLogin = new Forms.ToolStripMenuItem("Start Ledge when you sign in") { CheckOnClick = true };
+        startAtLogin.Click += (_, _) => StartAtLogin.IsOn = startAtLogin.Checked;
         var menu = new Forms.ContextMenuStrip();
+        menu.Opening += (_, _) => startAtLogin.Checked = StartAtLogin.IsOn; // setup can change it too
+        menu.Items.Add("Change what Ledge shows…", null, (_, _) => island.StartSetup());
         menu.Items.Add("Show a test alert", null, (_, _) => island.ShowBanner("Test alert", "Ledge is running"));
         menu.Items.Add(startAtLogin);
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -27,22 +27,6 @@ sealed class Tray : IDisposable
             ContextMenuStrip = menu,
             Visible = true,
         };
-    }
-
-    static bool StartsAtLogin
-    {
-        get
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue("Ledge") is string;
-        }
-    }
-
-    static void SetStartsAtLogin(bool on)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-        if (on) key.SetValue("Ledge", $"\"{Environment.ProcessPath}\"");
-        else key.DeleteValue("Ledge", throwOnMissingValue: false);
     }
 
     public void Dispose()

@@ -12,6 +12,7 @@ namespace Ledge;
 public partial class OpenPanel : UserControl
 {
     Tools tools = null!;
+    Settings settings = new();
     bool open, portsShown;
     IReadOnlyList<Ports.Listener> listeners = [];
     readonly DispatcherTimer portsTimer = new() { Interval = TimeSpan.FromSeconds(3) };
@@ -25,13 +26,31 @@ public partial class OpenPanel : UserControl
         portsTimer.Tick += async (_, _) => await RefreshPorts();
     }
 
-    public void Attach(Tools tools)
+    public void Attach(Tools tools, Settings settings)
     {
         this.tools = tools;
         HomeTab.IsChecked = true;
-        RefreshMedia();
+        Apply(settings);
         RefreshBattery();
         RefreshTimer();
+    }
+
+    /// <summary>Arranges the tabs and Home around what's on, most important first.</summary>
+    public void Apply(Settings settings)
+    {
+        this.settings = settings;
+        var tabs = new Dictionary<Tool, RadioButton> { [Tool.Timer] = TimerTab, [Tool.Ports] = PortsTab };
+        Tabs.Children.Clear();
+        Tabs.Children.Add(HomeTab);
+        foreach (var (tool, tab) in tabs)
+        {
+            if (settings.IsOn(tool)) continue;
+            if (tab.IsChecked == true) HomeTab.IsChecked = true;
+        }
+        foreach (var tool in settings.Layout.Tabs.Where(settings.IsOn)) Tabs.Children.Add(tabs[tool]);
+        if (!settings.IsOn(Tool.KeepAwake) && tools.KeepAwake.IsOn) KeepAwake_Click(this, new RoutedEventArgs());
+        KeepAwakeToggle.Visibility = settings.IsOn(Tool.KeepAwake) ? Visibility.Visible : Visibility.Collapsed;
+        RefreshMedia();
     }
 
     /// <summary>Ports are only looked up while you can see them.</summary>
@@ -57,8 +76,10 @@ public partial class OpenPanel : UserControl
     public void RefreshMedia()
     {
         var media = tools.NowPlaying;
-        Playing.Visibility = media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
-        NothingPlaying.Visibility = media.HasMedia ? Visibility.Collapsed : Visibility.Visible;
+        var on = settings.IsOn(Tool.Media);
+        Playing.Visibility = on && media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
+        NothingPlaying.Visibility = on && !media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
+        ToolsAbove.Visibility = on || Tabs.Children.Count < 2 ? Visibility.Collapsed : Visibility.Visible;
         SongTitle.Text = media.Title;
         SongArtist.Text = media.Artist;
         PlayPauseGlyph.Text = media.IsPlaying ? "" : "";
