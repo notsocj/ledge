@@ -20,7 +20,7 @@
     <h1><span class="rise" style="--i: 0">The notch,</span><br><span class="rise" style="--i: 1">put to work.</span></h1>
     <p class="lede rise" style="--i: 2">Ledge turns the space around your MacBook's notch into the tools you reach for all day, and arranges them around what you do.</p>
     <a class="button rise" style="--i: 3" href="https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg" download id="download">Download for Mac</a>
-    <p class="fineprint rise" style="--i: 4">Free and open source. macOS 14 or later.</p>
+    <p class="fineprint rise" style="--i: 4">Free and open source. macOS 14 or later. Also on <a class="other-os" href="https://github.com/notsocj/ledge/releases/tag/windows-v0.1.0">Windows</a>.</p>
   </div>
 
   <div class="stage" aria-label="Ledge opening out of the notch">
@@ -190,7 +190,7 @@
   <img src="assets/icon.svg" alt="Ledge's icon: a MacBook notch on light blue" width="96" height="96">
   <h2>Make the notch<br>earn its place.</h2>
   <a class="button" href="https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg" download>Download for Mac</a>
-  <p class="fineprint">Free and open source. macOS 14 or later.</p>
+  <p class="fineprint">Free and open source. macOS 14 or later. Also on <a class="other-os" href="https://github.com/notsocj/ledge/releases/tag/windows-v0.1.0">Windows</a>.</p>
 </div>
 
 </main>
@@ -335,6 +335,28 @@
       setTimeout(() => agentBanners[agentTurn].classList.add("is-shown"), 260); // the last one tucks away first
     }, 3000);
   });
+  // Windows releases aren't marked latest (that's the Mac one), so the newest windows-v* release is looked
+  // up. Visitors on Windows get its installer on every download button; everyone else, an "Also on" link.
+  const onWindows = /Windows/.test(navigator.userAgent);
+  const dmg = "https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg";
+  fetch("https://api.github.com/repos/notsocj/ledge/releases?per_page=30")
+    .then((response) => response.json())
+    .then((releases) => {
+      const setup = releases.find((release) => release.tag_name.startsWith("windows-v"))
+        ?.assets.find((asset) => asset.name.endsWith("-Setup.exe"));
+      if (!setup) return;
+      for (const link of document.querySelectorAll(".other-os")) {
+        link.href = onWindows ? dmg : setup.browser_download_url;
+        if (onWindows) link.textContent = "Mac";
+      }
+      if (!onWindows) return;
+      for (const link of document.querySelectorAll('a[href$="Ledge.dmg"]:not(.other-os)')) {
+        link.href = setup.browser_download_url;
+        if (link.textContent === "Download for Mac") link.textContent = "Download for Windows";
+      }
+      for (const note of document.querySelectorAll(".fineprint")) note.firstChild.textContent = note.firstChild.textContent.replace("macOS 14", "Windows 10");
+    })
+    .catch(() => {}); // GitHub unreachable: the links keep pointing at the release pages
 </script>
 </body>
 </html>
