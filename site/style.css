@@ -55,6 +55,7 @@ p { margin: 0; }
 .button.quiet { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1px rgba(255, 248, 239, 0.22); }
 @media (hover: hover) and (pointer: fine) { .button.quiet:hover { background: rgba(255, 248, 239, 0.08); } }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.downloads { align-items: center; }
 
 /* Hero: a dusk sky and the top of a MacBook screen */
 .hero {
