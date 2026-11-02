@@ -1,0 +1,76 @@
+using System.Runtime.InteropServices;
+
+namespace Ledge;
+
+/// <summary>The few Win32 calls WPF doesn't cover.</summary>
+static partial class Native
+{
+    public const int GWL_EXSTYLE = -20;
+    public const int WS_EX_TOOLWINDOW = 0x80; // keeps the island out of Alt+Tab
+    public const int WS_EX_NOACTIVATE = 0x08000000; // clicking the island never takes focus from your app
+
+    public static readonly nint HWND_TOPMOST = -1;
+    public const uint SWP_NOACTIVATE = 0x10;
+
+    const uint MONITOR_DEFAULTTOPRIMARY = 1;
+    const int MDT_EFFECTIVE_DPI = 0;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT { public int X, Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct MONITORINFO
+    {
+        public int Size;
+        public RECT Monitor, Work;
+        public uint Flags;
+    }
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    public static partial nint GetWindowLongPtr(nint hwnd, int index);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    public static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWindowPos(nint hwnd, nint after, int x, int y, int width, int height, uint flags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetCursorPos(out POINT point);
+
+    [LibraryImport("user32.dll")]
+    static partial nint MonitorFromPoint(POINT point, uint flags);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static partial bool GetMonitorInfo(nint monitor, ref MONITORINFO info);
+
+    [LibraryImport("shcore.dll")]
+    static partial int GetDpiForMonitor(nint monitor, int type, out uint dpiX, out uint dpiY);
+
+    [LibraryImport("shell32.dll")]
+    static partial int SHQueryUserNotificationState(out int state);
+
+    /// <summary>The primary monitor's usable area (minus a taskbar docked at the top) and its scale.</summary>
+    public static (RECT Work, double Scale) PrimaryMonitor()
+    {
+        var monitor = MonitorFromPoint(new POINT(), MONITOR_DEFAULTTOPRIMARY);
+        var info = new MONITORINFO { Size = Marshal.SizeOf<MONITORINFO>() };
+        GetMonitorInfo(monitor, ref info);
+        return GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, out var dpi, out _) == 0
+            ? (info.Work, dpi / 96.0)
+            : (info.Work, 1);
+    }
+
+    /// <summary>True while a full-screen app, game or presentation is up, when the island should get out of the way.</summary>
+    public static bool FullScreenAppRunning()
+    {
+        // 2: full-screen app ("busy"), 3: Direct3D full screen, 4: presentation mode.
+        return SHQueryUserNotificationState(out var state) == 0 && state is 2 or 3 or 4;
+    }
+}

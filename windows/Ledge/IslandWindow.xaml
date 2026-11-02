@@ -2,15 +2,23 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ledge"
-        Width="200" Height="36"
+        Width="600" Height="360"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        ResizeMode="NoResize" Topmost="True" ShowInTaskbar="False" ShowActivated="False">
-  <!-- Windows has no notch, so the island is a pill floating at the top centre of the screen. -->
-  <Border CornerRadius="18" Background="Black">
-    <Border.ContextMenu>
-      <ContextMenu>
-        <MenuItem Header="Quit Ledge" Click="Quit_Click"/>
-      </ContextMenu>
-    </Border.ContextMenu>
+        ResizeMode="NoResize" Topmost="True" ShowInTaskbar="False" ShowActivated="False"
+        FontFamily="Segoe UI Variable Text, Segoe UI" Foreground="White">
+  <!-- The window is a fixed transparent frame; clicks pass through everywhere except the island. Windows
+       has no notch, so the island is a pill floating at the top centre that grows into the open panel. -->
+  <Border x:Name="Island" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0"
+          Background="Black" BorderBrush="#14FFFFFF" BorderThickness="1">
+    <Grid ClipToBounds="True">
+      <Grid x:Name="BannerContent" Opacity="0" Margin="16,0" VerticalAlignment="Center">
+        <TextBlock x:Name="BannerTitle" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Left"/>
+        <TextBlock x:Name="BannerDetail" FontSize="13" Foreground="#A3FFFFFF" HorizontalAlignment="Right"/>
+      </Grid>
+      <StackPanel x:Name="OpenContent" Opacity="0" Margin="24,20" VerticalAlignment="Top">
+        <TextBlock Text="Ledge" FontSize="15" FontWeight="SemiBold"/>
+        <TextBlock Text="Your tools will appear here." FontSize="13" Foreground="#A3FFFFFF" Margin="0,4,0,0"/>
+      </StackPanel>
+    </Grid>
   </Border>
 </Window>

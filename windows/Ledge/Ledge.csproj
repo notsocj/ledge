@@ -5,14 +5,26 @@
     <!-- The 10.0.19041 target gives access to WinRT APIs (media sessions, battery, Bluetooth) used by the tools. -->
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- Only for the notification-area icon, which WPF doesn't have. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Ledge</AssemblyName>
     <RootNamespace>Ledge</RootNamespace>
     <Version>0.1.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Ledge.ico</ApplicationIcon>
+    <!-- LibraryImport generates the Win32 calls in Native.cs. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Lets the project compile on macOS too; it still only runs on Windows. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Windows Forms' global usings would clash with WPF's Application, Point and Size. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <Resource Include="Assets\Ledge.ico" />
+  </ItemGroup>
 
 </Project>
