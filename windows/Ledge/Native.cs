@@ -66,6 +66,37 @@ static partial class Native
     [LibraryImport("iphlpapi.dll")]
     public static partial uint GetExtendedTcpTable(nint table, ref int size, int sort, int addressFamily, int tableClass, uint reserved);
 
+    [LibraryImport("user32.dll")]
+    private static partial int GetSystemMetrics(int index);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetDC(nint hwnd);
+
+    [LibraryImport("user32.dll")]
+    private static partial int ReleaseDC(nint hwnd, nint dc);
+
+    [LibraryImport("gdi32.dll")]
+    private static partial uint GetPixel(nint dc, int x, int y);
+
+    /// <summary>Every monitor together, in screen pixels.</summary>
+    public static (int Left, int Top, int Width, int Height) VirtualScreen() =>
+        (GetSystemMetrics(76), GetSystemMetrics(77), GetSystemMetrics(78), GetSystemMetrics(79));
+
+    /// <summary>The color of one screen pixel. Layered windows, like Ledge's own, aren't part of the read.</summary>
+    public static System.Windows.Media.Color ScreenColor(int x, int y)
+    {
+        var dc = GetDC(0);
+        try
+        {
+            var bgr = GetPixel(dc, x, y);
+            return System.Windows.Media.Color.FromRgb((byte)bgr, (byte)(bgr >> 8), (byte)(bgr >> 16));
+        }
+        finally
+        {
+            ReleaseDC(0, dc);
+        }
+    }
+
     /// <summary>The primary monitor's usable area (minus a taskbar docked at the top) and its scale.</summary>
     public static (RECT Work, double Scale) PrimaryMonitor()
     {

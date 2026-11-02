@@ -12,4 +12,6 @@ public sealed class Tools(Dispatcher dispatcher)
     public AgentAlerts Agents { get; } = new();
     public ClipboardHistory Clipboard { get; } = new();
     public Shelf Shelf { get; } = new();
+    public ColorPicker ColorPicker { get; } = new();
+    public InUse InUse { get; } = new();
 }

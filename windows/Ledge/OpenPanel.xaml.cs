@@ -22,6 +22,8 @@ public partial class OpenPanel : UserControl
     /// <summary>The user changed something the closed island shows too, like starting a timer.</summary>
     public event Action? Changed;
 
+    public ColorPage ColorTabPage => ColorView;
+
     public OpenPanel()
     {
         InitializeComponent();
@@ -32,6 +34,7 @@ public partial class OpenPanel : UserControl
             [Tool.Ports] = (PortsTab, PortsPage),
             [Tool.Clipboard] = (ClipboardTab, ClipboardView),
             [Tool.Shelf] = (ShelfTab, ShelfView),
+            [Tool.ColorPicker] = (ColorTab, ColorView),
         };
     }
 
@@ -40,6 +43,7 @@ public partial class OpenPanel : UserControl
         this.tools = tools;
         ClipboardView.Attach(tools.Clipboard);
         ShelfView.Attach(tools.Shelf);
+        ColorView.Attach(tools.ColorPicker);
         HomeTab.IsChecked = true;
         Apply(settings);
         RefreshBattery();

@@ -148,3 +148,26 @@ public class ShelfTests
         }
     }
 }
+
+public class ColorAndInUseTests
+{
+    [Fact]
+    public void HexIsUppercaseWithAHash() =>
+        Assert.Equal("#0A7FFF", ColorPicker.Hex(System.Windows.Media.Color.FromRgb(10, 127, 255)));
+
+    [Theory]
+    [InlineData(@"C:#Program Files#Zoom#bin#Zoom.exe", "Zoom")]
+    [InlineData(@"C:#Users#cj#AppData#Local#Discord#app-1.0#Discord.exe", "Discord")]
+    [InlineData("Microsoft.WindowsCamera_8wekyb3d8bbwe", "WindowsCamera")]
+    [InlineData("MSTeams_8wekyb3d8bbwe", "MSTeams")]
+    public void NamesTheAppFromItsRegistryKey(string key, string name) => Assert.Equal(name, InUse.AppName(key));
+
+    [Fact]
+    public void InUseMeansStartedAndNotStopped()
+    {
+        Assert.True(InUse.IsInUse(133_000_000_000_000_000L, 0L));
+        Assert.False(InUse.IsInUse(133_000_000_000_000_000L, 133_000_000_100_000_000L));
+        Assert.False(InUse.IsInUse(0L, 0L)); // never used
+        Assert.False(InUse.IsInUse(null, null));
+    }
+}

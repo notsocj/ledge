@@ -82,7 +82,7 @@ public static class Personas
 public sealed record Layout(IReadOnlyList<Tool> Tools, IReadOnlyList<Tool> Tabs, IReadOnlyList<ClosedActivity> ClosedOrder)
 {
     /// <summary>Tools that get a tab of their own next to Home.</summary>
-    public static readonly Tool[] TabTools = [Tool.Timer, Tool.Ports, Tool.Clipboard, Tool.Shelf];
+    public static readonly Tool[] TabTools = [Tool.Timer, Tool.Ports, Tool.Clipboard, Tool.Shelf, Tool.ColorPicker];
 
     /// <summary>Before anyone picks a persona: everything on.</summary>
     public static readonly Layout Standard = new(Enum.GetValues<Tool>(), TabTools, [ClosedActivity.Timer, ClosedActivity.Media]);

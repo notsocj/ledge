@@ -23,7 +23,11 @@
       </Grid>
       <Grid x:Name="BannerContent" Opacity="0" Margin="16,0" VerticalAlignment="Center">
         <TextBlock x:Name="BannerTitle" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Left"/>
-        <TextBlock x:Name="BannerDetail" FontSize="13" Foreground="{StaticResource Graphite}" HorizontalAlignment="Right"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Ellipse x:Name="BannerSwatch" Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"
+                   Stroke="#40FFFFFF" StrokeThickness="1"/>
+          <TextBlock x:Name="BannerDetail" FontSize="13" Foreground="{StaticResource Graphite}"/>
+        </StackPanel>
       </Grid>
       <local:OpenPanel x:Name="OpenView" Opacity="0" IsHitTestVisible="False" Width="560" Height="220"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>

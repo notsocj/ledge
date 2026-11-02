@@ -25,6 +25,7 @@ public partial class IslandWindow : Window
     readonly DispatcherTimer batteryTimer = new() { Interval = TimeSpan.FromSeconds(30) };
     readonly DispatcherTimer countdownTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     readonly DispatcherTimer bannerTimer = new();
+    readonly DispatcherTimer inUseTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
     bool animating, expanded, hasWings, settingUp;
@@ -111,6 +112,18 @@ public partial class IslandWindow : Window
         };
         _ = tools.Agents.ListenAsync(Dispatcher);
 
+        OpenView.ColorTabPage.PickRequested += () =>
+        {
+            SetExpanded(false); // out of the way of what you're picking from
+            tools.ColorPicker.Start();
+        };
+        tools.ColorPicker.Picked += color => ShowBanner("Copied", ColorPicker.Hex(color), swatch: color);
+
+        // Microphone orange and camera green, the colors phones use for the same thing.
+        tools.InUse.Started += (device, app) => ShowBanner(device == InUse.Device.Microphone ? "Microphone on" : "Camera on", app, 4,
+            (Brush)FindResource(device == InUse.Device.Microphone ? "Warning" : "Live"));
+        inUseTimer.Tick += (_, _) => tools.InUse.Check();
+
         countdownTimer.Tick += (_, _) => TickCountdown();
         OpenView.Changed += () =>
         {
@@ -120,12 +133,14 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>Slides an alert out of the closed island for a few seconds.</summary>
-    public void ShowBanner(string title, string detail, double seconds = 2.5, Brush? detailColor = null)
+    public void ShowBanner(string title, string detail, double seconds = 2.5, Brush? detailColor = null, Color? swatch = null)
     {
         if (expanded) return; // the open island already has the user's attention
         BannerTitle.Text = title;
         BannerDetail.Text = detail;
         BannerDetail.Foreground = detailColor ?? (Brush)FindResource("Graphite");
+        BannerSwatch.Fill = swatch is { } color ? new SolidColorBrush(color) : null;
+        BannerSwatch.Visibility = swatch is null ? Visibility.Collapsed : Visibility.Visible;
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
@@ -152,6 +167,9 @@ public partial class IslandWindow : Window
     /// <summary>Tools that work in the background stop when they're switched off.</summary>
     void ApplyToolSwitches()
     {
+        tools.InUse.Reset(); // learns what's already on without announcing it
+        if (settings.IsOn(Tool.InUse)) inUseTimer.Start();
+        else inUseTimer.Stop();
         tools.Clipboard.Enabled = settings.IsOn(Tool.Clipboard);
         if (!tools.Clipboard.Enabled) tools.Clipboard.Clear();
         if (!settings.IsOn(Tool.Shelf)) tools.Shelf.Clear();
@@ -297,7 +315,7 @@ public partial class IslandWindow : Window
         // The pointer is usually nowhere near the island: look less often until it comes close.
         var interval = TimeSpan.FromMilliseconds(expanded || pointer.Y < island.Bottom + 200 * hover.Scale ? 16 : 100);
         if (pointerTimer.Interval != interval) pointerTimer.Interval = interval;
-        if (settingUp) return; // setup stays open until you finish it
+        if (settingUp || tools.ColorPicker.IsPicking) return; // setup stays open until you finish it; picking covers the screen
         switch (hover.Update(pointer, clock.Elapsed.TotalSeconds, island, screenTop, expanded))
         {
             case HoverIntent.Decision.Open: SetExpanded(true); break;
