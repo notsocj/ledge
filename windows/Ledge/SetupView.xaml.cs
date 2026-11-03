@@ -91,7 +91,8 @@ public partial class SetupView : UserControl
                 Style = (Style)FindResource("Toggle"),
                 IsChecked = order >= 0,
                 Margin = new Thickness(3),
-                Padding = new Thickness(12, 8, 12, 8),
+                Padding = new Thickness(10, 9, 10, 9),
+                VerticalContentAlignment = VerticalAlignment.Top,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Content = PersonaCard(persona, order),
             };
@@ -108,19 +109,29 @@ public partial class SetupView : UserControl
     {
         var title = new StackPanel { Orientation = Orientation.Horizontal };
         title.Children.Add(new TextBlock { Text = persona.Glyph(), Style = (Style)Application.Current.FindResource("Glyph"), Margin = new Thickness(0, 0, 8, 0) });
-        title.Children.Add(new TextBlock { Text = persona.Title(), FontWeight = FontWeights.SemiBold, Foreground = Brushes.White });
-        var card = new DockPanel();
+        // The persona's name is what you pick by, so it's SemiBold; the blurb under it stays Regular and smaller.
+        title.Children.Add(new TextBlock { Text = persona.Title(), Style = (Style)Application.Current.FindResource("HeadlineText"), Foreground = Brushes.White });
+        // A grid rather than a dock, so the badge sits over the corner and picking a card never re-wraps its blurb.
+        var card = new Grid();
         if (order >= 0)
         {
-            // Numbered, because the first pick leads.
-            var number = new TextBlock { Text = $"{order + 1}", FontSize = 11, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White };
-            DockPanel.SetDock(number, Dock.Right);
+            // Numbered, because the first pick leads: a small white badge, so the order reads at a glance.
+            var number = new Border
+            {
+                Width = 18, Height = 18, CornerRadius = new CornerRadius(9), Background = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
+                Child = new TextBlock { Text = $"{order + 1}", FontSize = 10.5, FontWeight = FontWeights.Bold, Foreground = Brushes.Black,
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 0, 0) },
+            };
             card.Children.Add(number);
         }
         var text = new StackPanel();
+        title.Margin = new Thickness(0, 0, 24, 0); // clear of the badge
         text.Children.Add(title);
-        text.Children.Add(new TextBlock { Text = persona.Blurb(), FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-        card.Children.Add(text);
+        // Fixed line spacing keeps three lines of blurb inside the card.
+        text.Children.Add(new TextBlock { Text = persona.Blurb(), FontSize = 11, FontWeight = FontWeights.Normal, TextWrapping = TextWrapping.Wrap,
+            LineHeight = 14.5, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, Margin = new Thickness(0, 3, 0, 0) });
+        card.Children.Insert(0, text);
         return card;
     }
 

@@ -52,7 +52,7 @@ public sealed class ColorPicker
             ShowInTaskbar = false,
             Cursor = Cursors.Cross,
             Content = canvas,
-            FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI"),
+            FontFamily = (FontFamily)Application.Current.FindResource("Poppins"), // the island's font, in its own window
         };
         var current = Colors.Black;
         overlay.SourceInitialized += (_, _) =>

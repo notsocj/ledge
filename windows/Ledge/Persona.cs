@@ -20,7 +20,7 @@ public static class Personas
         Persona.Designer => "A color picker, a shelf for assets and the clipboard.",
         Persona.Creator => "Music, timers, a shelf for clips and what's using your mic.",
         Persona.Student => "Timers, your class calendar and music.",
-        Persona.Professional => "Your meetings, what's using your mic and camera, and the clipboard.",
+        Persona.Professional => "Meetings, what's using your mic and camera, and the clipboard.",
         _ => "Music, shelf, clipboard and calendar. Nothing more.",
     };
 

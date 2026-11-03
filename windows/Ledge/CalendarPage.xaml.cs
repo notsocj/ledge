@@ -37,10 +37,10 @@ public partial class CalendarPage : UserControl
         var now = DateTime.Now;
         var upcoming = feed.Meetings.Where(meeting => meeting.End > now).ToList();
         if (hasLink && upcoming.Count == 0)
-            Rows.Children.Add(new TextBlock { Text = feed.Problem is null ? "Nothing else today or tomorrow." : "", Foreground = (Brush)FindResource("Graphite"), Margin = new Thickness(10, 4, 0, 0) });
+            Rows.Children.Add(new TextBlock { Text = feed.Problem is null ? "Nothing else today or tomorrow." : "", Style = (Style)FindResource("BodyText"), Margin = new Thickness(10, 4, 0, 0) });
         foreach (var day in upcoming.GroupBy(meeting => meeting.Start.Date < now.Date ? now.Date : meeting.Start.Date))
         {
-            Rows.Children.Add(new TextBlock { Text = day.Key == now.Date ? "Today" : "Tomorrow", FontSize = 12, Foreground = (Brush)FindResource("Graphite"), Margin = new Thickness(10, 4, 0, 2) });
+            Rows.Children.Add(new TextBlock { Text = day.Key == now.Date ? "Today" : "Tomorrow", Style = (Style)FindResource("LabelText"), Margin = new Thickness(10, 6, 0, 2) });
             foreach (var meeting in day) Rows.Children.Add(Row(meeting, now));
         }
     }
@@ -55,10 +55,11 @@ public partial class CalendarPage : UserControl
         var time = new TextBlock
         {
             Text = meeting.AllDay ? "All day" : live ? "Now" : meeting.Start.ToString("t"),
+            Style = (Style)FindResource("RowText"),
             Foreground = live ? (Brush)FindResource("Live") : (Brush)FindResource("Graphite"),
-            VerticalAlignment = VerticalAlignment.Center,
         };
-        var title = new TextBlock { Text = meeting.Title, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+        // The meeting's name is what you look for, so it's one step heavier than its time.
+        var title = new TextBlock { Text = meeting.Title, Style = (Style)FindResource("HeadlineText"), VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(title, 1);
         row.Children.Add(time);
         row.Children.Add(title);

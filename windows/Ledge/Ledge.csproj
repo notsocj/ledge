@@ -34,6 +34,9 @@
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
     <Resource Include="Assets\Ledge.ico" />
+    <!-- Poppins, bundled so the island looks the same on every PC (SIL Open Font License, see Assets/Fonts/OFL.txt).
+         Four weights, one per step of the type scale in App.xaml. -->
+    <Resource Include="Assets\Fonts\*.ttf" />
     <ApplicationDefinition Remove="App.xaml" />
     <Page Include="App.xaml" />
   </ItemGroup>

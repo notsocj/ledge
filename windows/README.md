@@ -52,6 +52,9 @@ dotnet run --project windows/Ledge
 dotnet test windows/Ledge.Tests
 ```
 
+The island's font is [Poppins](https://github.com/itfoundry/Poppins), bundled in `Ledge/Assets/Fonts` under the
+SIL Open Font License.
+
 Every push that touches `windows/` is built on GitHub Actions for x64 and Arm64; the builds are
 attached to the run as artifacts. A copy run straight from a build never updates itself.
 

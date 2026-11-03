@@ -228,8 +228,10 @@ public partial class OpenPanel : UserControl
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var dot = new Ellipse { Width = 6, Height = 6, Fill = (Brush)FindResource("Live"), Margin = new Thickness(0, 0, 10, 0), ToolTip = "Listening" };
-        var port = new TextBlock { Text = $":{listener.Port}", FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-        var name = new TextBlock { Text = listener.Name, Foreground = (Brush)FindResource("Graphite"), TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+        // The port is what you scan for, so it's the heavier of the two; the process name sits beside it, lighter.
+        var port = new TextBlock { Text = $":{listener.Port}", Style = (Style)FindResource("TitleText"), VerticalAlignment = VerticalAlignment.Center };
+        var name = new TextBlock { Text = listener.Name, Style = (Style)FindResource("BodyText"), TextWrapping = TextWrapping.NoWrap,
+            TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
         var openButton = new Button { Style = (Style)FindResource("Icon"), Content = Glyph(""), ToolTip = $"Open localhost:{listener.Port} in your browser" };
         openButton.Click += (_, _) => Process.Start(new ProcessStartInfo($"http://localhost:{listener.Port}") { UseShellExecute = true });
 

@@ -34,7 +34,7 @@ public partial class ShelfPage : UserControl
     {
         var name = Path.GetFileName(path.TrimEnd('\\'));
         var icon = new Image { Source = IconFor(path), Width = 32, Height = 32, HorizontalAlignment = HorizontalAlignment.Center };
-        var label = new TextBlock { Text = name, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
+        var label = new TextBlock { Text = name, FontSize = 11, FontWeight = FontWeights.Medium, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
         var remove = new Button { Style = (Style)FindResource("Icon"), Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
             Content = new TextBlock { Text = "", FontSize = 9, Style = (Style)FindResource("Glyph") }, ToolTip = "Take off the shelf" };
         remove.Click += (_, _) => shelf.Remove(path);

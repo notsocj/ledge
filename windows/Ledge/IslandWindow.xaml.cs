@@ -11,7 +11,7 @@ namespace Ledge;
 public partial class IslandWindow : Window
 {
     static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), BannerSize = new(380, 32), OpenSize = new(560, 220),
-        SetupSize = new(560, 290);
+        SetupSize = new(560, 320); // taller than the open island: setup's persona cards hold three lines of Poppins
     /// <summary>The open island's corner. Closed, the corner is half the height, which makes it a pill.</summary>
     const double OpenCorner = 28;
 

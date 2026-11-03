@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Ledge"
-             Foreground="White" FontSize="13">
+             Foreground="White" FontSize="12.5">
   <DockPanel Margin="16,12,16,16">
     <StackPanel x:Name="Tabs" DockPanel.Dock="Top" Orientation="Horizontal" Margin="-4,0,0,12">
       <RadioButton x:Name="HomeTab" Content="Home" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
@@ -30,9 +30,9 @@
             <TextBlock x:Name="ArtworkGlyph" Style="{StaticResource Glyph}" Text="&#xE8D6;" FontSize="24" Foreground="{StaticResource Ash}"/>
           </Border>
           <StackPanel Grid.Column="1" Margin="14,4,12,0">
-            <TextBlock x:Name="SongTitle" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-            <TextBlock x:Name="SongArtist" Foreground="{StaticResource Graphite}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
-            <StackPanel Orientation="Horizontal" Margin="-6,12,0,0">
+            <TextBlock x:Name="SongTitle" Style="{StaticResource TitleText}"/>
+            <TextBlock x:Name="SongArtist" Style="{StaticResource BodyText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="-6,10,0,0">
               <Button Style="{StaticResource Icon}" Click="Previous_Click" ToolTip="Previous">
                 <TextBlock Style="{StaticResource Glyph}" Text="&#xE892;"/>
               </Button>
@@ -46,28 +46,28 @@
           </StackPanel>
         </Grid>
         <StackPanel x:Name="NothingPlaying" Visibility="Collapsed" VerticalAlignment="Top" Margin="0,4,24,0">
-          <TextBlock Text="Nothing playing" FontSize="15" FontWeight="SemiBold"/>
+          <TextBlock Text="Nothing playing" Style="{StaticResource TitleText}"/>
           <TextBlock Text="Play something in Spotify, your browser or any media app and it shows up here."
-                     TextWrapping="Wrap" Foreground="{StaticResource Graphite}" Margin="0,4,0,0"/>
+                     Style="{StaticResource BodyText}" Margin="0,4,0,0"/>
         </StackPanel>
 
         <TextBlock x:Name="ToolsAbove" Visibility="Collapsed" Text="Your tools are in the tabs above."
-                   Foreground="{StaticResource Graphite}" Margin="0,4,24,0"/>
+                   Style="{StaticResource BodyText}" Margin="0,4,24,0"/>
 
         <StackPanel Grid.Column="1">
-          <Border x:Name="NextMeetingCard" Background="{StaticResource Well}" CornerRadius="14" Padding="14,8" Margin="0,0,0,8" Visibility="Collapsed">
+          <Border x:Name="NextMeetingCard" Background="{StaticResource Well}" CornerRadius="14" Padding="12,7" Margin="0,0,0,6" Visibility="Collapsed">
             <StackPanel>
-              <TextBlock x:Name="NextMeetingWhen" FontSize="12" Foreground="{StaticResource Graphite}"/>
-              <TextBlock x:Name="NextMeetingTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="NextMeetingWhen" Style="{StaticResource LabelText}"/>
+              <TextBlock x:Name="NextMeetingTitle" Style="{StaticResource HeadlineText}"/>
             </StackPanel>
           </Border>
-          <Border x:Name="BatteryCard" Background="{StaticResource Well}" CornerRadius="14" Padding="14,8" Margin="0,0,0,8">
+          <Border x:Name="BatteryCard" Background="{StaticResource Well}" CornerRadius="14" Padding="12,7" Margin="0,0,0,6">
             <StackPanel>
-              <TextBlock Text="Battery" FontSize="12" Foreground="{StaticResource Graphite}"/>
-              <TextBlock x:Name="BatteryText" FontSize="15" FontWeight="SemiBold"/>
+              <TextBlock Text="Battery" Style="{StaticResource LabelText}"/>
+              <TextBlock x:Name="BatteryText" Style="{StaticResource TitleText}"/>
             </StackPanel>
           </Border>
-          <ToggleButton x:Name="KeepAwakeToggle" Style="{StaticResource Toggle}" Height="40" HorizontalContentAlignment="Left"
+          <ToggleButton x:Name="KeepAwakeToggle" Style="{StaticResource Toggle}" Height="36" HorizontalContentAlignment="Left"
                         Click="KeepAwake_Click" ToolTip="Stops the screen from turning off or the PC from sleeping">
             <StackPanel Orientation="Horizontal">
               <TextBlock Style="{StaticResource Glyph}" Text="&#xE890;" Margin="0,0,8,0"/>
@@ -80,8 +80,8 @@
       <!-- Timer -->
       <Grid x:Name="TimerPage" Visibility="Collapsed">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
-          <TextBlock x:Name="TimerText" FontSize="44" FontWeight="Light" Typography.NumeralAlignment="Tabular"/>
-          <TextBlock x:Name="TimerHint" Foreground="{StaticResource Graphite}"/>
+          <local:TabularText x:Name="TimerText" Style="{StaticResource DisplayText}" HorizontalAlignment="Left"/>
+          <TextBlock x:Name="TimerHint" Style="{StaticResource BodyText}"/>
         </StackPanel>
         <StackPanel x:Name="TimerPresets" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
           <Button Style="{StaticResource Pill}" Content="5 min" Tag="5" Click="Preset_Click"/>
@@ -98,15 +98,15 @@
       <!-- Ports -->
       <Grid x:Name="PortsPage" Visibility="Collapsed">
         <DockPanel x:Name="PortsList">
-          <TextBlock x:Name="PortsHeader" DockPanel.Dock="Top" FontSize="12" Foreground="{StaticResource Graphite}" Margin="0,0,0,6"/>
+          <TextBlock x:Name="PortsHeader" DockPanel.Dock="Top" Style="{StaticResource LabelText}" Margin="0,0,0,6"/>
           <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="-10,0">
             <StackPanel x:Name="PortRows"/>
           </ScrollViewer>
         </DockPanel>
         <StackPanel x:Name="NoPorts" VerticalAlignment="Top" Margin="0,4,0,0">
-          <TextBlock Text="Nothing running" FontSize="15" FontWeight="SemiBold"/>
+          <TextBlock Text="Nothing running" Style="{StaticResource TitleText}"/>
           <TextBlock Text="Dev servers you start, like npm run dev, show up here with their port."
-                     TextWrapping="Wrap" Foreground="{StaticResource Graphite}" Margin="0,4,0,0"/>
+                     Style="{StaticResource BodyText}" Margin="0,4,0,0"/>
         </StackPanel>
       </Grid>
 

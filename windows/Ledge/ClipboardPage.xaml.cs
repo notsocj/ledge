@@ -31,7 +31,7 @@ public partial class ClipboardPage : UserControl
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 ToolTip = text.Length > 400 ? text[..400] + "…" : text,
                 // One line per copy: newlines and runs of spaces fold into single spaces.
-                Content = new TextBlock { Text = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)), TextTrimming = TextTrimming.CharacterEllipsis },
+                Content = new TextBlock { Text = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)), Style = (Style)FindResource("RowText") },
             };
             row.Click += (_, _) => history.Copy(text);
             Rows.Children.Add(row);

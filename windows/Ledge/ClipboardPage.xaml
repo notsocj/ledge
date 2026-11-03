@@ -1,11 +1,11 @@
 <UserControl x:Class="Ledge.ClipboardPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Foreground="White" FontSize="13">
+             Foreground="White" FontSize="12.5">
   <Grid>
     <DockPanel x:Name="List">
       <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
-        <TextBlock Text="Click to copy again" FontSize="12" Foreground="{StaticResource Graphite}" VerticalAlignment="Center"/>
+        <TextBlock Text="Click to copy again" Style="{StaticResource CaptionText}"/>
         <Button Style="{StaticResource Pill}" Content="Clear" Height="24" HorizontalAlignment="Right" Click="Clear_Click"/>
       </Grid>
       <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="-10,0">
@@ -13,9 +13,9 @@
       </ScrollViewer>
     </DockPanel>
     <StackPanel x:Name="Empty" VerticalAlignment="Top" Margin="0,4,0,0">
-      <TextBlock Text="Nothing copied yet" FontSize="15" FontWeight="SemiBold"/>
+      <TextBlock Text="Nothing copied yet" Style="{StaticResource TitleText}"/>
       <TextBlock Text="Text you copy shows up here, so you can paste older things again. Passwords from password managers are never kept."
-                 TextWrapping="Wrap" Foreground="{StaticResource Graphite}" Margin="0,4,0,0"/>
+                 Style="{StaticResource BodyText}" Margin="0,4,0,0"/>
     </StackPanel>
   </Grid>
 </UserControl>

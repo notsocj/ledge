@@ -1,11 +1,11 @@
 <UserControl x:Class="Ledge.ShelfPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Foreground="White" FontSize="13">
+             Foreground="White" FontSize="12.5">
   <Grid>
     <DockPanel x:Name="List">
       <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
-        <TextBlock Text="Drag a file out to use it. Double-click to open it." FontSize="12" Foreground="{StaticResource Graphite}" VerticalAlignment="Center"/>
+        <TextBlock Text="Drag a file out to use it. Double-click to open it." Style="{StaticResource CaptionText}"/>
         <Button Style="{StaticResource Pill}" Content="Clear" Height="24" HorizontalAlignment="Right" Click="Clear_Click"/>
       </Grid>
       <ScrollViewer VerticalScrollBarVisibility="Hidden">
@@ -13,9 +13,9 @@
       </ScrollViewer>
     </DockPanel>
     <StackPanel x:Name="Empty" VerticalAlignment="Top" Margin="0,4,0,0">
-      <TextBlock Text="Drop files here" FontSize="15" FontWeight="SemiBold"/>
+      <TextBlock Text="Drop files here" Style="{StaticResource TitleText}"/>
       <TextBlock Text="Drag files onto the island to keep them handy, then drag them out wherever they're going. Nothing is copied or moved."
-                 TextWrapping="Wrap" Foreground="{StaticResource Graphite}" Margin="0,4,0,0"/>
+                 Style="{StaticResource BodyText}" Margin="0,4,0,0"/>
     </StackPanel>
   </Grid>
 </UserControl>
