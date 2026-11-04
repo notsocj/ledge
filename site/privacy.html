@@ -15,7 +15,7 @@
 <main class="doc">
   <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Ledge</a>
   <h1>Privacy</h1>
-  <p class="updated">Last updated November 4, 2026</p>
+  <p class="updated">Last updated November 5, 2026</p>
 
   <p>Ledge has no account, no analytics and no cloud storage for your content. What it shows you is read on your Mac and stays there. This page lists every exception.</p>
 
@@ -33,6 +33,7 @@
   <p>These features talk to the internet while they're switched on:</p>
   <ul>
     <li><strong>Synced lyrics.</strong> When a song plays, Ledge looks it up on <a href="https://lrclib.net">LRCLIB</a> by title, artist, album and length. Nothing else is sent. Switch off Now playing in Settings and the lookups stop.</li>
+    <li><strong>F1 companion.</strong> Off by default. When enabled, Ledge requests public race schedules and published results from <a href="https://jolpi.ca/">Jolpica</a> and caches them locally for offline use. Jolpica receives normal network information such as your IP address and the Ledge version in the user-agent; no calendar events, notes, clipboard contents or credentials are sent. Switching F1 off cancels requests and polling. This feature does not provide live race timing.</li>
     <li><strong>Claude usage.</strong> To show your Claude limits, Ledge asks Anthropic's API for your usage, signed in with the login Claude Code already saved in your Keychain. Ledge only reads that login. It never refreshes, changes or sends it anywhere else. If Claude Code isn't installed, nothing is sent.</li>
     <li><strong>Mac updates.</strong> Starting with version 0.1.4, Ledge uses Sparkle to check the update feed on keepledge.vercel.app and download releases from GitHub. Checks are enabled by default and can be turned off in Settings → Updates. You choose when to install. These services receive normal network information such as your IP address and the updater's user-agent; Ledge does not send your notes, clipboard, calendar, agent credentials or a system profile with update checks.</li>
   </ul>
@@ -52,7 +53,7 @@
   <p>Agent alerts are off until you connect them in Settings. Connecting adds one small command to <code>~/.claude/settings.json</code> and <code>~/.codex/config.toml</code> so the agents can tell Ledge when they finish or need you. Ledge asks before changing either file, saves a backup next to each one, and keeps any existing Codex <code>notify</code> command working by running it afterwards. Disconnect removes the command again.</p>
 
   <h2>Removing everything</h2>
-  <p>Quit Ledge, disconnect agent alerts first if you connected them, then delete the app and the <code>~/Library/Application Support/Ledge</code> folder.</p>
+  <p>Quit Ledge, disconnect agent alerts first if you connected them, then delete the app and the <code>~/Library/Application Support/Ledge</code> folder. If you enabled F1, its saved public schedule and results can also be removed by deleting <code>~/Library/Caches/com.ledge.Ledge</code>.</p>
 
   <h2>Questions</h2>
   <!-- Replace with the support address before launch. -->

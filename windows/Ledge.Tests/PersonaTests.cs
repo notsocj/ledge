@@ -5,8 +5,8 @@ namespace Ledge.Tests;
 public class LayoutTests
 {
     [Fact]
-    public void NoPersonaMeansEverythingOn() =>
-        Assert.Equal(Enum.GetValues<Tool>(), Layout.Merging([]).Tools);
+    public void NoPersonaMeansStandardToolsOn() =>
+        Assert.Equal(Enum.GetValues<Tool>().Where(tool => tool != Tool.F1), Layout.Merging([]).Tools);
 
     [Fact]
     public void DeveloperLeadsWithAgentsThenPorts()

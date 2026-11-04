@@ -1,7 +1,7 @@
 namespace Ledge;
 
 /// <summary>Tools you can switch off. Home and the battery alerts are always there.</summary>
-public enum Tool { Media, Timer, Ports, KeepAwake, AgentAlerts, Clipboard, Shelf, ColorPicker, InUse, Calendar }
+public enum Tool { Media, Timer, Ports, KeepAwake, AgentAlerts, Clipboard, Shelf, ColorPicker, InUse, Calendar, F1 }
 
 /// <summary>What shows beside the closed island when more than one thing is live.</summary>
 public enum ClosedActivity { Timer, Media }
@@ -60,6 +60,7 @@ public static class Personas
         Tool.Shelf => "Shelf",
         Tool.ColorPicker => "Color picker",
         Tool.InUse => "Mic and camera",
+        Tool.F1 => "F1 weekend",
         _ => "Calendar",
     };
 
@@ -74,6 +75,7 @@ public static class Personas
         Tool.Shelf => "",
         Tool.ColorPicker => "",
         Tool.InUse => "",
+        Tool.F1 => "",
         _ => "",
     };
 }
@@ -85,7 +87,7 @@ public sealed record Layout(IReadOnlyList<Tool> Tools, IReadOnlyList<Tool> Tabs,
     public static readonly Tool[] TabTools = [Tool.Calendar, Tool.Timer, Tool.Ports, Tool.Clipboard, Tool.Shelf, Tool.ColorPicker];
 
     /// <summary>Before anyone picks a persona: everything on.</summary>
-    public static readonly Layout Standard = new(Enum.GetValues<Tool>(), TabTools, [ClosedActivity.Timer, ClosedActivity.Media]);
+    public static readonly Layout Standard = new([.. Enum.GetValues<Tool>().Where(tool => tool != Tool.F1)], TabTools, [ClosedActivity.Timer, ClosedActivity.Media]);
 
     /// <summary>Several personas merge: a tool is on if any of them wants it, and ranks as high as the
     /// persona that cares most about it. The first persona picked breaks ties and decides the closed island.</summary>

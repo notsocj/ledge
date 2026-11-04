@@ -57,7 +57,11 @@ final class NotchModel {
     @ObservationIgnored private var notifications = NotificationQueue()
     @ObservationIgnored var onBannerPresented: ((Banner) -> Void)?
 
-    func tabs(in preferences: Preferences) -> [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
+    func tabs(in preferences: Preferences) -> [Tool] {
+        let ranked = preferences.layout.tabOrder.filter(preferences.isOn)
+        // Reserve a visible slot for the companion only after an explicit opt-in.
+        return preferences.isOn(.f1) ? Array(ranked.prefix(Layout.maxTabs - 1)) + [.f1] : ranked
+    }
 
     func show(_ banner: Banner, seconds: Double = 2) {
         synchronizeNotifications(delivered: notifications.submit(banner, seconds: seconds, at: .now))
@@ -113,6 +117,7 @@ final class NotchController {
     let keepAwake = KeepAwake()
     let agenda = Agenda()
     let countdown = Countdown()
+    let f1 = F1Companion()
     let colorPicker = ColorPicker()
     let worldClock = WorldClock.shared
     let microphone = Microphone()
@@ -138,9 +143,17 @@ final class NotchController {
     private var speed: CGFloat = 0 // pointer speed in points per second, smoothed
 
     /// In the order your personas rank them; the first `leftTabCount` go left of the notch.
-    var tabs: [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
+    var tabs: [Tool] { model.tabs(in: preferences) }
     var leftTabs: [Tool] { Array(tabs.prefix(Tool.leftTabCount)) }
     var rightTabs: [Tool] { Array(tabs.dropFirst(Tool.leftTabCount)) }
+
+    var showsF1Compact: Bool {
+        preferences.isOn(.f1) && model.fileDrag == nil
+            && !(preferences.isOn(.micMute) && microphone.isMuted)
+            && !(preferences.isOn(.inUse) && inUse.any)
+            && !(preferences.isOn(.timer) && countdown.isActive)
+            && !(preferences.isOn(.media) && nowPlaying.hasTrack)
+    }
 
     init() {
         panel.level = .mainMenu + 3
@@ -245,6 +258,7 @@ final class NotchController {
 
     func quit() {
         nowPlaying.stop()
+        f1.stop()
         notes.save()
         keepAwake.off()
     }
@@ -288,6 +302,8 @@ final class NotchController {
     private func apply(_ tool: Tool, on: Bool) {
         if !on { model.removeNotifications(for: tool) }
         switch tool {
+        case .f1:
+            if on, Snapshots.folder == nil { f1.start() } else { f1.stop() }
         case .media: if on, Snapshots.folder == nil { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap. Snapshots use demo music.
         case .clipboard: on ? clipboard.start() : clipboard.stop()
         case .keepAwake: if !on { keepAwake.off() }
@@ -321,6 +337,7 @@ final class NotchController {
         case .home, .shelf, .calendar, .timer, .notes, .stats, .menuBarHider, .worldClock: break // nothing to start or stop
         }
         if !on, model.tab == tool { model.tab = tabs.first ?? .media }
+        if tool == .f1, on, !tabs.contains(model.tab) { model.tab = .f1 }
     }
 
     /// Accessibility tools can't start until the user allows it, which happens outside the app.
@@ -417,7 +434,8 @@ final class NotchController {
     /// The closed notch, widened a little and extended past the top edge where the cursor rests.
     private var hotZone: NSRect {
         let frame = panel.frame, notch = model.notchSize
-        return NSRect(x: frame.midX - notch.width / 2 - 14, y: frame.maxY - notch.height, width: notch.width + 28, height: notch.height + 2)
+        let wing: CGFloat = showsF1Compact && model.banner == nil ? F1CompactView.wingWidth(for: f1) : 14
+        return NSRect(x: frame.midX - notch.width / 2 - wing, y: frame.maxY - notch.height, width: notch.width + wing * 2, height: notch.height + 2)
     }
 
     /// The open island plus a small margin, so a pointer resting on its edge doesn't flicker it shut.
@@ -530,6 +548,7 @@ final class NotchController {
     private func setExpanded(_ expanded: Bool) {
         if expanded { pendingClose?.cancel(); pendingClose = nil } else { pendingOpen?.cancel(); pendingOpen = nil }
         panel.ignoresMouseEvents = !expanded
+        if expanded, !model.expanded, model.onboarding == nil, model.banner == nil, showsF1Compact { model.tab = .f1 }
         if expanded, !preferences.isOn(model.tab) { model.tab = tabs.first ?? .media }
         // Reduce Motion: the island snaps between states instead of morphing.
         let animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : expanded ? Motion.open : Motion.close

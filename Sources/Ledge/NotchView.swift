@@ -33,7 +33,7 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case drop, micMuted, inUse, timer, media, nothing
+        case drop, micMuted, inUse, timer, media, f1, nothing
     }
 
     private var closedContent: Closed {
@@ -48,6 +48,7 @@ struct NotchView: View {
             default: continue
             }
         }
+        if app.preferences.isOn(.f1) { return .f1 }
         return .nothing
     }
 
@@ -58,6 +59,7 @@ struct NotchView: View {
         case .micMuted: 64
         case .timer: 64
         case .media: 44
+        case .f1: F1CompactView.wingWidth(for: app.f1)
         case .nothing: 0
         }
         return CGSize(width: model.notchSize.width + wing * 2, height: model.notchSize.height)
@@ -113,6 +115,8 @@ struct NotchView: View {
             }
         case .nothing:
             EmptyView()
+        case .f1:
+            F1CompactView(companion: app.f1, height: model.notchSize.height)
         }
     }
 
@@ -191,6 +195,7 @@ struct NotchView: View {
         case .timer: TimerView(countdown: app.countdown)
         case .notes: NotesView(notes: app.notes)
         case .stats: StatsView(stats: app.stats, usage: app.usage)
+        case .f1: F1View(companion: app.f1)
         default: EmptyView()
         }
     }

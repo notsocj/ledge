@@ -31,6 +31,7 @@ static class Snapshots
         panel.HomeTab.IsChecked = true;
         Save(panel, OpenSize, Path.Combine(folder, "1-home.png"));
         HomeVariants(folder);
+        F1Variants(folder);
         foreach (var (tool, name) in new[] { (Tool.Calendar, "calendar"), (Tool.Timer, "timer"), (Tool.Ports, "ports"),
                      (Tool.Clipboard, "clipboard"), (Tool.Shelf, "shelf"), (Tool.ColorPicker, "color") })
         {
@@ -74,6 +75,34 @@ static class Snapshots
             var panel = new OpenPanel { Width = OpenSize.Width, Height = OpenSize.Height, AnimateTabs = false };
             panel.Attach(tools, settings);
             Save(panel, OpenSize, Path.Combine(folder, $"1-home-{variant}.png"));
+        }
+    }
+
+    /// <summary>Isolated F1 fixtures: snapshots never start the feed or make requests.</summary>
+    static void F1Variants(string folder)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var start = now.AddDays(3).AddHours(4);
+        var day = DateOnly.FromDateTime(start.UtcDateTime);
+        var weekend = new F1Race(2026, 20, "São Paulo Grand Prix", "Autódromo José Carlos Pace", day, start,
+        [
+            new("Practice 1", day.AddDays(-2), start.AddDays(-2).AddHours(-3)),
+            new("Sprint qualifying", day.AddDays(-2), start.AddDays(-2).AddHours(1)),
+            new("Sprint", day.AddDays(-1), start.AddDays(-1).AddHours(-3)),
+            new("Qualifying", day.AddDays(-1), start.AddDays(-1).AddHours(1)),
+            new("Race", day, start),
+        ]);
+        var previous = weekend with { Round = 19, Name = "Mexico City Grand Prix", Start = start.AddDays(-7), Date = day.AddDays(-7) };
+        var podium = new F1Podium(previous, [new(1, "Lando Norris", "McLaren"), new(2, "Charles Leclerc", "Ferrari"), new(3, "Max Verstappen", "Red Bull")]);
+        foreach (var variant in new[] { "weekend", "results-pending", "saved", "empty" })
+        {
+            var tools = new Tools(Dispatcher.CurrentDispatcher);
+            var race = variant == "results-pending" ? weekend with { Start = now.AddHours(-2) } : weekend;
+            if (variant != "empty") tools.F1.ShowDemo(new([race], podium, now.AddMinutes(-12)), variant == "saved" ? "Couldn't update" : null);
+            var panel = new OpenPanel { Width = 560, Height = 260, AnimateTabs = false };
+            panel.Attach(tools, new Settings { SetupDone = true, Personas = [Persona.Essentials], F1Enabled = true });
+            panel.ShowTab(Tool.F1);
+            Save(panel, new Size(560, 260), Path.Combine(folder, $"2-f1-{variant}.png"));
         }
     }
 

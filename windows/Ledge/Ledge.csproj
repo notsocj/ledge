@@ -11,7 +11,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Ledge</AssemblyName>
     <RootNamespace>Ledge</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\Ledge.ico</ApplicationIcon>
     <!-- LibraryImport generates the Win32 calls in Native.cs. -->

@@ -174,3 +174,11 @@ visitors on Windows; its fallback links (used only if GitHub can't be reached) n
   License 1.1 (`Ledge/Assets/Fonts/OFL.txt`).
 - Calendar links: [Ical.Net](https://github.com/rianjs/ical.net), MIT.
 - Installer and updates: [Velopack](https://velopack.io), MIT.
+
+## F1 weekend
+
+The optional **F1 weekend** toggle is off by default. Enable it from the tray menu or **Change what Ledge shows…**. It adds a quiet compact countdown and an expanded tab with the weekend schedule in local time and the latest published podium. The existing island spring handles opening and closing; minute updates only replace text. Active timers and music retain compact priority, and notifications temporarily interrupt the companion.
+
+The feed uses [Jolpica's Ergast-compatible API](https://github.com/jolpica/jolpica-f1/tree/main/docs), with an app/version User-Agent. It reads the calendar and published race results every 30 minutes, or every five minutes for the first 24 hours after a scheduled start while results are missing. This is schedule and post-race data, not live timing. Missing start times stay “Time TBC”; an elapsed scheduled start is “Results pending.” No key or account is needed.
+
+Disabling the feature cancels requests and stops its timer. Successful responses are stored in `%LOCALAPPDATA%\Ledge\f1-cache.json`; offline views retain the saved timestamp. The source link is shown in the tab. Jolpica data is provided under [CC BY-NC-SA 4.0](https://github.com/jolpica/jolpica-f1/blob/main/TERMS.md).

@@ -96,8 +96,8 @@ struct Layout: Equatable {
     var chips: [StatusChip]
     var closedOrder: [ClosedActivity]
 
-    /// Before anyone picks a persona: everything on, in the original order.
-    static let standard = Layout(tools: Set(Tool.allCases), tabOrder: Tool.tabs.filter { $0 != .colorPicker && $0 != .ports }, homeWidgets: [.media, .week],
+    /// Before anyone picks a persona: the original tools, with optional companions excluded.
+    static let standard = Layout(tools: Set(Tool.allCases).subtracting([.f1]), tabOrder: Tool.tabs.filter { $0 != .colorPicker && $0 != .ports && $0 != .f1 }, homeWidgets: [.media, .week],
                                  chips: StatusChip.allCases, closedOrder: [.timer, .media])
 
     /// Several personas merge: a tool is on if any of them wants it, and ranks as high as the persona

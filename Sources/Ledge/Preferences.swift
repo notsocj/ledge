@@ -4,16 +4,16 @@ import SwiftUI
 
 enum Tool: String, CaseIterable, Identifiable {
     // In the open island.
-    case home, media, shelf, colorPicker, clipboard, calendar, timer, notes, stats, ports
+    case home, media, shelf, colorPicker, clipboard, calendar, timer, notes, stats, ports, f1
     // Work everywhere, outside the island.
     case keepAwake, screenshot, volumeHUD, alerts, windowSnapping, menuBarHider, meetingAlerts, worldClock, micMute
     case audioOutput, agentAlerts, inUse
 
     /// Tabs, split around the notch: the first `leftTabCount` sit left of it, the rest right.
-    static let tabs: [Tool] = [.home, .media, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports]
+    static let tabs: [Tool] = [.home, .media, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports, .f1]
     static let leftTabCount = 4
     /// Calendar has no tab of its own; it lives on Home.
-    static let island: [Tool] = [.home, .media, .calendar, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports]
+    static let island: [Tool] = [.home, .media, .calendar, .shelf, .colorPicker, .clipboard, .timer, .notes, .stats, .ports, .f1]
     static let everywhere = allCases.filter { !island.contains($0) }
 
     var id: String { rawValue }
@@ -38,6 +38,7 @@ enum Tool: String, CaseIterable, Identifiable {
         case .audioOutput: "Output"
         case .agentAlerts: "Agents"
         case .inUse: "In use"
+        case .f1: "F1"
         default: title
         }
     }
@@ -66,6 +67,7 @@ enum Tool: String, CaseIterable, Identifiable {
         case .audioOutput: "Audio output"
         case .agentAlerts: "Agent alerts"
         case .inUse: "Mic and camera in use"
+        case .f1: "F1 companion"
         }
     }
 
@@ -93,6 +95,7 @@ enum Tool: String, CaseIterable, Identifiable {
         case .audioOutput: "speaker-minimalistic-linear"
         case .agentAlerts: "bell-ring-linear"
         case .inUse: "record-circle-linear"
+        case .f1: "flag-linear"
         }
     }
 
@@ -120,6 +123,7 @@ enum Tool: String, CaseIterable, Identifiable {
         case .audioOutput: "Switch between speakers, AirPods and other outputs from Home."
         case .agentAlerts: "The notch lights up when Claude Code or Codex finishes or needs you. Connect them below."
         case .inUse: "Shows beside the notch while any app is using your microphone or camera."
+        case .f1: "Next-race countdown, weekend times and the latest podium from Jolpica. Off by default; results update after the race."
         }
     }
 
@@ -133,7 +137,7 @@ extension Notification.Name {
     static let previewNotification = Notification.Name("LedgePreviewNotification")
 }
 
-/// Which tools are on. Stores the switched-off ones, so tools added in updates start switched on.
+/// Which tools are on. F1 has its own explicit opt-in, independent of tool migrations and personas.
 @Observable @MainActor
 final class Preferences {
     static let shared = Preferences()
@@ -141,16 +145,20 @@ final class Preferences {
     private(set) var disabled: Set<Tool>
     /// In the order they were picked; the first one leads (see `Layout.merging`). Empty until chosen.
     private(set) var personas: [Persona]
+    private(set) var f1Enabled: Bool
+    @ObservationIgnored private let defaults: UserDefaults
     /// Whether first-run setup has been finished or skipped.
-    var onboarded: Bool { didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") } }
-    var notificationSounds: Bool { didSet { UserDefaults.standard.set(notificationSounds, forKey: "notificationSounds") } }
+    var onboarded: Bool { didSet { defaults.set(onboarded, forKey: "onboarded") } }
+    var notificationSounds: Bool { didSet { defaults.set(notificationSounds, forKey: "notificationSounds") } }
     @ObservationIgnored var onChange: ((Tool, Bool) -> Void)?
 
-    private init() {
-        disabled = Set((UserDefaults.standard.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
-        personas = (UserDefaults.standard.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
-        onboarded = UserDefaults.standard.bool(forKey: "onboarded")
-        notificationSounds = UserDefaults.standard.object(forKey: "notificationSounds") as? Bool ?? true
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        disabled = Set((defaults.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
+        personas = (defaults.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
+        onboarded = defaults.bool(forKey: "onboarded")
+        notificationSounds = defaults.object(forKey: "notificationSounds") as? Bool ?? true
+        f1Enabled = defaults.bool(forKey: "f1Enabled")
         adoptNewTools()
     }
 
@@ -162,7 +170,6 @@ final class Preferences {
     /// Tools that arrived in an update start on only if your personas want them; tools you've
     /// already seen keep whatever you set.
     private func adoptNewTools() {
-        let defaults = UserDefaults.standard
         // Before this was tracked, every tool except these four already existed.
         let known = defaults.stringArray(forKey: "knownTools").map { Set($0.compactMap(Tool.init)) }
             ?? Set(Tool.allCases).subtracting([.colorPicker, .meetingAlerts, .worldClock, .micMute, .ports, .audioOutput, .agentAlerts, .inUse])
@@ -178,22 +185,29 @@ final class Preferences {
     /// Picking what you do rebuilds which tools are on; individual switches still work afterwards.
     func choose(_ personas: [Persona]) {
         self.personas = personas
-        UserDefaults.standard.set(personas.map(\.rawValue), forKey: "personas")
+        defaults.set(personas.map(\.rawValue), forKey: "personas")
         guard !personas.isEmpty else { return }
         let wanted = layout.tools
-        for tool in Tool.allCases where isOn(tool) != wanted.contains(tool) {
+        for tool in Tool.allCases where tool != .f1 && isOn(tool) != wanted.contains(tool) {
             set(tool, on: wanted.contains(tool))
         }
     }
 
     func isOn(_ tool: Tool) -> Bool {
         if let preview { return Layout.merging(preview).tools.contains(tool) }
+        if tool == .f1 { return f1Enabled }
         return !disabled.contains(tool)
     }
 
     func set(_ tool: Tool, on: Bool) {
+        if tool == .f1 {
+            f1Enabled = on
+            defaults.set(on, forKey: "f1Enabled")
+            onChange?(tool, on)
+            return
+        }
         if on { disabled.remove(tool) } else { disabled.insert(tool) }
-        UserDefaults.standard.set(disabled.map(\.rawValue), forKey: "disabledTools")
+        defaults.set(disabled.map(\.rawValue), forKey: "disabledTools")
         onChange?(tool, on)
     }
 }

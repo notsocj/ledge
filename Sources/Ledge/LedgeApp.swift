@@ -4,7 +4,7 @@ import SwiftUI
 struct LedgeApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     private let updater = AppUpdater.shared
-    private static var isPreview: Bool { NotificationPreview.isRequested || HomeMusicPreview.isRequested }
+    private static var isPreview: Bool { NotificationPreview.isRequested || HomeMusicPreview.isRequested || F1Preview.isRequested }
 
     init() {
         if !Self.isPreview {
@@ -48,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notch: NotchController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard !NotificationPreview.startIfRequested(), !HomeMusicPreview.startIfRequested() else { return }
+        guard !NotificationPreview.startIfRequested(), !HomeMusicPreview.startIfRequested(), !F1Preview.startIfRequested() else { return }
         notch = NotchController()
         if Snapshots.folder == nil { AppUpdater.shared.start() }
     }

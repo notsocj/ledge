@@ -23,7 +23,7 @@ private let updateInformation: [String: Any] = [
                                      arguments: ["Ledge"], environment: [:]))
 }
 
-@Test(arguments: ["--snapshot", "--notification-preview", "--home-music-preview"])
+@Test(arguments: ["--snapshot", "--notification-preview", "--home-music-preview", "--f1-preview"])
 func updaterNeverRunsDuringPreviewCapture(argument: String) {
     #expect(!UpdateStartup.isAllowed(bundleURL: updateBundle, information: updateInformation,
                                      arguments: ["Ledge", argument, "/tmp/preview"], environment: [:]))

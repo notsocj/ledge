@@ -12,6 +12,7 @@ public partial class SetupView : UserControl
     Step step;
     readonly List<Persona> picked = [];
     readonly HashSet<Tool> off = [];
+    bool f1Enabled;
 
     /// <summary>Setup is finished; the settings are ready to save and apply.</summary>
     public event Action<Settings>? Finished;
@@ -30,6 +31,7 @@ public partial class SetupView : UserControl
         picked.AddRange(settings.Personas);
         off.Clear();
         off.UnionWith(settings.Off);
+        f1Enabled = settings.F1Enabled;
         StartAtLoginToggle.IsChecked = settings.SetupDone ? StartAtLogin.IsOn : true;
         StartAtLoginGlyph.Text = StartAtLoginToggle.IsChecked == true ? "" : "";
         Show(settings.SetupDone ? Step.Personas : Step.Welcome);
@@ -77,7 +79,7 @@ public partial class SetupView : UserControl
         }
         StartAtLogin.IsOn = StartAtLoginToggle.IsChecked == true;
         var layout = Layout.Merging(picked);
-        Finished?.Invoke(new Settings { SetupDone = true, Personas = [.. picked], Off = [.. off.Where(layout.Tools.Contains)] });
+        Finished?.Invoke(new Settings { SetupDone = true, Personas = [.. picked], Off = [.. off.Where(layout.Tools.Contains)], F1Enabled = f1Enabled });
     }
 
     void BuildPersonaCards()
@@ -155,6 +157,14 @@ public partial class SetupView : UserControl
             };
             ToolChips.Children.Add(chip);
         }
+        var f1 = new ToggleButton
+        {
+            Style = (Style)FindResource("Toggle"), IsChecked = f1Enabled, Height = 36,
+            Margin = new Thickness(0, 0, 8, 8), Content = ChipContent(Tool.F1),
+            ToolTip = "Optional countdown, weekend schedule and latest podium from Jolpica. No live race data.",
+        };
+        f1.Click += (_, _) => f1Enabled = f1.IsChecked == true;
+        ToolChips.Children.Add(f1);
     }
 
     static UIElement ChipContent(Tool tool)

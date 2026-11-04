@@ -96,7 +96,15 @@ decides Home. Change it any time in Settings, where every tool can also be switc
 </table>
 
 **In the island:** Home · Now playing with synced lyrics · File shelf · Color picker · Clipboard
-history · Timer and focus sessions · Notes · System stats · Localhost ports · Calendar week on Home
+history · Timer and focus sessions · Notes · System stats · Localhost ports · Calendar week on Home · Optional F1 companion
+
+**F1 companion** is off by default. Enable it in Settings → In the island on Mac, or the Windows
+tool settings. It shows a next-race countdown, the weekend schedule in your local time and the
+latest published podium. Hover the compact F1 countdown to open the weekend; active timers, music
+and ordinary notifications keep priority. Countdown ticks are quiet and opening uses the existing
+island animation. Data comes from [Jolpica](https://jolpi.ca/): this is a schedule/results companion,
+not live timing. After the scheduled start it shows “Results pending” while publication catches up.
+Saved data stays available offline, with its update status. Missing session times are marked TBC.
 
 **Everywhere:** Volume and brightness in the notch · Battery and AirPods alerts · Meeting countdown ·
 Agent alerts for Claude Code and Codex · Mic mute · Mic and camera in use · Window snapping · Keep
@@ -116,9 +124,16 @@ Everything stays on the Mac. Clipboard history is kept in memory only, and items
 mark as secret are skipped. Notes are a file in `~/Library/Application Support/Ledge`. Calendar
 events are read through macOS's own calendar access and never leave the Mac.
 
-Two things go over the network: synced lyrics are looked up on [LRCLIB](https://lrclib.net) by song
+Optional features use the network: synced lyrics are looked up on [LRCLIB](https://lrclib.net) by song
 title and artist, and the Claude usage meter asks Anthropic's API using the login Claude Code already
 saved in your Keychain (read only; Ledge never refreshes or changes it).
+
+When explicitly enabled, F1 fetches public schedules/results from `api.jolpi.ca` and caches them
+locally; no account or API key is needed and no personal content is sent. Normal refreshes are
+30 minutes apart (5 minutes while results are pending). Turning it off cancels requests and polling.
+Jolpica receives normal network information such as IP address and the Ledge version in the user-agent.
+The Mac updater also checks the signed update feed as described above.
+Jolpica's data is [CC BY-NC-SA 4.0](https://github.com/jolpica/jolpica-f1/blob/main/TERMS.md).
 
 Agent alerts, when you connect them in Settings, add a small command to `~/.claude/settings.json`
 and `~/.codex/config.toml`. Ledge asks first, saves a backup of each file next to it, and keeps an
@@ -152,6 +167,9 @@ and keyboard feedback (volume, brightness, microphone, screenshot and color pick
 
 `open build/Ledge.app --args --home-music-preview <folder>` captures Home's music/calendar row,
 calendar-first and music-only layouts, and the empty player with demo content and no live integrations.
+
+`open build/Ledge.app --args --f1-preview <folder>` captures the native F1 weekend, compact countdown,
+results-pending and empty states with fixed demo data, without contacting Jolpica or changing settings.
 
 ## Layout
 

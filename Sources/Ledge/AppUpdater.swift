@@ -72,7 +72,7 @@ final class AppUpdater {
 enum UpdateStartup {
     static func isAllowed(bundleURL: URL, information: [String: Any], arguments: [String],
                           environment: [String: String]) -> Bool {
-        let previewArguments: Set<String> = ["--snapshot", "--notification-preview", "--home-music-preview"]
+        let previewArguments: Set<String> = ["--snapshot", "--notification-preview", "--home-music-preview", "--f1-preview"]
         guard bundleURL.pathExtension == "app",
               information["CFBundleIdentifier"] as? String == "com.ledge.Ledge",
               information["CFBundleVersion"] as? String != nil,

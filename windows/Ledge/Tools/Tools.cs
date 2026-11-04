@@ -15,4 +15,5 @@ public sealed class Tools(Dispatcher dispatcher)
     public ColorPicker ColorPicker { get; } = new();
     public InUse InUse { get; } = new();
     public CalendarFeed Calendar { get; } = new();
+    public F1Feed F1 { get; } = new();
 }

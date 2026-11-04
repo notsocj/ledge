@@ -35,6 +35,9 @@ public partial class OpenPanel : UserControl
 
     /// <summary>The user changed something the closed island shows too, like starting a timer.</summary>
     public event Action? Changed;
+    public event Action? PageChanged;
+    public bool ShowingF1 => F1Tab.IsChecked == true;
+    public void RefreshF1() => F1View.Refresh();
 
     public ColorPage ColorTabPage => ColorView;
     public CalendarPage CalendarTabPage => CalendarView;
@@ -51,6 +54,7 @@ public partial class OpenPanel : UserControl
             [Tool.Shelf] = (ShelfTab, ShelfView),
             [Tool.ColorPicker] = (ColorTab, ColorView),
             [Tool.Calendar] = (CalendarTab, CalendarView),
+            [Tool.F1] = (F1Tab, F1View),
         };
         foreach (var (tool, (tab, _)) in pages) tab.Tag = tool.Glyph(); // the same icons as setup's tool chips
         // The first layout, when the pill can first be placed: until then the tabs have no size.
@@ -67,6 +71,7 @@ public partial class OpenPanel : UserControl
         ShelfView.Attach(tools.Shelf);
         ColorView.Attach(tools.ColorPicker);
         CalendarView.Attach(tools.Calendar, settings.CalendarLink is not null);
+        F1View.Attach(tools.F1);
         tools.Calendar.Changed += RefreshNextMeeting;
         HomeTab.IsChecked = true;
         Apply(settings);
@@ -84,7 +89,10 @@ public partial class OpenPanel : UserControl
         }
         shownTabs.Clear();
         shownTabs.Add(HomeTab);
-        shownTabs.AddRange(settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool)).Select(tool => pages[tool].Tab));
+        shownTabs.AddRange(settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool))
+            .Take(settings.F1Enabled ? 5 : 6).Select(tool => pages[tool].Tab));
+        if (settings.F1Enabled) shownTabs.Add(F1Tab);
+        if (!shownTabs.Any(tab => tab.IsChecked == true)) HomeTab.IsChecked = true;
         // Split down the middle, as the Mac splits them around the notch. Home leads on the left, and the
         // left side takes the extra tab when there's an odd number.
         LeftTabs.Children.Clear();
@@ -117,6 +125,7 @@ public partial class OpenPanel : UserControl
         if (ShelfTab.IsChecked == true) tools.Shelf.Prune();
         _ = UpdatePortsWatch();
         SlideTabs(animate: true);
+        PageChanged?.Invoke();
     }
 
     /// <summary>Slides the open tab's name open and the others' shut, and sends the pill after the open tab.

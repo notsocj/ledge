@@ -47,11 +47,11 @@ private let mixes: [[Persona]] = {
     #expect(layout == Layout.merging([.developer, .student, .designer]))
 }
 
-@Test func everyToolBelongsToSomePersona() {
-    // A tool no persona wants would only ever be reachable by hand in Settings.
+@Test func everyCoreToolBelongsToSomePersonaAndF1StaysOptIn() {
+    // Companions are deliberately enabled by hand, never recommended by a work persona.
     let wanted = Set(Persona.basics + Persona.allCases.flatMap(\.ranking))
     let orphans = Tool.allCases.filter { !wanted.contains($0) }
-    #expect(orphans.isEmpty, "unranked: \(orphans.map(\.rawValue))")
+    #expect(orphans == [.f1], "unranked: \(orphans.map(\.rawValue))")
 }
 
 @MainActor @Test func setupFitsTheIsland() {

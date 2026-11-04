@@ -20,8 +20,12 @@ sealed class Tray : IDisposable
         var startAtLogin = new Forms.ToolStripMenuItem("Start Ledge when you sign in") { CheckOnClick = true };
         startAtLogin.Click += (_, _) => StartAtLogin.IsOn = startAtLogin.Checked;
         var menu = new Forms.ContextMenuStrip();
+        var f1 = new Forms.ToolStripMenuItem("F1 weekend") { CheckOnClick = true };
+        f1.Click += (_, _) => island.SetF1Enabled(f1.Checked);
         menu.Opening += (_, _) => startAtLogin.Checked = StartAtLogin.IsOn; // setup can change it too
+        menu.Opening += (_, _) => f1.Checked = island.F1Enabled;
         menu.Items.Add("Change what Ledge shows…", null, (_, _) => island.StartSetup());
+        menu.Items.Add(f1);
         menu.Items.Add(AgentsMenu(island));
         menu.Items.Add("Show a test alert", null, (_, _) => island.ShowBanner("Test alert", "Ledge is running"));
         menu.Items.Add(startAtLogin);

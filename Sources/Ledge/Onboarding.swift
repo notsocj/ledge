@@ -23,8 +23,10 @@ final class Onboarding {
 
     /// Picking personas resets the tool picks to what they recommend; the tools step can then adjust.
     func toggle(_ persona: Persona) {
+        let followsF1 = tools.contains(.f1)
         if let index = personas.firstIndex(of: persona) { personas.remove(at: index) } else { personas.append(persona) }
         tools = personas.isEmpty ? [] : Layout.merging(personas).tools
+        if followsF1 { tools.insert(.f1) }
     }
 
     func toggle(_ tool: Tool) {

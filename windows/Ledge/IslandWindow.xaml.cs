@@ -11,7 +11,7 @@ namespace Ledge;
 public partial class IslandWindow : Window
 {
     static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), NotificationSize = new(364, 64), OpenSize = new(560, 220),
-        SetupSize = new(560, 320); // taller than the open island: setup's persona cards hold three lines of Poppins
+        SetupSize = new(560, 320), F1Size = new(560, 260); // a compact weekend overview beneath the shared tabs
     readonly Tools tools;
     Settings settings = Settings.Load(Settings.DefaultPath);
     readonly IslandMotion motion = new(ClosedSize);
@@ -26,6 +26,7 @@ public partial class IslandWindow : Window
     readonly DispatcherTimer inUseTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     readonly DispatcherTimer calendarFetchTimer = new() { Interval = TimeSpan.FromMinutes(15) };
     readonly DispatcherTimer meetingTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    readonly DispatcherTimer f1Timer = new() { Interval = TimeSpan.FromMinutes(1) };
     readonly HashSet<string> announcedMeetings = [];
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
@@ -35,12 +36,21 @@ public partial class IslandWindow : Window
     double screenTop;
 
     public Tools Tools => tools;
+    public bool F1Enabled => settings.F1Enabled;
+    bool f1Wings;
 
     public IslandWindow()
     {
         InitializeComponent();
         tools = new Tools(Dispatcher);
         OpenView.Attach(tools, settings);
+        OpenView.PageChanged += UpdateShape;
+        tools.F1.Changed += RefreshF1;
+        f1Timer.Tick += (_, _) =>
+        {
+            RefreshF1();
+            _ = tools.F1.RefreshAsync();
+        };
         Setup.Finished += FinishSetup;
         Apply();
         ContentRendered += (_, _) =>
@@ -79,14 +89,18 @@ public partial class IslandWindow : Window
         DpiChanged += (_, _) => Place();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        SystemEvents.TimeChanged += OnTimeChanged;
         Closed += (_, _) =>
         {
             SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            SystemEvents.TimeChanged -= OnTimeChanged;
             CompositionTarget.Rendering -= OnFrame;
             bannerTimer.Stop();
             notifications.Clear();
             Notification.Clear();
+            f1Timer.Stop();
+            tools.F1.SetEnabled(false);
         };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
 
@@ -212,6 +226,9 @@ public partial class IslandWindow : Window
     /// <summary>Tools that work in the background stop when they're switched off.</summary>
     void ApplyToolSwitches()
     {
+        tools.F1.SetEnabled(settings.F1Enabled);
+        if (settings.F1Enabled) f1Timer.Start();
+        else f1Timer.Stop();
         if (settings.IsOn(Tool.Calendar))
         {
             calendarFetchTimer.Start();
@@ -249,6 +266,7 @@ public partial class IslandWindow : Window
     void SetExpanded(bool open)
     {
         if (expanded == open || settingUp && !open) return;
+        if (open && f1Wings && !settingUp && notifications.Current is null) OpenView.ShowTab(Tool.F1);
         expanded = open;
         hover.Reset();
         OpenView.SetOpen(open);
@@ -262,7 +280,9 @@ public partial class IslandWindow : Window
     {
         var banner = notifications.Current is not null && !expanded;
         var wings = hasWings && !expanded && !banner;
-        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : banner ? NotificationSize : hasWings ? WingsSize : ClosedSize,
+        var openSize = OpenView.ShowingF1 ? F1Size : OpenSize;
+        OpenView.Height = openSize.Height;
+        MoveTo(expanded ? (settingUp ? SetupSize : openSize) : banner ? NotificationSize : hasWings ? WingsSize : ClosedSize,
                banner, !expanded && immediateBanner);
         Fade(OpenView, expanded && !settingUp);
         OpenView.IsHitTestVisible = expanded && !settingUp;
@@ -287,12 +307,18 @@ public partial class IslandWindow : Window
     {
         var countdown = tools.Countdown;
         var media = tools.NowPlaying;
-        var art = !countdown.IsActive && media.IsPlaying ? media.Artwork : null;
+        var timerOn = settings.IsOn(Tool.Timer) && countdown.IsActive;
+        var mediaOn = settings.IsOn(Tool.Media) && media.IsPlaying;
+        f1Wings = settings.F1Enabled && !timerOn && !mediaOn;
+        var art = !timerOn && mediaOn ? media.Artwork : null;
         WingArt.Background = art is null ? null : new ImageBrush(art) { Stretch = Stretch.UniformToFill };
-        WingGlyph.Text = countdown.IsActive ? "" : art is null ? "" : "";
-        WingText.Text = countdown.IsActive ? Countdown.Format(countdown.Remaining) : "";
-        WingRightGlyph.Visibility = !countdown.IsActive && media.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
-        var wings = countdown.IsActive || media.IsPlaying;
+        WingGlyph.Text = timerOn ? "" : f1Wings ? Tool.F1.Glyph() : art is null ? "" : "";
+        WingLabel.Visibility = f1Wings ? Visibility.Visible : Visibility.Collapsed;
+        WingText.Text = timerOn ? Countdown.Format(countdown.Remaining) : f1Wings
+            ? tools.F1.Data is null ? (tools.F1.Updating ? "Updating…" : "Unavailable")
+                : F1Schedule.Countdown(F1Schedule.Focus(tools.F1.Data, DateTimeOffset.UtcNow), DateTimeOffset.UtcNow) : "";
+        WingRightGlyph.Visibility = !timerOn && mediaOn ? Visibility.Visible : Visibility.Collapsed;
+        var wings = timerOn || mediaOn || f1Wings;
         if (wings == hasWings) return;
         hasWings = wings;
         UpdateShape();
@@ -302,6 +328,33 @@ public partial class IslandWindow : Window
     {
         if (e.Mode == PowerModes.StatusChange) Dispatcher.BeginInvoke(new Action(tools.Battery.Check)); // plugged in or out
         if (e.Mode == PowerModes.Resume) Dispatcher.BeginInvoke(new Action(FetchCalendar)); // the day moved on while it slept
+        if (e.Mode == PowerModes.Resume) Dispatcher.BeginInvoke(new Action(() =>
+        {
+            TimeZoneInfo.ClearCachedData();
+            RefreshF1();
+            _ = tools.F1.RefreshAsync();
+        }));
+    }
+
+    void OnTimeChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(new Action(() =>
+    {
+        TimeZoneInfo.ClearCachedData();
+        RefreshF1();
+    }));
+
+    void RefreshF1()
+    {
+        OpenView.RefreshF1();
+        RefreshWings();
+    }
+
+    public void SetF1Enabled(bool enabled)
+    {
+        settings.F1Enabled = enabled;
+        OpenView.Apply(settings);
+        ApplyToolSwitches();
+        SaveSettings();
+        RefreshF1();
     }
 
     void FetchCalendar()

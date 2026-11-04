@@ -19,10 +19,12 @@ public sealed class Settings
     public List<Tool> Off { get; set; } = [];
     /// <summary>Your calendar's private ICS address. It stays in this file on this PC.</summary>
     public string? CalendarLink { get; set; }
+    /// <summary>Optional race schedules and post-race podiums. Never enabled by a persona.</summary>
+    public bool F1Enabled { get; set; }
 
     [JsonIgnore] public Layout Layout => Layout.Merging(Personas);
 
-    public bool IsOn(Tool tool) => Layout.Tools.Contains(tool) && !Off.Contains(tool);
+    public bool IsOn(Tool tool) => tool == Tool.F1 ? F1Enabled : Layout.Tools.Contains(tool) && !Off.Contains(tool);
 
     /// <summary>A missing or unreadable file means setup hasn't happened yet; it never stops Ledge starting.</summary>
     public static Settings Load(string path)
