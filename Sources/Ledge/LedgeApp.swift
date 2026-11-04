@@ -3,16 +3,17 @@ import SwiftUI
 @main
 struct LedgeApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
+    private static var isPreview: Bool { NotificationPreview.isRequested || HomeMusicPreview.isRequested }
 
     init() {
-        if !NotificationPreview.isRequested {
+        if !Self.isPreview {
             Migration.fromKestrel() // before anything reads settings
         }
     }
 
     var body: some Scene {
-        MenuBarExtra(isInserted: .constant(!NotificationPreview.isRequested)) {
-            if !NotificationPreview.isRequested {
+        MenuBarExtra(isInserted: .constant(!Self.isPreview)) {
+            if !Self.isPreview {
                 SettingsLink { Text("Settings…") }
                     .keyboardShortcut(",")
                 Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
@@ -30,7 +31,7 @@ struct LedgeApp: App {
             if let icon = Icon.image("ledge-mark") { Image(nsImage: icon) } else { Text("Ledge") }
         }
         Settings {
-            if !NotificationPreview.isRequested {
+            if !Self.isPreview {
                 SettingsView(preferences: .shared)
             }
         }
@@ -42,7 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notch: NotchController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard !NotificationPreview.startIfRequested() else { return }
+        guard !NotificationPreview.startIfRequested(), !HomeMusicPreview.startIfRequested() else { return }
         notch = NotchController()
     }
 

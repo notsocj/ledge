@@ -10,16 +10,8 @@ struct HomeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // The widgets share the width equally; one on its own takes all of it.
             if !widgets.isEmpty {
-                HStack(alignment: .top, spacing: 24) {
-                    ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
-                        switch widget {
-                        case .media: MediaWidget(nowPlaying: app.nowPlaying, wide: widgets.count == 1) { open(.media) }.entrance(index, shown)
-                        case .week: WeekWidget(agenda: app.agenda).entrance(index, shown)
-                        }
-                    }
-                }
+                HomeWidgets(nowPlaying: app.nowPlaying, agenda: app.agenda, widgets: widgets, shown: shown, open: open)
             }
             // One bar along the bottom: what's going on at the left, things to do at the right.
             let chips = StatusRow.hasChips(app), actions = QuickActions.hasActions(app)
@@ -54,6 +46,27 @@ struct HomeView: View {
     }
 }
 
+/// Shared by Home and its isolated visual preview. Each widget gets half the content width;
+/// a single widget takes the whole row.
+struct HomeWidgets: View {
+    let nowPlaying: NowPlaying
+    let agenda: Agenda
+    let widgets: [HomeWidget]
+    var shown = true
+    let open: (Tool) -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 24) {
+            ForEach(Array(widgets.enumerated()), id: \.offset) { index, widget in
+                switch widget {
+                case .media: MediaWidget(nowPlaying: nowPlaying, wide: widgets.count == 1) { open(.media) }.entrance(index, shown)
+                case .week: WeekWidget(agenda: agenda).entrance(index, shown)
+                }
+            }
+        }
+    }
+}
+
 /// Home's parts settle in one after another as the island opens. The island opens dozens of times a
 /// day, so the reveal is short and small enough never to feel like waiting.
 private struct Entrance: ViewModifier {
@@ -77,60 +90,60 @@ private extension View {
 
 private struct MediaWidget: View {
     let nowPlaying: NowPlaying
-    /// Alone on Home, the player has room for the song's progress beside its controls.
+    /// Alone on Home, the player also has room for progress beside its controls.
     var wide = false
     let openPlayer: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var artworkSize: CGFloat { wide ? 96 : 88 }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: openPlayer) {
                 ZStack(alignment: .bottomTrailing) {
-                    Artwork(image: nowPlaying.artwork, size: 64, radius: 12)
+                    Artwork(image: nowPlaying.artwork, size: artworkSize, radius: Radius.well)
                         .overlay {
                             if nowPlaying.artwork == nil {
-                                Icon(name: "music-note-linear", size: 22).foregroundStyle(Palette.ash)
+                                Icon(name: "music-note-linear", size: 28).foregroundStyle(Palette.ash)
                             }
                         }
                     if let appIcon {
                         Image(nsImage: appIcon)
                             .resizable()
-                            .frame(width: 20, height: 20)
+                            .frame(width: 22, height: 22)
                             .shadow(color: .black.opacity(0.6), radius: 2, y: 1)
                             .offset(x: 4, y: 4)
-                            .transition(.scale(scale: 0.9).combined(with: .opacity))
+                            .transition(reduceMotion ? .opacity : .scale(scale: 0.9).combined(with: .opacity))
                     }
                 }
             }
             .buttonStyle(PressStyle())
             .accessibilityLabel("Open the player")
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 0) {
                 // Song and artist only; the album and lyrics are a click away in the Music tab.
-                if nowPlaying.hasTrack {
-                    Text(nowPlaying.title)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(nowPlaying.hasTrack ? nowPlaying.title : "Nothing playing")
                         .font(Typeface.title)
                         .foregroundStyle(Palette.paper)
-                    Text(nowPlaying.artist)
-                        .font(Typeface.body)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .help(nowPlaying.hasTrack ? nowPlaying.title : "Nothing playing")
+                    Text(nowPlaying.hasTrack ? nowPlaying.artist : "Play music in any app")
+                        .font(Typeface.row)
                         .foregroundStyle(Palette.graphite)
-                } else {
-                    Text("Nothing playing")
-                        .font(Typeface.title)
-                        .foregroundStyle(Palette.paper)
-                    Text("Play music in any app")
-                        .font(Typeface.caption)
-                        .foregroundStyle(Palette.ash)
+                        .lineLimit(1)
                 }
-                Spacer(minLength: 4)
                 if nowPlaying.hasTrack {
+                    Spacer(minLength: 4)
                     HStack(spacing: 14) {
-                        HStack(spacing: 0) {
-                            IconButton(symbol: "skip-previous-bold", label: "Previous track", size: 11, box: 26) { nowPlaying.send(.previous) }
-                            IconButton(symbol: nowPlaying.isPlaying ? "pause-bold" : "play-bold", label: nowPlaying.isPlaying ? "Pause" : "Play", size: 14, box: 28) {
+                        HStack(spacing: 2) {
+                            IconButton(symbol: "skip-previous-bold", label: "Previous track", size: 13, box: 30) { nowPlaying.send(.previous) }
+                            IconButton(symbol: nowPlaying.isPlaying ? "pause-bold" : "play-bold", label: nowPlaying.isPlaying ? "Pause" : "Play", size: 18, box: 34) {
                                 nowPlaying.send(.togglePlayPause)
                             }
-                            IconButton(symbol: "skip-next-bold", label: "Next track", size: 11, box: 26) { nowPlaying.send(.next) }
+                            IconButton(symbol: "skip-next-bold", label: "Next track", size: 13, box: 30) { nowPlaying.send(.next) }
                         }
+                        .fixedSize()
                         .padding(.leading, -7) // optically align the first icon with the text, not its hover circle
                         if wide {
                             TimelineView(.periodic(from: .now, by: 0.5)) { context in
@@ -141,10 +154,10 @@ private struct MediaWidget: View {
                     }
                 }
             }
-            .lineLimit(1)
             .contentTransition(.opacity)
             .animation(Motion.easeOut(0.25), value: nowPlaying.trackKey)
-            .frame(height: 64 + 4, alignment: .topLeading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: artworkSize, alignment: nowPlaying.hasTrack ? .topLeading : .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .animation(Motion.easeOut(0.25), value: nowPlaying.appBundleID)

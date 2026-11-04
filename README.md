@@ -141,6 +141,9 @@ and `reduced-motion-frames`. The notification shell stretches and gently rebound
 text stays steady, then tucks back toward the notch with a faster ease-out. Reduce Motion uses a fade,
 and keyboard feedback (volume, brightness, microphone, screenshot and color picker) appears immediately.
 
+`open build/Ledge.app --args --home-music-preview <folder>` captures Home's music/calendar row,
+calendar-first and music-only layouts, and the empty player with demo content and no live integrations.
+
 ## Layout
 
 ```
