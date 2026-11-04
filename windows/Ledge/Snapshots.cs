@@ -24,7 +24,7 @@ static class Snapshots
 
         // Developer and Designer between them switch on every tab.
         var settings = new Settings { SetupDone = true, Personas = [Persona.Developer, Persona.Designer], CalendarLink = "https://example.com/demo.ics" };
-        var panel = new OpenPanel { Width = OpenSize.Width, Height = OpenSize.Height };
+        var panel = new OpenPanel { Width = OpenSize.Width, Height = OpenSize.Height, AnimateTabs = false };
         panel.Attach(tools, settings);
         panel.ShowPorts([new(3000, 0, "node"), new(5173, 0, "node"), new(8000, 0, "python"), new(5432, 0, "postgres")]);
 
@@ -128,6 +128,11 @@ static class Snapshots
         backdrop.Measure(size);
         backdrop.Arrange(new Rect(size));
         backdrop.UpdateLayout();
+        if (content is OpenPanel open) // the selection pill goes where the tabs were just laid out
+        {
+            open.SettleTabs();
+            backdrop.UpdateLayout();
+        }
         var bitmap = new RenderTargetBitmap((int)(size.Width * 2), (int)(size.Height * 2), 192, 192, PixelFormats.Pbgra32);
         bitmap.Render(backdrop);
         var png = new PngBitmapEncoder();

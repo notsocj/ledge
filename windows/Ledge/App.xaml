@@ -166,11 +166,14 @@
       </Setter>
     </Style>
 
-    <!-- Tabs as pills, as on the Mac: the open tab shows its icon and name, the rest shrink to icons, so
-         seven tabs take about half the width. The icon goes in Tag, the name in Content (also its tooltip). -->
+    <!-- Tabs as pills, as on the Mac: the open tab shows its icon and name, the rest shrink to icons.
+         The icon goes in Tag, the name in Content (also its tooltip). OpenPanel slides the names open and
+         shut, and draws the one selection pill that moves between tabs, so neither is in this template. -->
     <Style x:Key="Tab" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{StaticResource Ash}"/>
       <Setter Property="Focusable" Value="False"/>
+      <!-- The tabs are split over two tracks; one group name keeps them a single choice. -->
+      <Setter Property="GroupName" Value="Tabs"/>
       <Setter Property="FontSize" Value="12.5"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Height" Value="26"/>
@@ -185,7 +188,13 @@
             <Border x:Name="Plate" Background="Transparent" CornerRadius="13" Padding="{TemplateBinding Padding}">
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource Glyph}" FontSize="14" Foreground="{TemplateBinding Foreground}"/>
-                <ContentPresenter x:Name="Label" Margin="7,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                <!-- The name, clipped to a width OpenPanel animates: 0 on closed tabs, the name's own width on the open one.
+                     The inner StackPanel lets the name keep its natural width while the clip is narrower. -->
+                <Border x:Name="LabelHost" Width="0" ClipToBounds="True">
+                  <StackPanel Orientation="Horizontal">
+                    <ContentPresenter x:Name="Label" Margin="7,0,0,0" VerticalAlignment="Center" Opacity="0"/>
+                  </StackPanel>
+                </Border>
               </StackPanel>
             </Border>
             <ControlTemplate.Triggers>
@@ -193,10 +202,9 @@
                 <Setter TargetName="Plate" Property="Background" Value="{StaticResource Well}"/>
                 <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
               </Trigger>
-              <!-- After hover, so the open tab keeps its look under the pointer. -->
+              <!-- After hover, so the open tab keeps its look under the pointer; the pill is its background. -->
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Rail}"/>
-                <Setter TargetName="Label" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="Plate" Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="ToolTip" Value="{x:Null}"/>
               </Trigger>

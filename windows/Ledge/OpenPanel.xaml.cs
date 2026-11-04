@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
@@ -18,6 +19,19 @@ public partial class OpenPanel : UserControl
     readonly DispatcherTimer portsTimer = new() { Interval = TimeSpan.FromSeconds(3) };
     /// <summary>Each tool with a tab of its own, and its page.</summary>
     readonly Dictionary<Tool, (RadioButton Tab, FrameworkElement Page)> pages;
+
+    /// <summary>The tabs on show, in order: Home, then the tools your personas put first.</summary>
+    readonly List<RadioButton> shownTabs = [];
+    /// <summary>Where the selection pill is and how wide, each on a spring so it slides between tabs.</summary>
+    readonly Spring pillX = new(0), pillWidth = new(0);
+    readonly Stopwatch tabClock = new();
+    TimeSpan lastTabFrame;
+    bool tabsMoving;
+    static readonly Duration TabMotion = TimeSpan.FromMilliseconds(260);
+    static readonly IEasingFunction TabEase = new QuinticEase { EasingMode = EasingMode.EaseOut };
+
+    /// <summary>Off for snapshots, which are drawn in one go.</summary>
+    internal bool AnimateTabs { get; set; } = true;
 
     /// <summary>The user changed something the closed island shows too, like starting a timer.</summary>
     public event Action? Changed;
@@ -39,6 +53,11 @@ public partial class OpenPanel : UserControl
             [Tool.Calendar] = (CalendarTab, CalendarView),
         };
         foreach (var (tool, (tab, _)) in pages) tab.Tag = tool.Glyph(); // the same icons as setup's tool chips
+        // The first layout, when the pill can first be placed: until then the tabs have no size.
+        Header.SizeChanged += (_, _) =>
+        {
+            if (!tabsMoving) SettleTabs();
+        };
     }
 
     public void Attach(Tools tools, Settings settings)
@@ -59,13 +78,21 @@ public partial class OpenPanel : UserControl
     public void Apply(Settings settings)
     {
         this.settings = settings;
-        Tabs.Children.Clear();
-        Tabs.Children.Add(HomeTab);
         foreach (var (tool, (tab, _)) in pages)
         {
             if (!settings.IsOn(tool) && tab.IsChecked == true) HomeTab.IsChecked = true;
         }
-        foreach (var tool in settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool))) Tabs.Children.Add(pages[tool].Tab);
+        shownTabs.Clear();
+        shownTabs.Add(HomeTab);
+        shownTabs.AddRange(settings.Layout.Tabs.Where(tool => settings.IsOn(tool) && pages.ContainsKey(tool)).Select(tool => pages[tool].Tab));
+        // Split down the middle, as the Mac splits them around the notch. Home leads on the left, and the
+        // left side takes the extra tab when there's an odd number.
+        LeftTabs.Children.Clear();
+        RightTabs.Children.Clear();
+        var left = (shownTabs.Count + 1) / 2;
+        for (var index = 0; index < shownTabs.Count; index++) (index < left ? LeftTabs : RightTabs).Children.Add(shownTabs[index]);
+        RightTrack.Visibility = RightTabs.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        SlideTabs(animate: false);
         if (!settings.IsOn(Tool.KeepAwake) && tools.KeepAwake.IsOn) KeepAwake_Click(this, new RoutedEventArgs());
         KeepAwakeToggle.Visibility = settings.IsOn(Tool.KeepAwake) ? Visibility.Visible : Visibility.Collapsed;
         CalendarView.SetHasLink(settings.CalendarLink is not null);
@@ -89,12 +116,109 @@ public partial class OpenPanel : UserControl
         foreach (var (tab, page) in pages.Values) page.Visibility = tab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         if (ShelfTab.IsChecked == true) tools.Shelf.Prune();
         _ = UpdatePortsWatch();
+        SlideTabs(animate: true);
+    }
+
+    /// <summary>Slides the open tab's name open and the others' shut, and sends the pill after the open tab.
+    /// Without animation (Windows' "Animation effects" off, or a snapshot) everything jumps into place.</summary>
+    void SlideTabs(bool animate)
+    {
+        animate &= AnimateTabs && SystemParameters.ClientAreaAnimation;
+        foreach (var tab in shownTabs)
+        {
+            tab.ApplyTemplate();
+            if (tab.Template.FindName("LabelHost", tab) is not FrameworkElement host || tab.Template.FindName("Label", tab) is not FrameworkElement label) continue;
+            var open = tab.IsChecked == true;
+            label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity)); // the name's natural width, with its gap
+            var width = open ? label.DesiredSize.Width : 0;
+            if (animate)
+            {
+                host.BeginAnimation(WidthProperty, new DoubleAnimation(width, TabMotion) { EasingFunction = TabEase });
+                // Names fade in a little behind the slide, and out quickly, so they never look squashed.
+                label.BeginAnimation(OpacityProperty, new DoubleAnimation(open ? 1 : 0, open ? TabMotion : TimeSpan.FromMilliseconds(120))
+                {
+                    BeginTime = open ? TimeSpan.FromMilliseconds(60) : TimeSpan.Zero,
+                });
+            }
+            else
+            {
+                host.BeginAnimation(WidthProperty, null);
+                host.Width = width;
+                label.BeginAnimation(OpacityProperty, null);
+                label.Opacity = open ? 1 : 0;
+            }
+        }
+        if (!animate)
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(SettleTabs)); // once the new widths are laid out
+            return;
+        }
+        // Followed frame by frame: the open tab's width and place change while the names slide.
+        tabClock.Restart();
+        if (tabsMoving) return;
+        tabsMoving = true;
+        lastTabFrame = TimeSpan.Zero;
+        CompositionTarget.Rendering += OnTabFrame;
+    }
+
+    void OnTabFrame(object? sender, EventArgs e)
+    {
+        var now = ((RenderingEventArgs)e).RenderingTime;
+        if (now == lastTabFrame) return; // Rendering can fire more than once per frame
+        var seconds = lastTabFrame == TimeSpan.Zero ? 1.0 / 60 : (now - lastTabFrame).TotalSeconds;
+        lastTabFrame = now;
+        if (OpenTabBounds() is not { } target)
+        {
+            StopTabFrames();
+            return;
+        }
+        if (pillWidth.Value == 0) // never placed: appear on the tab rather than grow from the corner
+        {
+            pillX.Snap(target.X);
+            pillWidth.Snap(target.Width);
+        }
+        // A little bounce, like the island's own spring when it opens.
+        pillX.Retarget(target.X, 0.4, 0.15);
+        pillWidth.Retarget(target.Width, 0.4, 0.15);
+        var moving = pillX.Step(seconds) | pillWidth.Step(seconds);
+        PlacePill();
+        if (moving || tabClock.Elapsed < TabMotion.TimeSpan + TimeSpan.FromMilliseconds(60)) return;
+        StopTabFrames();
+    }
+
+    void StopTabFrames()
+    {
+        CompositionTarget.Rendering -= OnTabFrame;
+        tabsMoving = false;
+    }
+
+    /// <summary>Puts the pill straight on the open tab. Snapshots call it once the panel is laid out.</summary>
+    internal void SettleTabs()
+    {
+        if (OpenTabBounds() is not { } target) return;
+        pillX.Snap(target.X);
+        pillWidth.Snap(target.Width);
+        PlacePill();
+    }
+
+    /// <summary>The open tab's box within the header, as it is this frame.</summary>
+    Rect? OpenTabBounds()
+    {
+        var tab = shownTabs.FirstOrDefault(tab => tab.IsChecked == true);
+        if (tab is null || !Header.IsAncestorOf(tab) || tab.ActualWidth == 0) return null;
+        return tab.TransformToAncestor(Header).TransformBounds(new Rect(new Point(0, 0), tab.RenderSize));
+    }
+
+    void PlacePill()
+    {
+        Canvas.SetLeft(Selection, pillX.Value);
+        Selection.Width = Math.Max(0, pillWidth.Value);
     }
 
     /// <summary>Switches to a tool's tab, as when files are dragged onto the island.</summary>
     public void ShowTab(Tool tool)
     {
-        if (pages.TryGetValue(tool, out var page) && Tabs.Children.Contains(page.Tab)) page.Tab.IsChecked = true;
+        if (pages.TryGetValue(tool, out var page) && shownTabs.Contains(page.Tab)) page.Tab.IsChecked = true;
     }
 
     // Now playing
@@ -105,7 +229,7 @@ public partial class OpenPanel : UserControl
         var on = settings.IsOn(Tool.Media);
         Playing.Visibility = on && media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
         NothingPlaying.Visibility = on && !media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
-        ToolsAbove.Visibility = on || Tabs.Children.Count < 2 ? Visibility.Collapsed : Visibility.Visible;
+        ToolsAbove.Visibility = on || shownTabs.Count < 2 ? Visibility.Collapsed : Visibility.Visible;
         SongTitle.Text = media.Title;
         SongArtist.Text = media.Artist;
         PlayPauseGlyph.Text = media.IsPlaying ? "" : "";

@@ -4,20 +4,31 @@
              xmlns:local="clr-namespace:Ledge"
              Foreground="White" FontSize="12.5">
   <DockPanel Margin="16,12,16,16">
-    <!-- The tabs sit together on one faint track, so they read as one control. Each tool's icon is set from
-         Tool.Glyph() in code; Home's is here. -->
-    <Border DockPanel.Dock="Top" Background="{StaticResource Well}" CornerRadius="15" Padding="2" Margin="0,0,0,10"
-            HorizontalAlignment="Left">
-      <StackPanel x:Name="Tabs" Orientation="Horizontal" Margin="0,0,-2,0">
-        <RadioButton x:Name="HomeTab" Content="Home" Tag="&#xE80F;" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="TimerTab" Content="Timer" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="PortsTab" Content="Ports" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="ClipboardTab" Content="Clipboard" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="ShelfTab" Content="Shelf" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="ColorTab" Content="Color" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-        <RadioButton x:Name="CalendarTab" Content="Calendar" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      </StackPanel>
-    </Border>
+    <!-- Tabs on both sides, as the Mac has them on both sides of the notch: Home and the first half on the
+         left, the rest on the right, each group on a faint track. OpenPanel moves the tabs between the two
+         and sets each tool's icon from Tool.Glyph(); Home's is here. Track 30 + gap 10 = 40 px, the height
+         the pages are laid out for. -->
+    <Grid x:Name="Header" DockPanel.Dock="Top" Height="30" Margin="0,0,0,10">
+      <Border Background="{StaticResource Well}" CornerRadius="15" Padding="2" HorizontalAlignment="Left">
+        <StackPanel x:Name="LeftTabs" Orientation="Horizontal" Margin="0,0,-2,0">
+          <RadioButton x:Name="HomeTab" Content="Home" Tag="&#xE80F;" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="TimerTab" Content="Timer" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="PortsTab" Content="Ports" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="ClipboardTab" Content="Clipboard" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="ShelfTab" Content="Shelf" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="ColorTab" Content="Color" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+          <RadioButton x:Name="CalendarTab" Content="Calendar" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        </StackPanel>
+      </Border>
+      <Border x:Name="RightTrack" Background="{StaticResource Well}" CornerRadius="15" Padding="2" HorizontalAlignment="Right">
+        <StackPanel x:Name="RightTabs" Orientation="Horizontal" Margin="0,0,-2,0"/>
+      </Border>
+      <!-- The selection pill: one for both tracks, so it slides across from one side to the other. It's drawn over
+           the tabs, which looks the same as under them: faint white over the open tab's white icon and name. -->
+      <Canvas IsHitTestVisible="False">
+        <Border x:Name="Selection" Canvas.Top="2" Height="26" CornerRadius="13" Background="{StaticResource Rail}"/>
+      </Canvas>
+    </Grid>
 
     <Grid>
       <!-- Home: what's playing, the battery, keep awake. -->
