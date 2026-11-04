@@ -133,7 +133,13 @@ public partial class OpenPanel : UserControl
             var width = open ? label.DesiredSize.Width : 0;
             if (animate)
             {
-                host.BeginAnimation(WidthProperty, new DoubleAnimation(width, TabMotion) { EasingFunction = TabEase });
+                // From the width it has now (a settled open tab's is automatic, so there's no animated value to start from).
+                var slide = new DoubleAnimation(host.ActualWidth, width, TabMotion) { EasingFunction = TabEase };
+                if (open) slide.Completed += (_, _) =>
+                {
+                    if (tab.IsChecked == true) SizeToName(host); // a later switch may have closed it already
+                };
+                host.BeginAnimation(WidthProperty, slide);
                 // Names fade in a little behind the slide, and out quickly, so they never look squashed.
                 label.BeginAnimation(OpacityProperty, new DoubleAnimation(open ? 1 : 0, open ? TabMotion : TimeSpan.FromMilliseconds(120))
                 {
@@ -142,8 +148,12 @@ public partial class OpenPanel : UserControl
             }
             else
             {
-                host.BeginAnimation(WidthProperty, null);
-                host.Width = width;
+                if (open) SizeToName(host);
+                else
+                {
+                    host.BeginAnimation(WidthProperty, null);
+                    host.Width = 0;
+                }
                 label.BeginAnimation(OpacityProperty, null);
                 label.Opacity = open ? 1 : 0;
             }
@@ -159,6 +169,14 @@ public partial class OpenPanel : UserControl
         tabsMoving = true;
         lastTabFrame = TimeSpan.Zero;
         CompositionTarget.Rendering += OnTabFrame;
+    }
+
+    /// <summary>Once its name has slid open, the open tab sizes to its name itself, so the measured width
+    /// (taken before the font may have loaded) never clips it.</summary>
+    static void SizeToName(FrameworkElement host)
+    {
+        host.BeginAnimation(WidthProperty, null);
+        host.Width = double.NaN;
     }
 
     void OnTabFrame(object? sender, EventArgs e)
