@@ -16,6 +16,13 @@ public sealed class Battery
 
     public static bool ShouldWarn(int previous, int percent) => new[] { 20, 10 }.Any(level => previous > level && percent <= level);
 
+    /// <summary>For snapshots, which run on PCs without a battery.</summary>
+    internal void ShowDemo(int percent, bool onPower)
+    {
+        (Percent, OnPower) = (percent, onPower);
+        Changed?.Invoke();
+    }
+
     public void Check()
     {
         var status = Forms.SystemInformation.PowerStatus;

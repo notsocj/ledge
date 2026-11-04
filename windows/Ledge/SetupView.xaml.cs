@@ -7,7 +7,7 @@ namespace Ledge;
 
 public partial class SetupView : UserControl
 {
-    enum Step { Welcome, Personas, Tools, Done }
+    internal enum Step { Welcome, Personas, Tools, Done }
 
     Step step;
     readonly List<Persona> picked = [];
@@ -35,7 +35,7 @@ public partial class SetupView : UserControl
         Show(settings.SetupDone ? Step.Personas : Step.Welcome);
     }
 
-    void Show(Step next)
+    internal void Show(Step next)
     {
         step = next;
         PersonaCards.Visibility = step == Step.Personas ? Visibility.Visible : Visibility.Collapsed;

@@ -37,6 +37,13 @@ public sealed class NowPlaying(Dispatcher dispatcher)
         Follow();
     }
 
+    /// <summary>For snapshots: shows a made-up song instead of what's really playing.</summary>
+    internal void ShowDemo(string title, string artist, ImageSource artwork)
+    {
+        (Title, Artist, Artwork, IsPlaying) = (title, artist, artwork, true);
+        Changed?.Invoke();
+    }
+
     public Task PlayPause() => Send(current => current.TryTogglePlayPauseAsync());
     public Task Next() => Send(current => current.TrySkipNextAsync());
     public Task Previous() => Send(current => current.TrySkipPreviousAsync());

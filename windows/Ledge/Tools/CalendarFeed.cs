@@ -22,6 +22,13 @@ public sealed partial class CalendarFeed
     public string? Problem { get; private set; }
     public event Action? Changed;
 
+    /// <summary>For snapshots: made-up meetings instead of a fetched calendar.</summary>
+    internal void ShowDemo(IReadOnlyList<Meeting> meetings)
+    {
+        (Meetings, Problem) = (meetings, null);
+        Changed?.Invoke();
+    }
+
     public async Task RefreshAsync(string? link)
     {
         if (link is null)

@@ -209,6 +209,12 @@ public partial class OpenPanel : UserControl
     {
         var found = await Task.Run(Ports.Find);
         if (portsShown && found.SequenceEqual(listeners)) return; // rebuilding would lose a pending "Stop it?"
+        ShowPorts(found);
+    }
+
+    /// <summary>Lists these servers. Snapshots call it with made-up ones.</summary>
+    internal void ShowPorts(IReadOnlyList<Ports.Listener> found)
+    {
         portsShown = true;
         listeners = found;
         PortsHeader.Text = found.Count == 1 ? "1 server on localhost" : $"{found.Count} servers on localhost";

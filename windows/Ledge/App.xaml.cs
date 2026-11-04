@@ -39,6 +39,13 @@ public partial class App : Application
             Shutdown();
             return;
         }
+        // Renders the island's pages to PNGs for design review, then quits. See Snapshots.cs.
+        if (e.Args is ["--snapshot", var folder])
+        {
+            Snapshots.Run(folder);
+            Shutdown();
+            return;
+        }
         // One Ledge at a time: starting it again (say, from the Start menu while it's already running) just exits.
         running = new Mutex(true, @"Local\Ledge", out var first);
         if (!first)
