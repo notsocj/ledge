@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write # only for pushing the snapshots branch
     strategy:
       matrix:
         rid: [win-x64, win-arm64]
@@ -36,6 +38,18 @@ jobs:
           name: Ledge-snapshots
           path: snapshots/*.png
           if-no-files-found: error
+      # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
+      - if: matrix.rid == 'win-x64' && github.event_name == 'push'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd snapshots
+          git init -q -b windows-snapshots
+          git add *.png
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Windows snapshots of ${GITHUB_REF_NAME} at ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:windows-snapshots
       # The installer too, so packaging problems show up before a release is tagged.
       - if: matrix.rid == 'win-x64'
         shell: bash
