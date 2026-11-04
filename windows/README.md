@@ -1,27 +1,41 @@
 # Ledge for Windows
 
-Download `Ledge-win-Setup.exe` from the newest
-[Windows release](https://github.com/notsocj/ledge/releases) and run it. It installs for you only (no
-admin rights) into `%LOCALAPPDATA%\Ledge`, adds Ledge to the Start menu, and keeps itself up to date
-from GitHub: a new version downloads quietly and goes in when Ledge quits, or straight away from
-**Restart to update** in the notification-area menu. Uninstall from Settings > Apps; that also removes
-the sign-in entry and any coding agent hooks. The installer isn't code-signed yet, so Windows may show
-"Windows protected your PC": choose **More info**, then **Run anyway**.
+The Windows version of Ledge. Windows laptops have no notch, so the island floats as a pill at the top
+centre of the screen. Rest the pointer on it, push the pointer against the top edge above it, or tap it
+to open it. Ledge's icon in the notification area has the menu: a test alert, coding agent alerts,
+start at sign-in, **Change what Ledge shows…** and Quit.
 
-The Windows version of Ledge. Windows laptops have no notch, so the island floats as a pill
-at the top centre of the screen. Rest the pointer on it, push the pointer against the top edge above it,
-or tap it to open it. Ledge's icon in the notification area has the menu: a test alert, start at sign-in,
-and Quit.
+## Install
+
+Download `Ledge-win-Setup.exe` from the newest
+[Windows release](https://github.com/notsocj/ledge/releases) (or from [the website](https://keepledge.vercel.app),
+which offers it to visitors on Windows) and run it. It installs for you only (no admin rights) into
+`%LOCALAPPDATA%\Ledge` and adds Ledge to the Start menu.
+
+It keeps itself up to date from GitHub: a new version downloads quietly and goes in when Ledge quits,
+or straight away from **Restart to update** in the notification-area menu. Uninstall from Settings >
+Apps; that also removes the sign-in entry and any coding agent hooks.
+
+The installer isn't code-signed yet, so Windows may show "Windows protected your PC": choose
+**More info**, then **Run anyway**. Ledge needs Windows 10 (2004) or later, on x64 or Arm64 (Arm64 runs
+the x64 installer emulated for now).
+
+## Setup
 
 The first time it runs, setup opens inside the island: pick what you do (Developer, Designer, Creator,
 Student, Professional or Essentials, as many as fit) and Ledge switches on the tools for it and puts the
-most important first. Switch off anything you won't use, then choose whether it starts when you sign in.
-Your choices are saved in `%APPDATA%\Ledge\settings.json`; run setup again from the notification-area
-icon (**Change what Ledge shows…**).
+most important first. The first one you pick leads; picks are numbered so you can see the order. Switch
+off anything you won't use, then choose whether it starts when you sign in. Your choices are saved in
+`%APPDATA%\Ledge\settings.json`; run setup again from the notification-area icon.
 
-Open, Home shows what's playing (previous, play/pause, next), your next meeting, the battery and Keep
-awake. The tabs your personas switch on sit beside it:
+## Tabs
 
+Open, the island's tabs sit on both sides of its top edge, as the Mac's sit on both sides of the
+notch: Home and the first half of your tabs on the left, the rest on the right. The open tab shows its
+icon and name; the others are icons (point at one for its name). Switching slides the highlight across
+to the new tab and opens its name. With Windows' **Animation effects** off, it moves without sliding.
+
+- **Home**: what's playing (previous, play/pause, next), your next meeting, the battery and Keep awake.
 - **Calendar**: today's and tomorrow's meetings with Join buttons for Teams, Zoom, Meet and Webex links.
   Windows has no calendar API like the Mac's, so Ledge reads your calendar's private ICS link: copy it
   from Outlook (Publish a calendar) or Google Calendar (Secret address in iCal format) and press
@@ -32,6 +46,8 @@ awake. The tabs your personas switch on sit beside it:
   mark as private are never kept.
 - **Shelf**: drag files onto the island to keep them handy, then drag them out again. Nothing is copied.
 - **Color**: pick a color from anywhere on screen; its hex code is copied.
+
+## Alerts
 
 Alerts slide out of the closed island when you plug in, when the battery drops to 20% and 10%, when a
 timer ends, two minutes before a meeting, when an app turns on the microphone or camera, and when Claude
@@ -46,22 +62,90 @@ the hooks follow it the next time it starts.
 ## Build it yourself
 
 Needs Windows 10 (2004) or later and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
+From the repository root:
 
 ```powershell
 dotnet run --project windows/Ledge
 dotnet test windows/Ledge.Tests
 ```
 
-The island's font is [Poppins](https://github.com/itfoundry/Poppins), bundled in `Ledge/Assets/Fonts` under the
-SIL Open Font License.
+The project also compiles on macOS and Linux (`EnableWindowsTargeting`), which catches XAML and C#
+errors, but it only runs on Windows. A copy run straight from a build never updates itself.
 
-Every push that touches `windows/` is built on GitHub Actions for x64 and Arm64; the builds are
-attached to the run as artifacts. A copy run straight from a build never updates itself.
+### Snapshots
+
+To review the design without clicking through it, or without a Windows PC to hand:
+
+```powershell
+dotnet run --project windows/Ledge -- --snapshot snapshots
+```
+
+renders the open island on every tab and each setup step to PNGs at 200%, with made-up music, meetings,
+servers, clipboard and files, and quits. It never reads or changes your settings.
+
+Every push that touches `windows/` is built on GitHub Actions for x64 and Arm64 (the
+[Windows workflow](../.github/workflows/windows.yml)): it runs the tests, attaches the builds and the
+installer to the run, renders the snapshots, uploads them as the `Ledge-snapshots` artifact, and also
+pushes them to the `windows-snapshots` branch (replaced each run), so they can be viewed with plain git:
+
+```bash
+git fetch origin windows-snapshots && git archive FETCH_HEAD | tar -x -C snapshots
+```
+
+## Design
+
+The island is pure black with white text at a few fixed strengths, as on the Mac. Text is
+[Poppins](https://github.com/itfoundry/Poppins), bundled in `Ledge/Assets/Fonts`, and weight carries the
+hierarchy (the type scale is in `App.xaml`):
+
+| Style | Size, weight | For |
+|---|---|---|
+| Display | 40, Bold | the countdown |
+| Heading | 18, Bold | setup's headings |
+| Title | 14, SemiBold | the song, an empty page's title, the battery, a port |
+| Headline | 13, SemiBold | an alert's title, a meeting, a persona |
+| Row | 12.5, Medium | tabs, buttons, list rows |
+| Body | 12.5, Regular | supporting text: the artist, a process name, explanations |
+| Label | 11.5, Medium | small names over a value or group: Battery, Today |
+| Caption | 11.5, Regular | small hints beside a page's controls |
+
+Poppins has no fixed-width digits, so numbers that tick (the countdown in the Timer tab and the closed
+island) use `TabularText`, which gives every digit the same width. Icons are Segoe Fluent Icons, which
+come with Windows.
+
+## Layout
+
+```
+windows/
+  Ledge/
+    App.xaml(.cs)          entry point, installer hooks, colors, type scale and control styles
+    IslandWindow.xaml(.cs) the island window: shape, spring motion, hover, alerts, closed states
+    OpenPanel.xaml(.cs)    the open island: two-sided tabs, Home, Timer, Ports
+    SetupView.xaml(.cs)    first-run setup inside the island
+    CalendarPage, ClipboardPage, ColorPage, ShelfPage   the other tabs
+    Persona.cs             personas, tools and how they merge into a layout
+    Settings.cs            what setup saved, in %APPDATA%\Ledge\settings.json
+    TabularText.cs         text with fixed-width digits
+    Snapshots.cs           --snapshot
+    Spring.cs, HoverIntent.cs, Native.cs, Tray.cs, Updates.cs, StartAtLogin.cs
+    Tools/                 one file per tool
+    Assets/                the app icon and the Poppins font files
+  Ledge.Tests/
+```
 
 ## Releasing
 
-Push a tag named `windows-v` and the version, for example `windows-v0.1.0`. The
-[Windows release workflow](../.github/workflows/windows-release.yml) runs the tests, builds the installer
-with [Velopack](https://velopack.io) and publishes a GitHub release with it. Windows releases are never
-marked latest, so the Mac download links and the Homebrew tap keep pointing at the Mac release. The
-website finds the newest `windows-v` release on its own and offers it to visitors on Windows.
+Bump `<Version>` in `Ledge/Ledge.csproj`, then push a tag named `windows-v` and the version, for example
+`windows-v0.1.1`. The [Windows release workflow](../.github/workflows/windows-release.yml) runs the
+tests, builds the installer with [Velopack](https://velopack.io) and publishes a GitHub release with it.
+Windows releases are never marked latest, so the Mac download links and the Homebrew tap keep pointing
+at the Mac release. The website finds the newest `windows-v` release on its own and offers it to
+visitors on Windows; its fallback links (used only if GitHub can't be reached) name a version in
+`site/index.html`, so move them to the new release once it's published.
+
+## Credits
+
+- Font: [Poppins](https://github.com/itfoundry/Poppins) by the Poppins Project Authors, SIL Open Font
+  License 1.1 (`Ledge/Assets/Fonts/OFL.txt`).
+- Calendar links: [Ical.Net](https://github.com/rianjs/ical.net), MIT.
+- Installer and updates: [Velopack](https://velopack.io), MIT.

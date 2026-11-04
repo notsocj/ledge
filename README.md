@@ -5,18 +5,21 @@
 <h1 align="center">Ledge</h1>
 
 <p align="center">
-  The MacBook notch, put to work. Free and open source.
+  The MacBook notch, put to work. Free and open source, for Mac and Windows.
 </p>
 
 <p align="center">
   <a href="https://github.com/notsocj/ledge/releases/latest"><img src="https://img.shields.io/github/v/release/notsocj/ledge?label=release&color=43689A" alt="Latest release"></a>
   <a href="https://github.com/notsocj/ledge/releases"><img src="https://img.shields.io/github/downloads/notsocj/ledge/total?color=43689A" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-43689A" alt="macOS 14 or later">
+  <img src="https://img.shields.io/badge/Windows-10%2B-43689A" alt="Windows 10 or later">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/notsocj/ledge?color=43689A" alt="MIT license"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/notsocj/ledge/releases/latest/download/Ledge.dmg"><b>Download for Mac</b></a>
+  &nbsp;·&nbsp;
+  <a href="windows/README.md#install"><b>Windows</b></a>
   &nbsp;·&nbsp;
   <a href="#install">Homebrew</a>
   &nbsp;·&nbsp;
@@ -32,7 +35,8 @@
 Ledge turns the MacBook notch into a small, quiet island of everyday tools. Hover the notch and it
 opens: what's playing, your week, quick actions, and a single status row for everything else. Brief
 alerts (volume, battery, a meeting starting, an AI agent waiting on you) slide out beside the notch
-while it's closed. On Macs without a notch it sits at the top of the screen as a pill.
+while it's closed. On Macs without a notch it sits at the top of the screen as a pill, and on Windows
+it floats as a pill at the top centre of the screen.
 
 ## Install
 
@@ -46,7 +50,14 @@ brew install --cask notsocj/ledge/ledge
 
 Ledge needs macOS 14 or later on Apple Silicon. Releases are signed and notarized by Apple.
 
-On Windows? There's a [Windows version](windows/README.md) too.
+### Windows
+
+Download `Ledge-win-Setup.exe` from the newest
+[Windows release](https://github.com/notsocj/ledge/releases) and run it; it installs without admin rights
+and keeps itself up to date. It needs Windows 10 (2004) or later. The Windows version has the island,
+personas and setup, now playing, calendar (from an ICS link), timer, ports, clipboard, shelf, color
+picker and the same alerts, including Claude Code and Codex. Everything about it, from building it to
+releasing it, is in [windows/README.md](windows/README.md).
 
 ## How it works
 
@@ -138,6 +149,7 @@ Sources/Ledge/
   Tools/                 one file per tool
 Icons/                   Solar icons (SVG) and the Claude and Codex marks
 Tests/LedgeTests/
+windows/                 Ledge for Windows (WPF, .NET 9); see windows/README.md
 ```
 
 ## Credits
@@ -148,8 +160,13 @@ Tests/LedgeTests/
   Berg, BSD 3-Clause; its license ships inside the app.
 - Synced lyrics: [LRCLIB](https://lrclib.net).
 - The Claude and Codex marks belong to Anthropic and OpenAI and identify whose usage is shown.
+- Windows: [Poppins](https://github.com/itfoundry/Poppins) (SIL Open Font License), [Ical.Net](https://github.com/rianjs/ical.net)
+  and [Velopack](https://velopack.io) (both MIT); see [windows/README.md](windows/README.md#credits).
 
 ## Releasing
+
+This section is the Mac release; Windows releases are a `windows-v` tag, see
+[windows/README.md](windows/README.md#releasing).
 
 `./build.sh dmg` also packs `site/Ledge.dmg`. `./build.sh release` signs that DMG with your Developer
 ID, sends it to Apple for notarization, staples the ticket, checks that Gatekeeper accepts it, and
@@ -184,7 +201,9 @@ images in `video/public/img` are copies of `site/assets`, made with `--snapshot`
 ## Contributing
 
 Issues and pull requests are welcome. Run `swift test` before sending a change, and use
-`--snapshot` (see Building) to check how it looks across personas.
+`--snapshot` (see Building) to check how it looks across personas. For the Windows version, run
+`dotnet test windows/Ledge.Tests`; its `--snapshot` works the same way, and CI renders it on every push
+(see [windows/README.md](windows/README.md#snapshots)).
 
 ## Known gaps
 
