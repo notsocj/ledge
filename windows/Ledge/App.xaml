@@ -1,0 +1,236 @@
+<Application x:Class="Ledge.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ledge">
+  <Application.Resources>
+    <!-- The island is pure black; everything on it is white at a few fixed strengths, as on the Mac.
+         The quieter text strengths keep at least 4.5:1 contrast on black. -->
+    <SolidColorBrush x:Key="Graphite" Color="#A3FFFFFF"/>
+    <SolidColorBrush x:Key="Ash" Color="#75FFFFFF"/>
+    <SolidColorBrush x:Key="Rail" Color="#24FFFFFF"/>
+    <SolidColorBrush x:Key="Well" Color="#12FFFFFF"/>
+    <SolidColorBrush x:Key="Live" Color="#30D158"/>
+    <SolidColorBrush x:Key="Warning" Color="#FF9F0A"/>
+    <!-- Poppins is bundled in Assets/Fonts; "#Poppins" picks the family, and FontWeight picks the file. -->
+    <FontFamily x:Key="Poppins">pack://application:,,,/Ledge;component/Assets/Fonts/#Poppins</FontFamily>
+    <FontFamily x:Key="Glyphs">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <Style x:Key="Glyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Glyphs}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <!-- The icon font has one weight; without this a SemiBold button would smear its icon with fake bold. -->
+      <Setter Property="FontWeight" Value="Normal"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- The type scale. Weight carries the hierarchy, so the thing that matters reads first:
+         Bold for the one big thing on a page, SemiBold for names and values you scan for,
+         Medium for rows, tabs and buttons you act on, Regular for supporting text. -->
+
+    <!-- The countdown: the largest thing in the island. Used with TabularText, since Poppins has no fixed-width digits. -->
+    <Style x:Key="DisplayText" TargetType="local:TabularText">
+      <Setter Property="FontSize" Value="40"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+    <!-- A page's heading, as in setup. -->
+    <Style x:Key="HeadingText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <!-- What something is: the song, an empty page's title, the battery level. -->
+    <Style x:Key="TitleText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <!-- A smaller name: an alert's title, the next meeting, a persona. -->
+    <Style x:Key="HeadlineText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <!-- One line in a list: a copied snippet, a meeting. -->
+    <Style x:Key="RowText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <!-- Supporting text under a title: the artist, a process name, an explanation. -->
+    <Style x:Key="BodyText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="Normal"/>
+      <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="LineHeight" Value="18"/>
+      <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+    </Style>
+    <!-- Small hints beside a page's controls. -->
+    <Style x:Key="CaptionText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="FontWeight" Value="Normal"/>
+      <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <!-- A small name over a value or a group: "Battery", "Today". Heavier than a caption, so it reads as a label. -->
+    <Style x:Key="LabelText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+    </Style>
+
+    <!-- No chrome until hovered, and a slight press-down when clicked. Never takes keyboard focus,
+         since the island never takes focus from your app. -->
+    <Style x:Key="Quiet" TargetType="ButtonBase">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ButtonBase">
+            <Border x:Name="Plate" Background="{TemplateBinding Background}" CornerRadius="14" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Rail}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A round button holding a glyph. -->
+    <Style x:Key="Icon" TargetType="ButtonBase" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Width" Value="28"/>
+      <Setter Property="Height" Value="28"/>
+    </Style>
+
+    <!-- A labelled button on a faint plate. -->
+    <Style x:Key="Pill" TargetType="ButtonBase" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Background" Value="{StaticResource Well}"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="14,0"/>
+      <Setter Property="Margin" Value="6,0,0,0"/>
+    </Style>
+
+    <!-- The one main action on a page: white, so it reads first. -->
+    <Style x:Key="Primary" TargetType="ButtonBase">
+      <Setter Property="Foreground" Value="Black"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="16,0"/>
+      <Setter Property="Margin" Value="6,0,0,0"/>
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ButtonBase">
+            <Border x:Name="Plate" Background="White" CornerRadius="14" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Plate" Property="Opacity" Value="0.88"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Plate" Property="Opacity" Value="0.35"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Tabs as pills, as on the Mac: the open tab shows its icon and name, the rest shrink to icons.
+         The icon goes in Tag, the name in Content (also its tooltip). OpenPanel slides the names open and
+         shut, and draws the one selection pill that moves between tabs, so neither is in this template. -->
+    <Style x:Key="Tab" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{StaticResource Ash}"/>
+      <Setter Property="Focusable" Value="False"/>
+      <!-- The tabs are split over two tracks; one group name keeps them a single choice. -->
+      <Setter Property="GroupName" Value="Tabs"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Height" Value="26"/>
+      <Setter Property="MinWidth" Value="34"/>
+      <Setter Property="Padding" Value="10,0"/>
+      <Setter Property="Margin" Value="0,0,2,0"/>
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+      <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Plate" Background="Transparent" CornerRadius="13" Padding="{TemplateBinding Padding}">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource Glyph}" FontSize="14" Foreground="{TemplateBinding Foreground}"/>
+                <!-- The name, clipped to a width OpenPanel animates: 0 on closed tabs, the name's own width on the open one.
+                     The inner StackPanel lets the name keep its natural width while the clip is narrower. -->
+                <Border x:Name="LabelHost" Width="0" ClipToBounds="True">
+                  <StackPanel Orientation="Horizontal">
+                    <ContentPresenter x:Name="Label" Margin="7,0,0,0" VerticalAlignment="Center" Opacity="0"/>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Well}"/>
+                <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+              </Trigger>
+              <!-- After hover, so the open tab keeps its look under the pointer; the pill is its background. -->
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="ToolTip" Value="{x:Null}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="Toggle" TargetType="ToggleButton" BasedOn="{StaticResource Quiet}">
+      <Setter Property="Background" Value="{StaticResource Well}"/>
+      <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+      <Setter Property="Padding" Value="12,0"/>
+      <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Background" Value="{StaticResource Rail}"/>
+          <Setter Property="Foreground" Value="White"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+  </Application.Resources>
+</Application>

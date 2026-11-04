@@ -1,0 +1,43 @@
+name: Windows release
+
+# Push a tag like windows-v0.1.0 to build the installer and publish it as a GitHub release.
+on:
+  push:
+    tags: ['windows-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - run: dotnet test windows/Ledge.Tests
+      - name: Build
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#windows-v}"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          dotnet publish windows/Ledge -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:Version=$version -o publish
+      # shortcut: x64 only (Windows on Arm runs it emulated) and full updates only, no deltas.
+      # Add a win-arm64 channel and `vpk download github` before packing when either matters.
+      - run: dotnet tool install -g vpk --version 1.2.161
+      - name: Package
+        shell: bash
+        run: >
+          vpk pack --packId Ledge --packVersion "$VERSION" --packDir publish --mainExe Ledge.exe
+          --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico
+          --shortcuts StartMenuRoot --outputDir releases
+      # Not marked latest: the site's Mac download and the Homebrew tap use the latest release.
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" releases/*
+          --title "Ledge for Windows $VERSION" --latest=false
+          --notes "Download Ledge-win-Setup.exe and run it. Installed copies update themselves. See windows/README.md."

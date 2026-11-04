@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- The 10.0.19041 target gives access to WinRT APIs (media sessions, battery, Bluetooth) used by the tools. -->
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Only for the notification-area icon, which WPF doesn't have. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Ledge</AssemblyName>
+    <RootNamespace>Ledge</RootNamespace>
+    <Version>0.1.1</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Ledge.ico</ApplicationIcon>
+    <!-- LibraryImport generates the Win32 calls in Native.cs. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Lets the project compile on macOS too; it still only runs on Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Main is in App.xaml.cs, so the installer's hooks run before WPF starts. -->
+    <StartupObject>Ledge.App</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reads calendar links (ICS), including repeating meetings and time zones. MIT licensed. -->
+    <PackageReference Include="Ical.Net" Version="4.3.1" />
+    <!-- The installer and updates from GitHub Releases. MIT licensed. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Windows Forms' global usings would clash with WPF's Application, Point and Size. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <Resource Include="Assets\Ledge.ico" />
+    <!-- Poppins, bundled so the island looks the same on every PC (SIL Open Font License, see Assets/Fonts/OFL.txt).
+         Four weights, one per step of the type scale in App.xaml. -->
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+</Project>

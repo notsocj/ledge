@@ -1,0 +1,25 @@
+<UserControl x:Class="Ledge.CalendarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="White" FontSize="12.5">
+  <Grid>
+    <DockPanel x:Name="List">
+      <Grid DockPanel.Dock="Bottom" Margin="0,6,0,0">
+        <TextBlock x:Name="Problem" Style="{StaticResource CaptionText}" Foreground="{StaticResource Warning}" Margin="0,0,140,0"/>
+        <Button Style="{StaticResource Pill}" Content="Remove calendar" Height="24" HorizontalAlignment="Right" Click="Remove_Click"/>
+      </Grid>
+      <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="-10,0">
+        <StackPanel x:Name="Rows"/>
+      </ScrollViewer>
+    </DockPanel>
+    <StackPanel x:Name="Setup" VerticalAlignment="Top" Margin="0,2,0,0">
+      <TextBlock Text="Add your calendar" Style="{StaticResource TitleText}"/>
+      <TextBlock Style="{StaticResource BodyText}" Margin="0,4,0,10"
+                 Text="Copy your calendar's private ICS link, then paste it here. Outlook: Settings › Calendar › Shared calendars › Publish a calendar. Google Calendar: Settings › your calendar › Secret address in iCal format."/>
+      <StackPanel Orientation="Horizontal">
+        <Button Style="{StaticResource Primary}" Margin="0" Content="Paste calendar link" Click="Paste_Click"/>
+        <TextBlock x:Name="PasteProblem" Style="{StaticResource CaptionText}" Foreground="{StaticResource Warning}" Margin="12,0,0,0"/>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</UserControl>

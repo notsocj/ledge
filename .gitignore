@@ -4,3 +4,6 @@ vendor/
 site/Ledge.dmg
 .vercel
 .env*
+.DS_Store
+windows/**/bin/
+windows/**/obj/

@@ -46,6 +46,8 @@ brew install --cask notsocj/ledge/ledge
 
 Ledge needs macOS 14 or later on Apple Silicon. Releases are signed and notarized by Apple.
 
+On Windows? There's a [Windows version](windows/README.md) too.
+
 ## How it works
 
 <img src="docs/readme/moments.png" width="100%" alt="Three states of the island: closed in the notch with what's playing; a meeting alert sliding out beside the notch; and open on Home with music, the week's calendar and a status row">

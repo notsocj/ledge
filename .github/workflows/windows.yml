@@ -1,0 +1,63 @@
+name: Windows
+
+on:
+  push:
+    branches: ['**'] # tags go to windows-release.yml
+    paths: ['windows/**', '.github/workflows/windows.yml']
+  pull_request:
+    paths: ['windows/**', '.github/workflows/windows.yml']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write # only for pushing the snapshots branch
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - run: dotnet test windows/Ledge.Tests
+        if: matrix.rid == 'win-x64'
+      - run: dotnet publish windows/Ledge -c Release -r ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true -o out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ledge-${{ matrix.rid }}
+          path: out/Ledge.exe
+      # Pictures of every page, rendered by the app itself, for reviewing the design without a Windows PC.
+      - if: matrix.rid == 'win-x64'
+        shell: pwsh
+        timeout-minutes: 3
+        run: Start-Process out/Ledge.exe -ArgumentList '--snapshot', "$PWD\snapshots" -Wait
+      - if: matrix.rid == 'win-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ledge-snapshots
+          path: snapshots/*.png
+          if-no-files-found: error
+      # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
+      - if: matrix.rid == 'win-x64' && github.event_name == 'push'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd snapshots
+          git init -q -b windows-snapshots
+          git add *.png
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Windows snapshots of ${GITHUB_REF_NAME} at ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:windows-snapshots
+      # The installer too, so packaging problems show up before a release is tagged.
+      - if: matrix.rid == 'win-x64'
+        shell: bash
+        run: |
+          dotnet tool install -g vpk --version 1.2.161
+          vpk pack --packId Ledge --packVersion 0.1.0 --packDir out --mainExe Ledge.exe --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico --shortcuts StartMenuRoot --outputDir releases
+      - if: matrix.rid == 'win-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ledge-win-Setup
+          path: releases/*-Setup.exe
