@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -39,7 +40,7 @@ static class NotificationSnapshots
             var scene = new PreviewScene();
             scene.Show(content, reduced: false);
             for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
-            var image = Render(scene.Canvas, SceneSize);
+            var image = scene.Capture();
             Save(image, Path.Combine(folder, $"4-notification-{name}.png"));
             cards.Add((name.Replace('-', ' '), image));
         }
@@ -78,16 +79,28 @@ static class NotificationSnapshots
         {
             window.Show();
             var handle = new WindowInteropHelper(window).Handle;
-            Render(scene.Canvas, SceneSize);
+            window.UpdateLayout();
+            scene.VerifyLayout();
+            scene.Capture();
             if (scene.Frame.Children.OfType<IslandSurface>().Count() != 1 || surface.Geometry.Bounds.Width != 180)
                 throw new InvalidOperationException("The compact island must have one surface.");
             scene.Show(Samples[0].Content, reduced: false);
-            for (var frame = 0; frame < 5; frame++) scene.Advance(1 / FramesPerSecond);
+            for (var frame = 0; frame < 5; frame++)
+            {
+                scene.Advance(1 / FramesPerSecond);
+                // Exercise the native layout queue before the capture's forced measurement,
+                // so the screenshot fix cannot conceal a live-window layout regression.
+                window.UpdateLayout();
+                scene.VerifyLayout();
+                scene.Capture();
+            }
             scene.Dismiss(reduced: false);
             scene.Advance(1 / FramesPerSecond);
             scene.Show(Samples[1].Content, reduced: false);
             for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
-            Render(scene.Canvas, SceneSize);
+            window.UpdateLayout();
+            scene.VerifyLayout();
+            scene.Capture();
             if (!ReferenceEquals(scene.Surface, surface) || surface.Geometry.Bounds.Width != 364
                 || scene.Capsule.Visibility != Visibility.Visible || scene.ContentClip.Clip != surface.Geometry)
                 throw new InvalidOperationException("A replacement alert must use the same growing surface and content clip.");
@@ -96,7 +109,9 @@ static class NotificationSnapshots
                 throw new InvalidOperationException("Notification presentation must keep one native window.");
             scene.Dismiss(reduced: false);
             for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
-            Render(scene.Canvas, SceneSize);
+            window.UpdateLayout();
+            scene.VerifyLayout();
+            scene.Capture();
             if (!ReferenceEquals(scene.Surface, surface) || surface.Geometry.Bounds.Width != 180
                 || scene.Motion.Height != 32 || scene.Capsule.Visibility != Visibility.Collapsed
                 || new WindowInteropHelper(window).Handle != handle)
@@ -136,7 +151,7 @@ static class NotificationSnapshots
             }
             scene.Advance(1 / FramesPerSecond);
             if (!includeFrames && !keyframes.Contains(frame)) continue;
-            var image = Render(scene.Canvas, SceneSize);
+            var image = scene.Capture();
             if (includeFrames) Save(image, Path.Combine(frames, $"{frame:0000}.png"));
             if (keyframes.Contains(frame)) cards.Add(($"{(frame + 1) / FramesPerSecond:0.00}s", image));
         }
@@ -151,7 +166,10 @@ static class NotificationSnapshots
         public Canvas Canvas { get; } = new() { Width = SceneSize.Width, Height = SceneSize.Height, Background = Backdrop() };
         public Grid Frame { get; } = new();
         public Grid ContentClip { get; } = new();
-        public IslandSurface Surface { get; } = new();
+        public IslandSurface Surface { get; } = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        };
         public NotificationCapsule Capsule { get; } = new()
         {
             AnimateAutomatically = false, HorizontalAlignment = HorizontalAlignment.Center,
@@ -192,6 +210,57 @@ static class NotificationSnapshots
             Motion.Step(seconds);
             Apply();
         }
+
+        public BitmapSource Capture()
+        {
+            var image = Render(Canvas, SceneSize);
+            VerifyLayout();
+
+            // Check the rendered silhouette too: a stale layout clip can leave RenderSize correct
+            // while cutting off the shell's right or lower edge. Wallpaper is light; the shell is dark.
+            var stride = image.PixelWidth * 4;
+            var pixels = new byte[stride * image.PixelHeight];
+            image.CopyPixels(pixels, stride, 0);
+            var left = image.PixelWidth;
+            var top = image.PixelHeight;
+            var right = -1;
+            var bottom = -1;
+            for (var y = 0; y < image.PixelHeight; y++)
+            for (var x = 0; x < image.PixelWidth; x++)
+            {
+                var i = y * stride + x * 4;
+                if (pixels[i] >= 96 || pixels[i + 1] >= 96 || pixels[i + 2] >= 96) continue;
+                left = Math.Min(left, x);
+                top = Math.Min(top, y);
+                right = Math.Max(right, x);
+                bottom = Math.Max(bottom, y);
+            }
+            var ink = Surface.Geometry.Bounds;
+            ink.Offset((SceneSize.Width - Motion.Width) / 2, 8);
+            const double pixelsPerDip = 2, tolerance = 2;
+            if (Math.Abs(left - ink.Left * pixelsPerDip) > tolerance
+                || Math.Abs(top - ink.Top * pixelsPerDip) > tolerance
+                || Math.Abs(right + 1 - ink.Right * pixelsPerDip) > tolerance
+                || Math.Abs(bottom + 1 - ink.Bottom * pixelsPerDip) > tolerance)
+                throw new InvalidOperationException($"The island silhouette was clipped or misplaced: geometry {ink}; pixels {left},{top}–{right + 1},{bottom + 1}.");
+            return image;
+        }
+
+        public void VerifyLayout()
+        {
+            var expected = new Rect((SceneSize.Width - Motion.Width) / 2, 8, Motion.Width, Motion.Height);
+            var slot = LayoutInformation.GetLayoutSlot(Frame);
+            var actual = Frame.TransformToAncestor(Canvas).TransformBounds(new Rect(Frame.RenderSize));
+            if (!SameBounds(slot, expected) || !SameBounds(actual, expected)
+                || !SameBounds(new Rect(Surface.RenderSize), new Rect(expected.Size))
+                || LayoutInformation.GetLayoutClip(Frame) is not null
+                || LayoutInformation.GetLayoutClip(Surface) is not null)
+                throw new InvalidOperationException($"Island layout must match the current motion frame without clipping. Expected {expected}; slot {slot}; actual {actual}.");
+        }
+
+        static bool SameBounds(Rect actual, Rect expected) =>
+            Math.Abs(actual.X - expected.X) < 0.001 && Math.Abs(actual.Y - expected.Y) < 0.001
+            && Math.Abs(actual.Width - expected.Width) < 0.001 && Math.Abs(actual.Height - expected.Height) < 0.001;
 
         void Apply()
         {
@@ -246,6 +315,10 @@ static class NotificationSnapshots
 
     static BitmapSource Render(FrameworkElement element, Size size)
     {
+        // The detached root may still consider its measure valid after a child changes size.
+        // Force measurement before Canvas arranges children at their DesiredSize; otherwise it
+        // gives the growing island the previous frame's slot and WPF clips the current geometry.
+        element.InvalidateMeasure();
         element.Measure(size);
         element.Arrange(new Rect(size));
         element.UpdateLayout();
