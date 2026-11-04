@@ -59,7 +59,8 @@ import CoreGraphics
     model.show(replacement, seconds: 60)
     try await Task.sleep(for: .milliseconds(30))
     #expect(model.banner == replacement)
-    model.show(replacement, seconds: 0)
+    // A changed status replaces the existing source; exact duplicates intentionally do not renew it.
+    model.show(.agent(name: "Codex", waiting: true, project: "ledge"), seconds: 0)
     try await Task.sleep(for: .milliseconds(30))
     #expect(model.banner == nil)
 }

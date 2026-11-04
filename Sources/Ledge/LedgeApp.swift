@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct LedgeApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
+    private let updater = AppUpdater.shared
     private static var isPreview: Bool { NotificationPreview.isRequested || HomeMusicPreview.isRequested }
 
     init() {
@@ -16,6 +17,10 @@ struct LedgeApp: App {
             if !Self.isPreview {
                 SettingsLink { Text("Settings…") }
                     .keyboardShortcut(",")
+                Button("Preview notification") { NotificationCenter.default.post(name: .previewNotification, object: nil) }
+                Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheckForUpdates)
+                Divider()
                 Button("Set up again…") { NotificationCenter.default.post(name: .startOnboarding, object: nil) }
                 if Preferences.shared.isOn(.menuBarHider) {
                     // macOS 26+ draws every app's menu bar icon itself, so choosing which show is a system setting.
@@ -32,7 +37,7 @@ struct LedgeApp: App {
         }
         Settings {
             if !Self.isPreview {
-                SettingsView(preferences: .shared)
+                SettingsView(preferences: .shared, updater: updater)
             }
         }
     }
@@ -45,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !NotificationPreview.startIfRequested(), !HomeMusicPreview.startIfRequested() else { return }
         notch = NotchController()
+        if Snapshots.folder == nil { AppUpdater.shared.start() }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

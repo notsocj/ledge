@@ -29,7 +29,7 @@ final class NotchModel {
     /// Space above and below a tab's content inside the open island.
     static let contentInsets = (top: CGFloat(8), bottom: CGFloat(14))
 
-    var expanded = false { didSet { onResize?() } }
+    var expanded = false { didSet { updateNotificationAvailability(); onResize?() } }
     var notchSize = CGSize(width: 180, height: 32)
     var tab: Tool = .home { didSet { onResize?() } }
     /// Each tab's measured content height, so the island fits what it shows and reopening doesn't resize again.
@@ -39,7 +39,7 @@ final class NotchModel {
     /// The measured height of setup while it's showing.
     var pageHeight: CGFloat = 200 { didSet { onResize?() } }
     /// A drag carrying files, anywhere on screen. `.far` hints at the notch; `.near` has opened the shelf to catch it.
-    var fileDrag: FileDrag?
+    var fileDrag: FileDrag? { didSet { updateNotificationAvailability() } }
     @ObservationIgnored var onResize: (() -> Void)?
 
     var expandedSize: CGSize {
@@ -54,16 +54,45 @@ final class NotchModel {
 
     private(set) var banner: Banner? { didSet { onResize?() } }
     @ObservationIgnored private var bannerTask: Task<Void, Never>?
+    @ObservationIgnored private var notifications = NotificationQueue()
+    @ObservationIgnored var onBannerPresented: ((Banner) -> Void)?
 
     func tabs(in preferences: Preferences) -> [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
 
     func show(_ banner: Banner, seconds: Double = 2) {
-        self.banner = banner // the shared island surface owns the notification morph
+        synchronizeNotifications(delivered: notifications.submit(banner, seconds: seconds, at: .now))
+    }
+
+    func removeNotifications(for tool: Tool) {
+        synchronizeNotifications(delivered: notifications.remove(where: { $0.sourceTool == tool }, at: .now))
+    }
+
+    /// Independent full-app snapshot samples must not wait behind the previous sample.
+    func showSnapshot(_ banner: Banner) {
+        guard Snapshots.folder != nil else { return }
+        notifications = NotificationQueue()
+        synchronizeNotifications(delivered: notifications.submit(banner, seconds: 60, at: .now))
+    }
+
+    func previewNotification() {
+        let preview = Banner.message(symbol: "ledge-mark", text: "Notification preview")
+        synchronizeNotifications(delivered: notifications.submit(preview, seconds: 6, at: .now, allowRepeat: true))
+    }
+
+    private func updateNotificationAvailability() {
+        synchronizeNotifications(delivered: notifications.setSuspended(expanded || fileDrag != nil, at: .now))
+    }
+
+    private func synchronizeNotifications(delivered: Banner?) {
+        // The shared island owns the transition; content stays in one surface.
+        if banner != notifications.banner { banner = notifications.banner }
+        if let delivered { onBannerPresented?(delivered) }
         bannerTask?.cancel()
+        guard let deadline = notifications.nextDeadline else { bannerTask = nil; return }
         bannerTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(seconds))
-            guard !Task.isCancelled else { return }
-            self?.banner = nil
+            try? await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
+            guard let self, !Task.isCancelled else { return }
+            synchronizeNotifications(delivered: notifications.tick(at: .now))
         }
     }
 }
@@ -136,22 +165,26 @@ final class NotchController {
             MainActor.assumeIsolated { self?.handle(event) }
         }
 
-        let show: (Banner) -> Void = { [weak self] in self?.model.show($0) }
+        model.onBannerPresented = { [weak self] banner in
+            guard Snapshots.folder == nil, self?.preferences.notificationSounds == true,
+                  let sound = banner.notificationSound else { return }
+            NSSound(named: sound)?.play()
+        }
+        let show: (Banner) -> Void = { [weak self] in self?.showBanner($0) }
         mediaKeys.onChange = show
-        alerts.onBanner = { [weak self] in self?.model.show($0, seconds: 3) }
+        alerts.onBanner = { [weak self] in self?.showBanner($0, seconds: 3) }
         countdown.onFinish = { [weak self] finish in
-            NSSound(named: "Glass")?.play()
             let banner: Banner = switch finish {
             case .timer: .message(symbol: "stopwatch-bold", text: "Time's up")
             case .focusDone: .message(symbol: "leaf-linear", text: "Break time")
             case .breakOver: .message(symbol: "brain-linear", text: "Back to focus")
             }
-            self?.model.show(banner, seconds: 4)
+            self?.showBanner(banner, seconds: 4)
         }
-        colorPicker.onPicked = { [weak self] in self?.model.show(.color(hex: $0), seconds: 2.5) }
-        microphone.onChange = { [weak self] in self?.model.show(.mic(muted: $0)) }
-        meetingAlerts.onBanner = { [weak self] in self?.model.show($0, seconds: 8) }
-        audioOutputs.onSwitch = { [weak self] in self?.model.show(.message(symbol: "speaker-minimalistic-linear", text: $0), seconds: 2.5) }
+        colorPicker.onPicked = { [weak self] in self?.showBanner(.color(hex: $0), seconds: 2.5) }
+        microphone.onChange = { [weak self] in self?.showBanner(.mic(muted: $0)) }
+        meetingAlerts.onBanner = { [weak self] in self?.showBanner($0, seconds: 8) }
+        audioOutputs.onSwitch = { [weak self] in self?.showBanner(.message(symbol: "speaker-minimalistic-linear", text: $0), seconds: 2.5) }
         preferences.onChange = { [weak self] tool, on in self?.apply(tool, on: on) }
         for tool in Tool.allCases { apply(tool, on: preferences.isOn(tool)) }
         if let folder = Snapshots.folder {
@@ -162,6 +195,11 @@ final class NotchController {
 
         NotificationCenter.default.addObserver(forName: .startOnboarding, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.startOnboarding() }
+        }
+        NotificationCenter.default.addObserver(forName: .previewNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.model.previewNotification()
+            }
         }
         if !preferences.onboarded {
             // First launch: let the menu bar settle, then grow the island out of the notch to say hello.
@@ -196,7 +234,7 @@ final class NotchController {
         preferences.onboarded = true
         setExpanded(false)
         model.onboarding = nil
-        model.show(.message(symbol: "ledge-mark", text: "Hover here"), seconds: 3) // where to find it from now on
+        showBanner(.message(symbol: "ledge-mark", text: "Hover here"), seconds: 3) // where to find it from now on
     }
 
     func measuredPage(_ height: CGFloat) {
@@ -223,8 +261,7 @@ final class NotchController {
         guard parts.count >= 2, let agent = AgentAlerts.Agent(rawValue: parts[0]) else { return }
         let waiting = parts[1] == "waiting"
         let project = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "project" }?.value ?? ""
-        NSSound(named: waiting ? "Tink" : "Pop")?.play()
-        model.show(.agent(name: agent == .claude ? "Claude" : "Codex", waiting: waiting, project: project), seconds: waiting ? 10 : 6)
+        showBanner(.agent(name: agent == .claude ? "Claude" : "Codex", waiting: waiting, project: project), seconds: waiting ? 10 : 6)
     }
 
     func pickColor() {
@@ -239,11 +276,17 @@ final class NotchController {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.writeObjects([image])
             if preferences.isOn(.shelf) { shelf.add([url]) }
-            model.show(.screenshot(image), seconds: 3)
+            showBanner(.screenshot(image), seconds: 3)
         }
     }
 
+    private func showBanner(_ banner: Banner, seconds: Double = 2) {
+        guard banner.sourceTool.map(preferences.isOn) ?? true else { return }
+        model.show(banner, seconds: seconds)
+    }
+
     private func apply(_ tool: Tool, on: Bool) {
+        if !on { model.removeNotifications(for: tool) }
         switch tool {
         case .media: if on, Snapshots.folder == nil { nowPlaying.start() } // keeps streaming until relaunch once on; it's cheap. Snapshots use demo music.
         case .clipboard: on ? clipboard.start() : clipboard.stop()

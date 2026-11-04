@@ -60,6 +60,12 @@ even during dismissal. The compact area remains the hover trigger, so an alert e
 the pointer never opens Home by itself. With Windows' **Animation effects** off, the size changes
 immediately and the content fades. Color-picker feedback is immediate.
 
+Alerts that need attention (an agent waiting, a meeting or a finished timer) take priority over routine
+status. Repeated alerts from the same source are grouped, and an agent finishing replaces its older
+waiting message. Home and full-screen apps hold a small queue of up to four fresh alerts. Old alerts
+expire instead of replaying when you return; identical repeats do not keep an alert on screen forever.
+Immediate color feedback is never queued.
+
 **Coding agent alerts** are connected from the notification-area icon (**Coding agent alerts**). Ledge
 adds two hooks to `~/.claude/settings.json` and a `notify` line to `~/.codex/config.toml`, each running
 `Ledge.exe --agent …`; both files are backed up first (`.ledge-backup`), an existing Codex notify program

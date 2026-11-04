@@ -15,6 +15,7 @@ public partial class IslandWindow : Window
     readonly Tools tools;
     Settings settings = Settings.Load(Settings.DefaultPath);
     readonly IslandMotion motion = new(ClosedSize);
+    readonly NotificationQueue notifications = new();
     readonly HoverIntent hover = new();
     readonly Stopwatch clock = Stopwatch.StartNew();
     readonly DispatcherTimer pointerTimer = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(100) };
@@ -28,6 +29,7 @@ public partial class IslandWindow : Window
     readonly HashSet<string> announcedMeetings = [];
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
+    long presentedNotification;
     bool animating, expanded, hasWings, settingUp, immediateBanner;
     /// <summary>Top of the usable screen, in screen pixels; below a taskbar docked at the top.</summary>
     double screenTop;
@@ -45,6 +47,7 @@ public partial class IslandWindow : Window
         {
             if (!settings.SetupDone) StartSetup();
         };
+        IsVisibleChanged += (_, _) => RefreshNotifications();
 
         SourceInitialized += (_, _) =>
         {
@@ -82,6 +85,7 @@ public partial class IslandWindow : Window
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             CompositionTarget.Rendering -= OnFrame;
             bannerTimer.Stop();
+            notifications.Clear();
             Notification.Clear();
         };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
@@ -90,7 +94,7 @@ public partial class IslandWindow : Window
         pointerTimer.Start();
         fullScreenTimer.Tick += (_, _) => GetOutOfFullScreenApps();
         fullScreenTimer.Start();
-        bannerTimer.Tick += (_, _) => EndBanner();
+        bannerTimer.Tick += (_, _) => RefreshNotifications();
 
         tools.NowPlaying.Changed += () =>
         {
@@ -156,24 +160,42 @@ public partial class IslandWindow : Window
     public void ShowBanner(string title, string detail, double seconds = 2.5) =>
         ShowBanner(NotificationContent.Message(title, detail), seconds);
 
-    /// <summary>The compact island itself grows to hold the alert; opening it dismisses the content.</summary>
+    /// <summary>Urgent alerts take precedence; occupied or hidden islands retain only fresh context.</summary>
     public void ShowBanner(NotificationContent content, double seconds = 2.5)
     {
-        if (expanded || !IsVisible || Native.FullScreenAppRunning()) return;
-        immediateBanner = content.Immediate;
-        Notification.Show(content);
-        bannerTimer.Stop();
-        bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
-        bannerTimer.Start();
-        UpdateShape();
+        if (content.SourceTool is { } source && !settings.IsOn(source)) return;
+        notifications.SetAvailable(CanPresentNotification);
+        notifications.Enqueue(content, seconds);
+        RefreshNotifications();
     }
 
-    void EndBanner()
+    bool CanPresentNotification => !expanded && IsVisible && !Native.FullScreenAppRunning();
+
+    void RefreshNotifications()
     {
+        notifications.SetAvailable(CanPresentNotification);
         bannerTimer.Stop();
-        Notification.Dismiss();
-        UpdateShape();
-        immediateBanner = false;
+        if (notifications.CurrentId != presentedNotification)
+        {
+            presentedNotification = notifications.CurrentId;
+            if (notifications.Current is { } content)
+            {
+                immediateBanner = content.Immediate;
+                Notification.Show(content);
+                UpdateShape();
+            }
+            else
+            {
+                Notification.Dismiss();
+                UpdateShape();
+                immediateBanner = false;
+            }
+        }
+        if (notifications.TimeUntilNextChange is { } wait)
+        {
+            bannerTimer.Interval = wait > TimeSpan.FromMilliseconds(10) ? wait : TimeSpan.FromMilliseconds(10);
+            bannerTimer.Start();
+        }
     }
 
     /// <summary>Opens the island on setup, and keeps it open until you finish.</summary>
@@ -207,6 +229,8 @@ public partial class IslandWindow : Window
         tools.Clipboard.Enabled = settings.IsOn(Tool.Clipboard);
         if (!tools.Clipboard.Enabled) tools.Clipboard.Clear();
         if (!settings.IsOn(Tool.Shelf)) tools.Shelf.Clear();
+        notifications.RemoveWhere(content => content.SourceTool is { } tool && !settings.IsOn(tool));
+        RefreshNotifications();
     }
 
     void FinishSetup(Settings chosen)
@@ -227,9 +251,8 @@ public partial class IslandWindow : Window
         if (expanded == open || settingUp && !open) return;
         expanded = open;
         hover.Reset();
-        bannerTimer.Stop();
-        Notification.Dismiss();
         OpenView.SetOpen(open);
+        RefreshNotifications();
         UpdateShape();
         immediateBanner = false;
     }
@@ -237,7 +260,7 @@ public partial class IslandWindow : Window
     /// <summary>The one place that decides the island's shape and which content shows.</summary>
     void UpdateShape()
     {
-        var banner = bannerTimer.IsEnabled && !expanded;
+        var banner = notifications.Current is not null && !expanded;
         var wings = hasWings && !expanded && !banner;
         MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : banner ? NotificationSize : hasWings ? WingsSize : ClosedSize,
                banner, !expanded && immediateBanner);
@@ -415,7 +438,8 @@ public partial class IslandWindow : Window
         if (hide)
         {
             SetExpanded(false);
-            bannerTimer.Stop();
+            notifications.SetAvailable(false);
+            presentedNotification = 0;
             Notification.Clear();
             UpdateShape();
             immediateBanner = false;
@@ -424,6 +448,7 @@ public partial class IslandWindow : Window
         else
         {
             Show();
+            RefreshNotifications();
         }
     }
 }

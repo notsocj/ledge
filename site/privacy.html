@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy · Ledge</title>
-  <meta name="description" content="What Ledge keeps on your Mac, the two things it sends over the network, and why it asks for each permission.">
+  <meta name="description" content="What Ledge keeps on your Mac, which features use the network, and why it asks for each permission.">
   <meta name="theme-color" content="#070e1a">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -15,9 +15,9 @@
 <main class="doc">
   <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">Ledge</a>
   <h1>Privacy</h1>
-  <p class="updated">Last updated October 27, 2026</p>
+  <p class="updated">Last updated November 4, 2026</p>
 
-  <p>Ledge has no account, no analytics and no server of its own. What it shows you is read on your Mac and stays there. This page lists every exception.</p>
+  <p>Ledge has no account, no analytics and no cloud storage for your content. What it shows you is read on your Mac and stays there. This page lists every exception.</p>
 
   <h2>What stays on your Mac</h2>
   <ul>
@@ -30,12 +30,13 @@
   </ul>
 
   <h2>What goes over the network</h2>
-  <p>Two features talk to the internet, and only while they're switched on.</p>
+  <p>These features talk to the internet while they're switched on:</p>
   <ul>
     <li><strong>Synced lyrics.</strong> When a song plays, Ledge looks it up on <a href="https://lrclib.net">LRCLIB</a> by title, artist, album and length. Nothing else is sent. Switch off Now playing in Settings and the lookups stop.</li>
     <li><strong>Claude usage.</strong> To show your Claude limits, Ledge asks Anthropic's API for your usage, signed in with the login Claude Code already saved in your Keychain. Ledge only reads that login. It never refreshes, changes or sends it anywhere else. If Claude Code isn't installed, nothing is sent.</li>
+    <li><strong>Mac updates.</strong> Starting with version 0.1.4, Ledge uses Sparkle to check the update feed on keepledge.vercel.app and download releases from GitHub. Checks are enabled by default and can be turned off in Settings → Updates. You choose when to install. These services receive normal network information such as your IP address and the updater's user-agent; Ledge does not send your notes, clipboard, calendar, agent credentials or a system profile with update checks.</li>
   </ul>
-  <p>Ledge doesn't check for updates or send crash reports today. If that changes, this page will say so first.</p>
+  <p>Ledge does not send analytics or crash reports.</p>
 
   <h2>Permissions, and why</h2>
   <p>macOS asks you before Ledge can use any of these. Each one is optional; the tools that need it simply stay off without it.</p>

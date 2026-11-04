@@ -129,6 +129,8 @@ enum Tool: String, CaseIterable, Identifiable {
 extension Notification.Name {
     /// Runs setup again inside the island, from Settings or the menu bar.
     static let startOnboarding = Notification.Name("LedgeStartOnboarding")
+    /// Shows a sample through the live island without connecting an agent or changing tools.
+    static let previewNotification = Notification.Name("LedgePreviewNotification")
 }
 
 /// Which tools are on. Stores the switched-off ones, so tools added in updates start switched on.
@@ -141,12 +143,14 @@ final class Preferences {
     private(set) var personas: [Persona]
     /// Whether first-run setup has been finished or skipped.
     var onboarded: Bool { didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") } }
+    var notificationSounds: Bool { didSet { UserDefaults.standard.set(notificationSounds, forKey: "notificationSounds") } }
     @ObservationIgnored var onChange: ((Tool, Bool) -> Void)?
 
     private init() {
         disabled = Set((UserDefaults.standard.stringArray(forKey: "disabledTools") ?? []).compactMap(Tool.init))
         personas = (UserDefaults.standard.stringArray(forKey: "personas") ?? []).compactMap(Persona.init)
         onboarded = UserDefaults.standard.bool(forKey: "onboarded")
+        notificationSounds = UserDefaults.standard.object(forKey: "notificationSounds") as? Bool ?? true
         adoptNewTools()
     }
 
@@ -196,6 +200,7 @@ final class Preferences {
 
 struct SettingsView: View {
     let preferences: Preferences
+    let updater: AppUpdater
     @State private var openAtLogin = SMAppService.mainApp.status == .enabled
     @State private var trusted = AXIsProcessTrusted()
 
@@ -235,6 +240,18 @@ struct SettingsView: View {
             if preferences.isOn(.worldClock) {
                 WorldClockSettings(clock: .shared)
             }
+            Section {
+                Toggle("Play notification sounds", isOn: Binding(
+                    get: { preferences.notificationSounds }, set: { preferences.notificationSounds = $0 }))
+                Button("Preview notification") {
+                    NotificationCenter.default.post(name: .previewNotification, object: nil)
+                }
+            } header: {
+                Text("Notifications")
+            } footer: {
+                Text("Important alerts go first. Repeated alerts are grouped, and old alerts expire. The preview follows your Mac’s Reduce Motion setting.")
+                    .foregroundStyle(.secondary)
+            }
             Section("General") {
                 Toggle("Open at login", isOn: $openAtLogin)
                     .onChange(of: openAtLogin) { _, on in
@@ -254,10 +271,29 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section {
+                Toggle("Automatically check for updates", isOn: Binding(
+                    get: { updater.automaticallyChecksForUpdates },
+                    set: { updater.automaticallyChecksForUpdates = $0 }))
+                    .disabled(!updater.isAvailable)
+                Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheckForUpdates)
+                LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")
+                if updater.startupError != nil {
+                    Text("Update checking couldn't start. Relaunch Ledge to try again.")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Ledge checks for new releases in the background. You choose when to install and relaunch.")
+                    .foregroundStyle(.secondary)
+            }
             Section("Credits") {
                 // Required by the icons' CC BY 4.0 license.
                 Link("Icons: Solar by 480 Design, CC BY 4.0", destination: URL(string: "https://www.figma.com/community/file/1166831539721848736")!)
                 Link("Now playing: mediaremote-adapter by Jonas van den Berg, BSD 3-Clause", destination: URL(string: "https://github.com/ungive/mediaremote-adapter")!)
+                Link("Updates: Sparkle, MIT License", destination: URL(string: "https://sparkle-project.org")!)
             }
         }
         .formStyle(.grouped)

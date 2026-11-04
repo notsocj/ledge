@@ -99,7 +99,7 @@ enum Snapshots {
             ("mic", .mic(muted: true)),
         ]
         for (name, banner) in banners {
-            app.model.show(banner, seconds: 60)
+            app.model.showSnapshot(banner)
             try? await Task.sleep(for: .milliseconds(700))
             capture(host, "closed-\(name)", in: folder)
         }

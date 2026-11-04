@@ -50,6 +50,14 @@ brew install --cask notsocj/ledge/ledge
 
 Ledge needs macOS 14 or later on Apple Silicon. Releases are signed and notarized by Apple.
 
+Starting with 0.1.4, Ledge checks for updates automatically. Use **Check for Updates…** in its menu,
+or turn automatic checks off in **Settings → Updates**. You choose when to install and relaunch.
+Copies older than 0.1.4 need one manual update to get the updater.
+
+Use **Preview notification** in the Mac menu or Settings to try the island's animation. Notification
+sounds can be switched off in Settings. Important alerts go first, repeats are grouped, and pending
+alerts expire rather than appearing late after you close Home.
+
 ### Windows
 
 Download `Ledge-win-Setup.exe` from the newest
@@ -181,14 +189,24 @@ This section is the Mac release; Windows releases are a `windows-v` tag, see
 
 `./build.sh dmg` also packs `site/Ledge.dmg`. `./build.sh release` signs that DMG with your Developer
 ID, sends it to Apple for notarization, staples the ticket, checks that Gatekeeper accepts it, and
-publishes it as the GitHub Release for the version in `Info.plist` (bump `CFBundleShortVersionString`
-first). The site's Download buttons and the [Homebrew cask](https://github.com/notsocj/homebrew-ledge)
-both fetch `releases/latest/download/Ledge.dmg`, so nothing else needs updating. It needs, once:
+publishes it as the GitHub Release for the version in `Info.plist` (bump both
+`CFBundleShortVersionString` and `CFBundleVersion` first). The site's Download buttons and the
+[Homebrew cask](https://github.com/notsocj/homebrew-ledge) both fetch `releases/latest/download/Ledge.dmg`.
+The build includes Sparkle and signs its nested helpers before signing Ledge. It needs, once:
 
 1. A **Developer ID Application** certificate: Xcode › Settings › Accounts › Manage Certificates › + ›
    Developer ID Application.
 2. Notarization credentials saved in your keychain: `xcrun notarytool store-credentials ledge`
    (it asks for your Apple ID, team ID and an app-specific password from account.apple.com).
+3. The Sparkle Ed25519 private key in the login Keychain under account `com.ledge.Ledge`. The public
+   key is in `Info.plist`; never commit or print the private key. On a new release machine, securely
+   transfer that existing key rather than generating a replacement for shipped apps.
+
+The release script creates and verifies a signed `site/appcast.xml` with a version-specific archive
+URL after notarization. Commit and deploy that file only after the GitHub release is published. Add
+release notes at `releases/mac-<version>.md` before building to embed them in the feed. Published DMGs
+are immutable: use a new version for any change. Update archives are verified before extraction;
+the feed is signed too. Profile reporting and unattended installation are disabled.
 
 Downloads per release: `gh api repos/notsocj/ledge/releases --jq '.[] | "\(.tag_name) \(.assets[0].download_count)"'`.
 
@@ -218,7 +236,6 @@ Issues and pull requests are welcome. Run `swift test` before sending a change, 
 
 ## Known gaps
 
-- No in-app updates yet (Sparkle is planned); download new releases from GitHub or use `brew upgrade --greedy`.
 - Lyrics come from a crowd-sourced service without a lyrics license.
 - The Claude usage endpoint is undocumented; check Anthropic's terms for this use of Claude Code's login.
 - Now playing and brightness use private macOS APIs that can change in updates.
