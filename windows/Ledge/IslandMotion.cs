@@ -20,8 +20,17 @@ public sealed class IslandMotion(Size initialSize)
             return 32 * phase * (1 - phase);
         }
     }
-    // Reveal only after the narrow resting island has made room. Text and icons never scale.
-    public double NotificationReveal => Math.Clamp((Width - 240) / 124, 0, 1) * Math.Clamp((Height - 40) / 24, 0, 1);
+    // The content remains 364 wide while centered in the growing shell. Wait until its
+    // 12-point badge inset still leaves at least 5 points inside the shell on either side.
+    // A smooth reveal keeps the rigid badge and text from being visibly sliced by the clip.
+    public double NotificationReveal
+    {
+        get
+        {
+            var fit = Math.Clamp((Width - 350) / 14, 0, 1) * Math.Clamp((Height - 56) / 8, 0, 1);
+            return fit * fit * (3 - 2 * fit);
+        }
+    }
     public bool IsMoving => !width.IsSettled || !height.IsSettled || !notification.IsSettled;
 
     public void Retarget(Size target, bool notification = false, bool reduceMotion = false, bool immediate = false)

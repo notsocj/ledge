@@ -173,7 +173,10 @@ public class IslandMotionTests
     public void LabelsStayHiddenWhileTheShapeIsTooNarrowOrTooShort()
     {
         Assert.Equal(0, new IslandMotion(new Size(230, 64)).NotificationReveal);
-        Assert.Equal(0, new IslandMotion(new Size(364, 39)).NotificationReveal);
+        Assert.Equal(0, new IslandMotion(new Size(331, 64)).NotificationReveal);
+        Assert.Equal(0, new IslandMotion(new Size(350, 64)).NotificationReveal);
+        Assert.Equal(0, new IslandMotion(new Size(364, 56)).NotificationReveal);
+        Assert.Equal(0.5, new IslandMotion(new Size(357, 64)).NotificationReveal);
         Assert.Equal(1, new IslandMotion(Notification).NotificationReveal);
     }
 }
