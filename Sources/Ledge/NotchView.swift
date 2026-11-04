@@ -13,17 +13,22 @@ struct NotchView: View {
     var body: some View {
         let size = shapeSize
         ZStack(alignment: .top) {
-            Color.black
-            if model.expanded {
-                expanded.transition(.asymmetric(insertion: .reveal, removal: .opacity.animation(Motion.easeOut(0.12))))
-            } else {
-                closed.transition(.opacity)
+            ZStack(alignment: .top) {
+                Color.black
+                if model.expanded {
+                    expanded.transition(.asymmetric(insertion: .reveal, removal: .opacity.animation(Motion.easeOut(0.12))))
+                } else {
+                    closed.transition(.opacity)
+                }
             }
+            .frame(width: size.width, height: size.height)
+            .clipShape(NotchShape(topRadius: model.expanded ? 14 : 6, bottomRadius: model.expanded ? 32 : 12))
+            .animation(reduceMotion || model.banner != nil ? nil : Motion.open, value: closedContent)
+
+            NotificationOverlay(banner: !model.expanded && model.fileDrag == nil ? model.banner : nil,
+                                topInset: model.notchSize.height + NotificationCapsule.gap)
         }
-        .frame(width: size.width, height: size.height)
-        .clipShape(NotchShape(topRadius: model.expanded ? 14 : 6, bottomRadius: model.expanded ? 32 : 12))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(reduceMotion ? nil : Motion.open, value: closedContent) // wings follow what they show
         .task(id: nowPlaying.trackKey) {
             lyrics = nil
             guard nowPlaying.hasTrack else { return }
@@ -35,12 +40,12 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case drop, banner(Banner), micMuted, inUse, timer, media, nothing
+        case drop, banner, micMuted, inUse, timer, media, nothing
     }
 
     private var closedContent: Closed {
         if model.fileDrag != nil { return .drop } // a file on its way: say where it can go
-        if let banner = model.banner { return .banner(banner) }
+        if model.banner != nil { return .banner }
         // A muted mic outranks everything: it's what you need to know before you speak.
         if app.preferences.isOn(.micMute), app.microphone.isMuted { return .micMuted }
         if app.preferences.isOn(.inUse), app.inUse.any { return .inUse }
@@ -57,14 +62,12 @@ struct NotchView: View {
     private var shapeSize: CGSize {
         if model.expanded { return model.expandedSize }
         let wing: CGFloat = switch closedContent {
-        case .banner(.meeting), .banner(.agent): 124
         case .drop: 104
         case .inUse: 64
-        case .banner: 96
         case .micMuted: 64
         case .timer: 64
         case .media: 44
-        case .nothing: 0
+        case .banner, .nothing: 0
         }
         return CGSize(width: model.notchSize.width + wing * 2, height: model.notchSize.height)
     }
@@ -80,8 +83,8 @@ struct NotchView: View {
                 Text("Drop here")
             }
             .accessibilityLabel("Drop files on the notch to keep them on the shelf")
-        case .banner(let banner):
-            BannerView(banner: banner, height: model.notchSize.height)
+        case .banner:
+            EmptyView() // the separate capsule stays clear of the physical camera cutout
         case .micMuted:
             Wings(height: model.notchSize.height) {
                 MicIcon(muted: true, size: 15).foregroundStyle(.red)
@@ -268,63 +271,6 @@ private struct TabPill: View {
         .help(tab.title)
         .accessibilityLabel(tab.title)
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-private struct BannerView: View {
-    let banner: Banner
-    let height: CGFloat
-
-    var body: some View {
-        Wings(height: height) {
-            switch banner {
-            case .level(let symbol, _): Icon(name: symbol, size: 16)
-            case .battery(let percent, let charging):
-                Icon(name: charging ? "battery-charge-bold" : "battery-low-bold", size: 16)
-                    .foregroundStyle(charging ? .green : percent <= 20 ? Palette.warning : Palette.paper)
-            case .headphones: Icon(name: "headphones-round-bold", size: 16)
-            case .screenshot(let image): Artwork(image: image, size: height - 12, radius: 4)
-            case .message(let symbol, _): Icon(name: symbol, size: 16)
-            case .color(let hex):
-                Circle()
-                    .fill(Color(nsColor: ColorPicker.color(hex: hex) ?? .gray))
-                    .overlay(Circle().strokeBorder(Palette.ash, lineWidth: 1))
-                    .frame(width: 15, height: 15)
-            case .meeting(let title, _):
-                HStack(spacing: 6) {
-                    Icon(name: "calendar-mark-linear", size: 16)
-                    Text(title).frame(maxWidth: 98, alignment: .leading)
-                }
-            case .mic(let muted): MicIcon(muted: muted, size: 16).foregroundStyle(muted ? .red : Palette.paper)
-            case .agent(let name, _, let project):
-                HStack(spacing: 6) {
-                    Icon(name: name == "Claude" ? "claude-logo" : "codex-logo", size: 16)
-                    Text(project.isEmpty ? name : project).frame(maxWidth: 98, alignment: .leading)
-                }
-            }
-        } trailing: {
-            switch banner {
-            case .level(_, let value):
-                Capsule()
-                    .fill(Palette.rail)
-                    .overlay(alignment: .leading) {
-                        GeometryReader { geometry in
-                            Capsule().fill(Palette.paper).frame(width: geometry.size.width * value)
-                        }
-                    }
-                    .frame(width: 56, height: 4)
-                    .animation(Motion.easeOut(0.15), value: value)
-                    .accessibilityLabel("\(Int((value * 100).rounded())) percent")
-            case .battery(let percent, _): Text("\(percent)%")
-            case .headphones(_, let battery): Text(battery.map { "\($0)%" } ?? "Connected")
-            case .screenshot: Text("Copied")
-            case .message(_, let text): Text(text)
-            case .color(let hex): Text(hex)
-            case .meeting(_, let startsAt): Text("in \(max(1, Int((startsAt.timeIntervalSinceNow / 60).rounded(.up)))) min")
-            case .mic(let muted): Text(muted ? "Muted" : "Mic on")
-            case .agent(_, let waiting, _): Text(waiting ? "Needs you" : "Done").foregroundStyle(waiting ? .orange : Palette.paper)
-            }
-        }
     }
 }
 

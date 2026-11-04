@@ -9,7 +9,7 @@ final class NotchPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-/// A short-lived message beside the closed notch, like the iPhone's Dynamic Island.
+/// A short-lived message shown in a capsule below the closed notch.
 enum Banner: Equatable {
     case level(symbol: String, value: Double)
     case battery(percent: Int, charging: Bool)
@@ -29,7 +29,7 @@ final class NotchModel {
     /// Space above and below a tab's content inside the open island.
     static let contentInsets = (top: CGFloat(8), bottom: CGFloat(14))
 
-    var expanded = false
+    var expanded = false { didSet { onResize?() } }
     var notchSize = CGSize(width: 180, height: 32)
     var tab: Tool = .home { didSet { onResize?() } }
     /// Each tab's measured content height, so the island fits what it shows and reopening doesn't resize again.
@@ -46,19 +46,25 @@ final class NotchModel {
         let content = onboarding != nil ? pageHeight : contentHeights[tab] ?? 120
         return CGSize(width: Self.width, height: min(Self.maxHeight, notchSize.height + Self.contentInsets.top + content + Self.contentInsets.bottom))
     }
-    private(set) var banner: Banner?
+    /// Keep room for the detached capsule and its shadow, even after viewing a short tab.
+    var panelHeight: CGFloat {
+        guard banner != nil, !expanded else { return expandedSize.height }
+        return max(expandedSize.height, notchSize.height + NotificationCapsule.gap
+                   + NotificationCapsule.height + NotificationCapsule.shadowSpace)
+    }
+
+    private(set) var banner: Banner? { didSet { onResize?() } }
     @ObservationIgnored private var bannerTask: Task<Void, Never>?
 
     func tabs(in preferences: Preferences) -> [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
 
     func show(_ banner: Banner, seconds: Double = 2) {
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        withAnimation(reduceMotion ? nil : Motion.open) { self.banner = banner }
+        self.banner = banner // the notification layer owns its transition, independently of the island
         bannerTask?.cancel()
         bannerTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }
-            withAnimation(reduceMotion ? nil : Motion.close) { self?.banner = nil }
+            self?.banner = nil
         }
     }
 }
@@ -295,7 +301,7 @@ final class NotchController {
         } else {
             model.notchSize = CGSize(width: 180, height: NSStatusBar.system.thickness) // no notch: draw a pill instead
         }
-        setPanelHeight(model.expandedSize.height)
+        setPanelHeight(model.panelHeight)
     }
 
     private var pendingShrink: Task<Void, Never>?
@@ -303,7 +309,7 @@ final class NotchController {
     /// The window follows the island: it grows at once so nothing is clipped, and shrinks only after
     /// the island's spring has settled, so empty window never keeps the island open under the cursor.
     private func fitPanel() {
-        let target = model.expandedSize.height
+        let target = model.panelHeight
         pendingShrink?.cancel()
         if target >= panel.frame.height {
             setPanelHeight(target)
@@ -311,7 +317,7 @@ final class NotchController {
             pendingShrink = Task { [weak self] in
                 try? await Task.sleep(for: .milliseconds(450))
                 guard let self, !Task.isCancelled else { return }
-                setPanelHeight(model.expandedSize.height)
+                setPanelHeight(model.panelHeight)
             }
         }
     }

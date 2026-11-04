@@ -13,6 +13,11 @@ enum Palette {
     static let well = Color.white.opacity(0.07)
     static let warning = Color(nsColor: .systemOrange) // a usage limit is nearly spent
     static let live = Color(nsColor: .systemGreen) // something running right now
+    // Notification accents are quiet on black; the bright badge anchors the capsule at a glance.
+    static let notificationBadge = Color(red: 0.96, green: 0.96, blue: 0.97)
+    static let notificationIris = Color(red: 0.72, green: 0.65, blue: 1)
+    static let notificationMint = Color(red: 0.66, green: 0.86, blue: 0.78)
+    static let notificationAmber = Color(red: 0.94, green: 0.80, blue: 0.53)
 }
 
 /// Corner radii nest: a shape inside the island is rounder the closer it sits to the island's own
@@ -32,6 +37,10 @@ enum Motion {
     static let snappy = Animation.spring(duration: 0.35, bounce: 0)
     /// Lyrics stepping up a line is on-screen movement, so ease-in-out.
     static let lyric = Animation.timingCurve(0.77, 0, 0.175, 1, duration: 0.3)
+    /// A soft arrival, then a brisk return along the same path. Content fades independently.
+    static let notificationEnter = open
+    static let notificationExit = easeOut(0.22)
+    static let notificationFade = easeOut(0.15)
 
     static func move(_ duration: Double) -> Animation { .timingCurve(0.77, 0, 0.175, 1, duration: duration) }
     static func easeOut(_ duration: Double) -> Animation { .timingCurve(0.23, 1, 0.32, 1, duration: duration) }
