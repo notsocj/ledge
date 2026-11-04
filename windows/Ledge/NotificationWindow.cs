@@ -9,24 +9,24 @@ namespace Ledge;
 /// other apps, while the island remains interactive. WPF's IsHitTestVisible alone cannot do that.</summary>
 sealed class NotificationWindow : Window
 {
-    const double Padding = 32, CapsuleTop = 50;
+    const double Inset = 32, CapsuleTop = 50;
     readonly Window island;
     readonly NotificationCapsule capsule = new()
     {
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Top,
-        Margin = new Thickness(Padding),
+        Margin = new Thickness(Inset),
     };
     Native.RECT work;
     double scale = 1;
-    bool placed, closed;
+    bool placed, initialized, closed;
 
     public NotificationWindow(Window island)
     {
         this.island = island;
         Title = "Ledge notification";
-        Width = 364 + 2 * Padding;
-        Height = 64 + 2 * Padding;
+        Width = 364 + 2 * Inset;
+        Height = 64 + 2 * Inset;
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -39,6 +39,7 @@ sealed class NotificationWindow : Window
         capsule.Dismissed += () => { if (!closed && IsVisible) Hide(); };
         SourceInitialized += (_, _) =>
         {
+            initialized = true;
             var style = Native.GetWindowLongPtr(Handle, Native.GWL_EXSTYLE);
             Native.SetWindowLongPtr(Handle, Native.GWL_EXSTYLE,
                 style | Native.WS_EX_TRANSPARENT | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE);
@@ -84,7 +85,7 @@ sealed class NotificationWindow : Window
         this.work = work;
         this.scale = scale;
         placed = true;
-        if (IsSourceInitialized) PlaceCurrent();
+        if (initialized) PlaceCurrent();
     }
 
     void PlaceCurrent()
@@ -93,7 +94,7 @@ sealed class NotificationWindow : Window
         var pixelWidth = (int)Math.Round(Width * scale);
         var pixelHeight = (int)Math.Round(Height * scale);
         var left = work.Left + (work.Right - work.Left - pixelWidth) / 2;
-        var top = work.Top + (int)Math.Round((CapsuleTop - Padding) * scale);
+        var top = work.Top + (int)Math.Round((CapsuleTop - Inset) * scale);
         Native.SetWindowPos(Handle, Native.HWND_TOPMOST, left, top, pixelWidth, pixelHeight, Native.SWP_NOACTIVATE);
     }
 }
