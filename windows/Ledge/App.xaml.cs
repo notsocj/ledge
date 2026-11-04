@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using Velopack;
 
@@ -42,15 +43,13 @@ public partial class App : Application
         // Renders the island's pages to PNGs for design review, then quits. See Snapshots.cs.
         if (e.Args is ["--snapshot", var folder])
         {
-            Snapshots.Run(folder);
-            Shutdown();
+            RunPreview(folder, Snapshots.Run);
             return;
         }
         // Uses only the production notification view and invented content, before live services start.
         if (e.Args is ["--notification-preview", var notificationFolder])
         {
-            NotificationSnapshots.Run(notificationFolder);
-            Shutdown();
+            RunPreview(notificationFolder, path => NotificationSnapshots.Run(path));
             return;
         }
         // One Ledge at a time: starting it again (say, from the Start menu while it's already running) just exits.
@@ -67,6 +66,33 @@ public partial class App : Application
         updates = new Updates();
         tray = new Tray(island, updates);
         updates.Start();
+    }
+
+    /// <summary>A WinExe has no attached console in CI, so retain the actual render failure
+    /// beside any completed preview frames while still returning a failing process exit code.</summary>
+    void RunPreview(string folder, Action<string> render)
+    {
+        try
+        {
+            Directory.CreateDirectory(folder);
+            File.Delete(Path.Combine(folder, "preview-error.txt"));
+            render(folder);
+            Shutdown();
+        }
+        catch (Exception error)
+        {
+            Console.Error.WriteLine(error);
+            try
+            {
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "preview-error.txt"), error.ToString());
+            }
+            catch (Exception logError)
+            {
+                Console.Error.WriteLine($"Could not write preview-error.txt: {logError}");
+            }
+            Shutdown(1);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

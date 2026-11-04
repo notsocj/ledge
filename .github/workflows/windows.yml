@@ -33,14 +33,22 @@ jobs:
         timeout-minutes: 3
         run: |
           $pages = Start-Process out/Ledge.exe -ArgumentList '--snapshot', "$PWD\snapshots" -Wait -PassThru
-          if ($pages.ExitCode -ne 0) { throw "Page snapshots failed: $($pages.ExitCode)" }
+          if ($pages.ExitCode -ne 0) {
+            if (Test-Path snapshots/preview-error.txt) { Get-Content snapshots/preview-error.txt }
+            throw "Page snapshots failed: $($pages.ExitCode)"
+          }
           $motion = Start-Process out/Ledge.exe -ArgumentList '--notification-preview', "$PWD\snapshots\notifications" -Wait -PassThru
-          if ($motion.ExitCode -ne 0) { throw "Notification previews failed: $($motion.ExitCode)" }
-      - if: matrix.rid == 'win-x64'
+          if ($motion.ExitCode -ne 0) {
+            if (Test-Path snapshots/notifications/preview-error.txt) { Get-Content snapshots/notifications/preview-error.txt }
+            throw "Notification previews failed: $($motion.ExitCode)"
+          }
+      - if: matrix.rid == 'win-x64' && always()
         uses: actions/upload-artifact@v4
         with:
           name: Ledge-snapshots
-          path: snapshots/**/*.png
+          path: |
+            snapshots/**/*.png
+            snapshots/**/preview-error.txt
           if-no-files-found: error
       # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
       - if: matrix.rid == 'win-x64' && github.event_name == 'push'
