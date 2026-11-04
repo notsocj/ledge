@@ -7,8 +7,10 @@
   <!-- Only the surface deforms. The badge and text retain their natural proportions. -->
   <Grid x:Name="Presentation" Opacity="0">
     <Grid.RenderTransform><TranslateTransform x:Name="Travel"/></Grid.RenderTransform>
-    <Grid x:Name="Surface">
-      <Grid.RenderTransform><ScaleTransform x:Name="Stretch" CenterX="182"/></Grid.RenderTransform>
+    <!-- Reserve real drawing bounds around the path: WPF otherwise clips its deforming edge and
+         shadow to the capsule's 64-point content slot. Negative margins keep layout unchanged. -->
+    <Grid x:Name="Surface" Width="412" Height="112" Margin="-24,-24,-24,-24">
+      <Grid.RenderTransform><ScaleTransform x:Name="Stretch" CenterX="206" CenterY="24"/></Grid.RenderTransform>
       <Path x:Name="Shell" Fill="Black" Stroke="#1AFFFFFF" StrokeThickness="0.5">
         <Path.Effect><DropShadowEffect Color="Black" Opacity="0.22" BlurRadius="20" ShadowDepth="6" Direction="270"/></Path.Effect>
       </Path>

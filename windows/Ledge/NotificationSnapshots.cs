@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -30,6 +31,7 @@ static class NotificationSnapshots
     /// page snapshots only need the static captures and contact sheets.</param>
     public static void Run(string folder, bool includeFrames = true)
     {
+        VerifyNativeHost();
         Directory.CreateDirectory(folder);
         var cards = new List<(string Label, BitmapSource Image)>();
         foreach (var (name, content) in Samples)
@@ -53,6 +55,61 @@ static class NotificationSnapshots
         CaptureMotion(folder, "reduced-motion", 45, true, includeFrames,
             [(3, Samples[1].Content), (18, Samples[0].Content), (30, null)],
             [3, 4, 6, 18, 30, 31, 33, 38]);
+    }
+
+    /// <summary>Exercise the real native host as well as rendering the control. Everything stays
+    /// off-screen, and neither window constructs app services or reads personal settings.</summary>
+    static void VerifyNativeHost()
+    {
+        var app = Application.Current;
+        var previousShutdown = app.ShutdownMode;
+        var previousMain = app.MainWindow;
+        Window? owner = null;
+        NotificationWindow? host = null;
+        app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        try
+        {
+            owner = new Window
+            {
+                Width = 600, Height = 380, Left = -10000, Top = -10000,
+                WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false,
+            };
+            owner.Show();
+            host = new NotificationWindow(owner);
+            var scale = Native.PrimaryMonitor().Scale;
+            host.Place(new Native.RECT { Left = -10000, Top = -10000, Right = -9400, Bottom = -9620 }, scale);
+            host.Present(Samples[0].Content);
+            var handle = new WindowInteropHelper(host).Handle;
+            var style = Native.GetWindowLongPtr(handle, Native.GWL_EXSTYLE);
+            var required = Native.WS_EX_TRANSPARENT | Native.WS_EX_NOACTIVATE | Native.WS_EX_TOOLWINDOW;
+            if ((style & required) != required || !host.IsVisible || host.Owner != owner)
+                throw new InvalidOperationException("The notification host must be visible, owned, nonactivating and native mouse-transparent.");
+            var pixelWidth = (int)Math.Round(428 * scale);
+            var pixelHeight = (int)Math.Round(128 * scale);
+            if (!Native.GetWindowRect(handle, out var rect) || rect.Left != -10000 + (600 - pixelWidth) / 2
+                || rect.Top != -10000 + (int)Math.Round(18 * scale)
+                || rect.Right - rect.Left != pixelWidth || rect.Bottom - rect.Top != pixelHeight)
+                throw new InvalidOperationException("The notification host does not match the shared work-area placement.");
+
+            host.Present(Samples[1].Content); // replacement keeps the same native window
+            if (new WindowInteropHelper(host).Handle != handle || !host.IsVisible)
+                throw new InvalidOperationException("Replacing a notification must retain its host.");
+            host.Suppress();
+            if (host.IsVisible) throw new InvalidOperationException("A suppressed notification host must be hidden.");
+            host.Present(Samples[0].Content);
+            if (!host.IsVisible || new WindowInteropHelper(host).Handle != handle)
+                throw new InvalidOperationException("The notification host must reopen after suppression.");
+            host.CloseOverlay();
+            host.CloseOverlay(); // owner shutdown may reach a host that WPF already closed
+            Console.WriteLine("Native notification host: styles, placement, replacement, suppression and reopen passed.");
+        }
+        finally
+        {
+            host?.CloseOverlay();
+            owner?.Close();
+            app.MainWindow = previousMain;
+            app.ShutdownMode = previousShutdown;
+        }
     }
 
     static void CaptureMotion(string folder, string name, int count, bool reduced, bool includeFrames,

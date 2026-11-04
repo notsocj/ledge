@@ -9,7 +9,6 @@
         FontFamily="{StaticResource Poppins}" FontSize="12.5" Foreground="White">
   <!-- The window is a fixed transparent frame; clicks pass through everywhere except the island. Windows
        has no notch, so the island is a pill floating at the top centre that grows into the open panel. -->
-  <Grid>
   <Border x:Name="Island" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0"
           Background="Black" BorderBrush="#14FFFFFF" BorderThickness="1">
     <Grid ClipToBounds="True">
@@ -28,8 +27,4 @@
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
   </Border>
-  <!-- Ten points below the resting island, with room for the deforming shell and its shadow.
-       This layer never steals clicks or alters the island's hover region. -->
-  <local:NotificationCapsule x:Name="Notification" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0"/>
-  </Grid>
 </Window>

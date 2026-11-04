@@ -16,6 +16,7 @@ public partial class IslandWindow : Window
     const double OpenCorner = 28;
 
     readonly Tools tools;
+    readonly NotificationWindow notification;
     Settings settings = Settings.Load(Settings.DefaultPath);
     readonly Spring width = new(ClosedSize.Width), height = new(ClosedSize.Height);
     readonly HoverIntent hover = new();
@@ -40,6 +41,7 @@ public partial class IslandWindow : Window
     public IslandWindow()
     {
         InitializeComponent();
+        notification = new NotificationWindow(this);
         tools = new Tools(Dispatcher);
         OpenView.Attach(tools, settings);
         Setup.Finished += FinishSetup;
@@ -85,6 +87,7 @@ public partial class IslandWindow : Window
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             CompositionTarget.Rendering -= OnFrame;
             bannerTimer.Stop();
+            notification.CloseOverlay();
         };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
 
@@ -161,8 +164,8 @@ public partial class IslandWindow : Window
     /// <summary>Retargets one capsule below the closed island; opening the island dismisses it.</summary>
     public void ShowBanner(NotificationContent content, double seconds = 2.5)
     {
-        if (expanded) return; // the open island already has the user's attention
-        Notification.Show(content);
+        if (expanded || !IsVisible || Native.FullScreenAppRunning()) return;
+        notification.Present(content);
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
@@ -172,7 +175,7 @@ public partial class IslandWindow : Window
     void EndBanner()
     {
         bannerTimer.Stop();
-        Notification.Dismiss();
+        notification.Dismiss();
         UpdateShape();
     }
 
@@ -228,7 +231,7 @@ public partial class IslandWindow : Window
         expanded = open;
         hover.Reset();
         bannerTimer.Stop();
-        Notification.Dismiss();
+        notification.Dismiss();
         OpenView.SetOpen(open);
         UpdateShape();
     }
@@ -396,6 +399,7 @@ public partial class IslandWindow : Window
         var pixelWidth = (int)Math.Round(Width * scale);
         var x = work.Left + (work.Right - work.Left - pixelWidth) / 2;
         Native.SetWindowPos(Handle, Native.HWND_TOPMOST, x, work.Top, pixelWidth, (int)Math.Round(Height * scale), Native.SWP_NOACTIVATE);
+        notification.Place(work, scale);
     }
 
     void OnDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(new Action(Place));
@@ -408,6 +412,9 @@ public partial class IslandWindow : Window
         if (hide)
         {
             SetExpanded(false);
+            bannerTimer.Stop();
+            notification.Suppress();
+            UpdateShape();
             Hide();
         }
         else

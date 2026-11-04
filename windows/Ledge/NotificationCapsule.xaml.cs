@@ -14,6 +14,7 @@ public partial class NotificationCapsule : UserControl
     TimeSpan? lastFrame;
     bool rendering;
     public bool IsPresent => motion.IsVisible;
+    public event Action? Dismissed;
     internal bool AnimateAutomatically { get; set; } = true;
 
     public NotificationCapsule()
@@ -55,6 +56,15 @@ public partial class NotificationCapsule : UserControl
         motion.Dismiss(reduceMotion ?? !SystemParameters.ClientAreaAnimation);
         Apply();
         StartRendering();
+    }
+
+    /// <summary>Full-screen apps and shutdown remove the overlay without leaving a pending fade.</summary>
+    internal void Clear()
+    {
+        StopRendering();
+        motion.Dismiss(reduceMotion: true);
+        motion.Step(1);
+        Apply();
     }
 
     internal void Advance(double seconds)
@@ -105,16 +115,19 @@ public partial class NotificationCapsule : UserControl
             path.BezierTo(new Point(214, 64 + bend), new Point(150, 64 + bend), new Point(32, 64), true, false);
             path.ArcTo(new Point(32, 0), new Size(32, 32), 0, false, SweepDirection.Clockwise, true, false);
         }
+        surface.Transform = new TranslateTransform(24, 24);
         surface.Freeze();
         Shell.Data = Sheen.Data = surface;
         Sheen.Opacity = Math.Min(1, Math.Abs(tension) * 0.8);
         Presentation.Opacity = motion.Opacity;
         if (!motion.IsVisible)
         {
+            var wasVisible = Visibility == Visibility.Visible;
             Visibility = Visibility.Collapsed;
             TitleText.Text = DetailText.Text = StatusText.Text = "";
             BadgeSwatch.Fill = null;
             AutomationProperties.SetName(this, "");
+            if (wasVisible) Dismissed?.Invoke();
         }
     }
 }
