@@ -6,7 +6,7 @@
   <DockPanel Margin="16,12,16,16">
     <!-- The tabs sit together on one faint track, so they read as one control. Each tool's icon is set from
          Tool.Glyph() in code; Home's is here. -->
-    <Border DockPanel.Dock="Top" Background="{StaticResource Well}" CornerRadius="16" Padding="2" Margin="0,0,0,12"
+    <Border DockPanel.Dock="Top" Background="{StaticResource Well}" CornerRadius="15" Padding="2" Margin="0,0,0,10"
             HorizontalAlignment="Left">
       <StackPanel x:Name="Tabs" Orientation="Horizontal" Margin="0,0,-2,0">
         <RadioButton x:Name="HomeTab" Content="Home" Tag="&#xE80F;" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
