@@ -31,13 +31,13 @@ jobs:
         run: >
           vpk pack --packId Ledge --packVersion "$VERSION" --packDir publish --mainExe Ledge.exe
           --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico
-          --shortcuts StartMenuRoot --outputDir releases
+          --shortcuts StartMenuRoot --outputDir build/windows-release
       # Not marked latest: the site's Mac download and the Homebrew tap use the latest release.
       - name: Publish
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "$GITHUB_REF_NAME" releases/*
+          gh release create "$GITHUB_REF_NAME" build/windows-release/*
           --title "Ledge for Windows $VERSION" --latest=false
           --notes "Download Ledge-win-Setup.exe and run it. Installed copies update themselves. See windows/README.md."
