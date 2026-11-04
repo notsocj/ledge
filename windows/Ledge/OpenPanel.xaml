@@ -4,15 +4,20 @@
              xmlns:local="clr-namespace:Ledge"
              Foreground="White" FontSize="12.5">
   <DockPanel Margin="16,12,16,16">
-    <StackPanel x:Name="Tabs" DockPanel.Dock="Top" Orientation="Horizontal" Margin="-4,0,0,12">
-      <RadioButton x:Name="HomeTab" Content="Home" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="TimerTab" Content="Timer" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="PortsTab" Content="Ports" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="ClipboardTab" Content="Clipboard" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="ShelfTab" Content="Shelf" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="ColorTab" Content="Color" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-      <RadioButton x:Name="CalendarTab" Content="Calendar" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
-    </StackPanel>
+    <!-- The tabs sit together on one faint track, so they read as one control. Each tool's icon is set from
+         Tool.Glyph() in code; Home's is here. -->
+    <Border DockPanel.Dock="Top" Background="{StaticResource Well}" CornerRadius="16" Padding="2" Margin="0,0,0,12"
+            HorizontalAlignment="Left">
+      <StackPanel x:Name="Tabs" Orientation="Horizontal" Margin="0,0,-2,0">
+        <RadioButton x:Name="HomeTab" Content="Home" Tag="&#xE80F;" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="TimerTab" Content="Timer" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="PortsTab" Content="Ports" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="ClipboardTab" Content="Clipboard" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="ShelfTab" Content="Shelf" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="ColorTab" Content="Color" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+        <RadioButton x:Name="CalendarTab" Content="Calendar" Style="{StaticResource Tab}" Checked="Tab_Checked"/>
+      </StackPanel>
+    </Border>
 
     <Grid>
       <!-- Home: what's playing, the battery, keep awake. -->

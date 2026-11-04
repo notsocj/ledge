@@ -166,16 +166,51 @@
       </Setter>
     </Style>
 
-    <Style x:Key="Tab" TargetType="RadioButton" BasedOn="{StaticResource Quiet}">
+    <!-- Tabs as pills, as on the Mac: the open tab shows its icon and name, the rest shrink to icons, so
+         seven tabs take about half the width. The icon goes in Tag, the name in Content (also its tooltip). -->
+    <Style x:Key="Tab" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{StaticResource Ash}"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Height" Value="28"/>
-      <Setter Property="Padding" Value="12,0"/>
-      <Style.Triggers>
-        <Trigger Property="IsChecked" Value="True">
-          <Setter Property="Foreground" Value="White"/>
-          <Setter Property="Background" Value="{StaticResource Rail}"/>
-        </Trigger>
-      </Style.Triggers>
+      <Setter Property="MinWidth" Value="34"/>
+      <Setter Property="Padding" Value="10,0"/>
+      <Setter Property="Margin" Value="0,0,2,0"/>
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+      <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Plate" Background="Transparent" CornerRadius="14" Padding="{TemplateBinding Padding}">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource Glyph}" FontSize="14" Foreground="{TemplateBinding Foreground}"/>
+                <ContentPresenter x:Name="Label" Margin="7,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Well}"/>
+                <Setter Property="Foreground" Value="{StaticResource Graphite}"/>
+              </Trigger>
+              <!-- After hover, so the open tab keeps its look under the pointer. -->
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Plate" Property="Background" Value="{StaticResource Rail}"/>
+                <Setter TargetName="Label" Property="Visibility" Value="Visible"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="ToolTip" Value="{x:Null}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="Toggle" TargetType="ToggleButton" BasedOn="{StaticResource Quiet}">

@@ -38,6 +38,7 @@ public partial class OpenPanel : UserControl
             [Tool.ColorPicker] = (ColorTab, ColorView),
             [Tool.Calendar] = (CalendarTab, CalendarView),
         };
+        foreach (var (tool, (tab, _)) in pages) tab.Tag = tool.Glyph(); // the same icons as setup's tool chips
     }
 
     public void Attach(Tools tools, Settings settings)
