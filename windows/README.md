@@ -51,13 +51,14 @@ to the new tab and opens its name. With Windows' **Animation effects** off, it m
 
 ## Alerts
 
-Alerts appear in a capsule below the closed island when you plug in, when the battery drops to 20% and 10%, when a
+The compact island grows to hold an alert when you plug in, when the battery drops to 20% and 10%, when a
 timer ends, two minutes before a meeting, when an app turns on the microphone or camera, and when Claude
 Code or Codex finishes or needs you. A circular badge, two lines of context and a colored status keep
-each alert readable. The black surface gently stretches and settles on entry, then retracts on exit;
-the text stays steady. The notification passes clicks through to the app underneath. Replacing an alert
-reuses the same capsule, even during dismissal. With Windows'
-**Animation effects** off, alerts only fade. Color-picker feedback is immediate.
+each alert readable. The same black surface gently grows and settles on entry, then returns to its
+compact size on exit; the text stays steady inside it. Replacing an alert retargets that same surface,
+even during dismissal. The compact area remains the hover trigger, so an alert expanding underneath
+the pointer never opens Home by itself. With Windows' **Animation effects** off, the size changes
+immediately and the content fades. Color-picker feedback is immediate.
 
 **Coding agent alerts** are connected from the notification-area icon (**Coding agent alerts**). Ledge
 adds two hooks to `~/.claude/settings.json` and a `notify` line to `~/.codex/config.toml`, each running
@@ -144,8 +145,8 @@ windows/
     TabularText.cs         text with fixed-width digits
     Snapshots.cs           --snapshot
     Spring.cs, HoverIntent.cs, Native.cs, Tray.cs, Updates.cs, StartAtLogin.cs
-    NotificationCapsule, NotificationContent, NotificationMotion   capsule presentation and motion
-    NotificationWindow    nonactivating, click-through notification host
+    IslandSurface, IslandMotion   one shape that morphs between compact, notification and open states
+    NotificationCapsule, NotificationContent, NotificationMotion   alert content and reveal timing
     Tools/                 one file per tool
     Assets/                the app icon and the Poppins font files
   Ledge.Tests/

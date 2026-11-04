@@ -9,7 +9,7 @@ final class NotchPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-/// A short-lived message shown in a capsule below the closed notch.
+/// A short-lived message that grows the resting notch into a larger island.
 enum Banner: Equatable {
     case level(symbol: String, value: Double)
     case battery(percent: Int, charging: Bool)
@@ -46,11 +46,10 @@ final class NotchModel {
         let content = onboarding != nil ? pageHeight : contentHeights[tab] ?? 120
         return CGSize(width: Self.width, height: min(Self.maxHeight, notchSize.height + Self.contentInsets.top + content + Self.contentInsets.bottom))
     }
-    /// Keep room for the detached capsule and its shadow, even after viewing a short tab.
+    /// Keep room for the expanded notification surface and its shadow after viewing a short tab.
     var panelHeight: CGFloat {
         guard banner != nil, !expanded else { return expandedSize.height }
-        return max(expandedSize.height, notchSize.height + NotificationCapsule.gap
-                   + NotificationCapsule.height + NotificationCapsule.shadowSpace)
+        return max(expandedSize.height, notchSize.height + NotificationCapsule.height + NotificationCapsule.shadowSpace)
     }
 
     private(set) var banner: Banner? { didSet { onResize?() } }
@@ -59,7 +58,7 @@ final class NotchModel {
     func tabs(in preferences: Preferences) -> [Tool] { preferences.layout.tabOrder.filter(preferences.isOn) }
 
     func show(_ banner: Banner, seconds: Double = 2) {
-        self.banner = banner // the notification layer owns its transition, independently of the island
+        self.banner = banner // the shared island surface owns the notification morph
         bannerTask?.cancel()
         bannerTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))

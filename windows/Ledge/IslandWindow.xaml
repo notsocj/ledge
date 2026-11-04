@@ -9,9 +9,9 @@
         FontFamily="{StaticResource Poppins}" FontSize="12.5" Foreground="White">
   <!-- The window is a fixed transparent frame; clicks pass through everywhere except the island. Windows
        has no notch, so the island is a pill floating at the top centre that grows into the open panel. -->
-  <Border x:Name="Island" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0"
-          Background="Black" BorderBrush="#14FFFFFF" BorderThickness="1">
-    <Grid ClipToBounds="True">
+  <Grid x:Name="Island" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0">
+    <local:IslandSurface x:Name="Shell" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+    <Grid x:Name="IslandContent">
       <!-- Closed, the island's sides show what's going on: a running timer, or what's playing. -->
       <Grid x:Name="Wings" Opacity="0" Margin="7,0,12,0">
         <Border x:Name="WingArt" Width="20" Height="20" CornerRadius="5" HorizontalAlignment="Left" VerticalAlignment="Center"/>
@@ -21,10 +21,11 @@
         <TextBlock x:Name="WingRightGlyph" Style="{StaticResource Glyph}" FontSize="13" HorizontalAlignment="Right"
                    Foreground="{StaticResource Graphite}" Text="&#xE8D6;"/>
       </Grid>
+      <local:NotificationCapsule x:Name="Notification" HorizontalAlignment="Center" VerticalAlignment="Top"/>
       <local:OpenPanel x:Name="OpenView" Opacity="0" IsHitTestVisible="False" Width="560" Height="220"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
       <local:SetupView x:Name="Setup" Opacity="0" IsHitTestVisible="False" Width="560" Height="320"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
-  </Border>
+  </Grid>
 </Window>

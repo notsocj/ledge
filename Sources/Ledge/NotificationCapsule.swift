@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Notifications live below the camera cutout, keeping the whole message in one reading line.
-/// This same layer is used by the app and by the isolated native preview renderer.
-struct NotificationOverlay: View {
+/// One persistent island surface: a notification grows the resting notch itself, keeping all
+/// readable content below the camera cutout. The isolated native renderer uses this same view.
+struct NotificationIsland<Content: View>: View {
     let banner: Banner?
-    let topInset: CGFloat
-    /// Allows the isolated renderer to exercise the accessible variant without changing macOS settings.
+    let notchSize: CGSize
+    let restingSize: CGSize
+    let expandedSize: CGSize?
     var forceReducedMotion = false
+    let content: () -> Content
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { systemReduceMotion || forceReducedMotion }
     @State private var displayedBanner: Banner?
@@ -14,15 +16,33 @@ struct NotificationOverlay: View {
     @State private var visibility: Double = 0
     @State private var generation = 0
 
+    init(banner: Banner?, notchSize: CGSize, restingSize: CGSize, expandedSize: CGSize? = nil,
+         forceReducedMotion: Bool = false, @ViewBuilder content: @escaping () -> Content) {
+        self.banner = banner
+        self.notchSize = notchSize
+        self.restingSize = restingSize
+        self.expandedSize = expandedSize
+        self.forceReducedMotion = forceReducedMotion
+        self.content = content
+    }
+
     var body: some View {
-        NotificationPresentation(banner: displayedBanner, progress: progress,
-                                 moves: !reduceMotion && displayedBanner?.isImmediateFeedback != true)
-        .opacity(visibility)
-        .frame(width: NotificationCapsule.width, height: NotificationCapsule.height, alignment: .top)
-        .padding(.top, topInset)
-        .allowsHitTesting(false)
-        .accessibilityHidden(banner == nil)
-        .onChange(of: banner, initial: true) { _, incoming in present(incoming) }
+        let geometry = NotificationGeometry(notchSize: notchSize, restingSize: restingSize, progress: progress)
+        let immediate = (banner ?? displayedBanner)?.isImmediateFeedback == true
+        let motion: Animation? = reduceMotion || immediate ? nil
+            : expandedSize != nil ? Motion.open : banner == nil ? Motion.notificationExit : Motion.notificationEnter
+        let fade: Animation? = immediate ? nil : reduceMotion ? Motion.notificationFade
+            : banner == nil ? Motion.notificationExit : Motion.notificationFade
+        NotificationIslandPresentation(banner: displayedBanner, notchHeight: notchSize.height,
+                                       size: expandedSize ?? geometry.size,
+                                       cornerProgress: expandedSize == nil ? progress : 1,
+                                       progress: progress, visibility: visibility,
+                                       expanded: expandedSize != nil,
+                                       moves: !reduceMotion && displayedBanner?.isImmediateFeedback != true,
+                                       fadeAnimation: fade,
+                                       content: content())
+            .animation(motion, value: progress)
+            .onChange(of: banner, initial: true) { _, incoming in present(incoming) }
     }
 
     private func present(_ incoming: Banner?) {
@@ -31,8 +51,8 @@ struct NotificationOverlay: View {
         let immediate = (incoming ?? displayedBanner)?.isImmediateFeedback == true
         var instant = Transaction(animation: nil)
         instant.disablesAnimations = true
-        // Retain one physical capsule throughout its exit. An interruption retargets its
-        // presentation values instead of inserting a second view over the outgoing content.
+        // Keep content mounted through the return to the resting size. A replacement never
+        // inserts another surface, and cannot be removed by an earlier dismissal completion.
         withTransaction(instant) {
             if let incoming { displayedBanner = incoming }
         }
@@ -47,85 +67,100 @@ struct NotificationOverlay: View {
                       completionCriteria: .removed) {
             visibility = Double(target)
         } completion: {
-            // Release screenshots and stop meeting timelines after the fade. A stale completion
-            // can never remove a new alert, including one that arrived halfway through dismissal.
             if incoming == nil, generation == currentGeneration { displayedBanner = nil }
         }
     }
 }
 
-/// A persistent animatable view passes the actual spring value directly into the surface.
-/// Labels never inherit interpolation or crossfades when an alert replaces another one.
-private struct NotificationPresentation: View, Animatable {
-    let banner: Banner?
+/// Geometry is shared with regression checks. There is no gap or second silhouette: the surface
+/// remains attached to y=0, and its minimum height always covers the physical camera cutout.
+struct NotificationGeometry {
+    let notchSize: CGSize
+    let restingSize: CGSize
     var progress: CGFloat
+
+    var notificationSize: CGSize {
+        CGSize(width: max(NotificationCapsule.width, notchSize.width + 28),
+               height: notchSize.height + NotificationCapsule.height)
+    }
+
+    var size: CGSize {
+        CGSize(width: max(notchSize.width, restingSize.width + (notificationSize.width - restingSize.width) * progress),
+               height: max(notchSize.height, restingSize.height + (notificationSize.height - restingSize.height) * progress))
+    }
+
+    /// Only the bottom edge yields, then returns to its normal contour at either resting state.
+    static func bend(at progress: CGFloat) -> CGFloat { 32 * progress * (1 - progress) }
+
+    /// Labels reveal once the surface has enough space for the unscaled badge and text.
+    static func contentReveal(at progress: CGFloat) -> Double {
+        Double(min(1, max(0, (progress - 0.85) / 0.15)))
+    }
+}
+
+/// Interpolated values reach the shape directly, so the jelly contour follows the actual spring
+/// rather than animating a second time. Text keeps its natural proportions throughout the morph.
+private struct NotificationIslandPresentation<Content: View>: View, Animatable {
+    let banner: Banner?
+    let notchHeight: CGFloat
+    var size: CGSize
+    var cornerProgress: CGFloat
+    var progress: CGFloat
+    let visibility: Double
+    let expanded: Bool
     let moves: Bool
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
+    let fadeAnimation: Animation?
+    let content: Content
+
+    typealias AnimatableData = AnimatablePair<AnimatablePair<CGFloat, CGFloat>, AnimatablePair<CGFloat, CGFloat>>
+
+    var animatableData: AnimatableData {
+        get { AnimatablePair(AnimatablePair(size.width, size.height),
+                            AnimatablePair(cornerProgress, progress)) }
+        set {
+            size = CGSize(width: newValue.first.first, height: newValue.first.second)
+            cornerProgress = newValue.second.first
+            progress = newValue.second.second
+        }
     }
 
     var body: some View {
-        let phase = moves ? progress : 1
-        ZStack {
+        let phase = min(1.08, max(0, progress))
+        let corner = min(1, max(0, cornerProgress))
+        let surface = NotchShape(topRadius: 6 + 8 * corner, bottomRadius: 12 + 20 * corner,
+                                 bend: expanded || !moves ? 0 : NotificationGeometry.bend(at: phase))
+        let reveal = moves ? NotificationGeometry.contentReveal(at: phase) : 1
+        ZStack(alignment: .top) {
+            surface.fill(.black)
+            content.opacity(expanded ? 1 : 1 - visibility)
+                .animation(fadeAnimation, value: visibility)
             if let banner {
-                NotificationCapsule(banner: banner, progress: phase)
+                NotificationCapsule(banner: banner)
                     .transaction { $0.animation = nil; $0.disablesAnimations = true }
-                    .offset(y: -18 * (1 - phase))
-                    .transition(.identity)
+                    .padding(.top, notchHeight)
+                    .opacity(expanded ? 0 : visibility * reveal)
+                    .animation(fadeAnimation, value: visibility)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(expanded || visibility == 0)
             }
         }
+        .frame(width: max(1, size.width), height: max(notchHeight, size.height), alignment: .top)
+        .clipShape(surface)
+        .overlay {
+            surface.stroke(.white.opacity(expanded ? 0 : visibility * 0.10), lineWidth: 0.5)
+                .allowsHitTesting(false)
+        }
+        .shadow(color: .black.opacity(expanded ? 0 : visibility * 0.22), radius: 10, x: 0, y: 6)
     }
 }
 
-/// Only the black shell stretches; the title, badge and status keep their natural proportions.
-private struct NotificationPhase {
-    var progress: CGFloat = 1
-
-    var tension: CGFloat { 1 - progress }
-    // Preserve clearance around the fixed 40pt badge while the shoulders pull inward.
-    var widthScale: CGFloat { 1 - 0.04 * tension }
-    var heightScale: CGFloat { 1 + 0.08 * tension }
-    var bend: CGFloat { 8 * tension }
-}
-
-/// Rounded shoulders stay steady while the middle yields, like a small drop of liquid.
-/// At rest this is a normal capsule. Bending never changes layout or the content's hit area.
-private struct NotificationSurface: Shape {
-    var bend: CGFloat
-    var animatableData: CGFloat {
-        get { bend }
-        set { bend = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        let r = rect.height / 2
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
-        path.addCurve(to: CGPoint(x: rect.maxX - r, y: rect.minY),
-                      control1: CGPoint(x: rect.midX - r, y: rect.minY - bend * 0.3),
-                      control2: CGPoint(x: rect.midX + r, y: rect.minY - bend * 0.3))
-        path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.midY), radius: r,
-                    startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
-        path.addCurve(to: CGPoint(x: rect.minX + r, y: rect.maxY),
-                      control1: CGPoint(x: rect.midX + r, y: rect.maxY + bend),
-                      control2: CGPoint(x: rect.midX - r, y: rect.maxY + bend))
-        path.addArc(center: CGPoint(x: rect.minX + r, y: rect.midY), radius: r,
-                    startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
-        path.closeSubpath()
-        return path
-    }
-}
-
+/// Readable notification content only. Its parent is the one shared notch surface.
 struct NotificationCapsule: View {
     static let width: CGFloat = 364
     static let height: CGFloat = 64
-    static let gap: CGFloat = 10
     static let shadowSpace: CGFloat = 24
 
     let banner: Banner
-    var progress: CGFloat = 1
-    private var phase: NotificationPhase { NotificationPhase(progress: progress) }
 
     var body: some View {
         if case .meeting = banner {
@@ -172,21 +207,9 @@ struct NotificationCapsule: View {
                     .layoutPriority(1)
             }
         }
-        .padding(.leading, 12)
-        .padding(.trailing, 20)
+        .padding(.leading, 24)
+        .padding(.trailing, 26)
         .frame(width: Self.width, height: Self.height)
-        .background {
-            let surface = NotificationSurface(bend: phase.bend)
-            surface.fill(.black)
-                .overlay { surface.stroke(.white.opacity(0.10), lineWidth: 0.5) }
-                .overlay {
-                    surface.stroke(LinearGradient(colors: [.white.opacity(0.55), .clear, .white.opacity(0.12)],
-                                                  startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
-                        .opacity(min(1, abs(phase.tension) * 0.8))
-                }
-                .shadow(color: .black.opacity(0.22), radius: 10, x: 0, y: 6)
-                .scaleEffect(x: phase.widthScale, y: phase.heightScale, anchor: .top)
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(content.accessibilityLabel)
     }

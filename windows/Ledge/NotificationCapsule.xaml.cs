@@ -6,8 +6,8 @@ using System.Windows.Media;
 
 namespace Ledge;
 
-/// <summary>The Windows counterpart of the Mac's liquid capsule. It stays mounted through
-/// dismissal and replacement, with one rendering subscription only while values are moving.</summary>
+/// <summary>Notification content inside the one island surface. It stays mounted through
+/// dismissal and replacement; the island's morph controls when there is room to reveal it.</summary>
 public partial class NotificationCapsule : UserControl
 {
     readonly NotificationMotion motion = new();
@@ -16,6 +16,12 @@ public partial class NotificationCapsule : UserControl
     public bool IsPresent => motion.IsVisible;
     public event Action? Dismissed;
     internal bool AnimateAutomatically { get; set; } = true;
+    double reveal = 1;
+    internal double Reveal
+    {
+        get => reveal;
+        set { reveal = Math.Clamp(value, 0, 1); Presentation.Opacity = motion.Opacity * reveal; }
+    }
 
     public NotificationCapsule()
     {
@@ -58,7 +64,7 @@ public partial class NotificationCapsule : UserControl
         StartRendering();
     }
 
-    /// <summary>Full-screen apps and shutdown remove the overlay without leaving a pending fade.</summary>
+    /// <summary>Full-screen apps and shutdown clear the content without leaving a pending fade.</summary>
     internal void Clear()
     {
         StopRendering();
@@ -71,12 +77,12 @@ public partial class NotificationCapsule : UserControl
     {
         motion.Step(seconds);
         Apply();
-        if (!motion.IsMoving) StopRendering();
+        if (!motion.IsFading) StopRendering();
     }
 
     void StartRendering()
     {
-        if (rendering || !AnimateAutomatically || !IsLoaded || !motion.IsMoving) return;
+        if (rendering || !AnimateAutomatically || !IsLoaded || !motion.IsFading) return;
         rendering = true;
         lastFrame = null;
         CompositionTarget.Rendering += OnFrame;
@@ -101,25 +107,7 @@ public partial class NotificationCapsule : UserControl
 
     void Apply()
     {
-        var tension = 1 - motion.SurfaceProgress;
-        Travel.Y = -18 * tension;
-        Stretch.ScaleX = 1 - 0.04 * tension;
-        Stretch.ScaleY = 1 + 0.08 * tension;
-        var bend = 8 * tension;
-        var surface = new StreamGeometry();
-        using (var path = surface.Open())
-        {
-            path.BeginFigure(new Point(32, 0), true, true);
-            path.BezierTo(new Point(150, -bend * 0.3), new Point(214, -bend * 0.3), new Point(332, 0), true, false);
-            path.ArcTo(new Point(332, 64), new Size(32, 32), 0, false, SweepDirection.Clockwise, true, false);
-            path.BezierTo(new Point(214, 64 + bend), new Point(150, 64 + bend), new Point(32, 64), true, false);
-            path.ArcTo(new Point(32, 0), new Size(32, 32), 0, false, SweepDirection.Clockwise, true, false);
-        }
-        surface.Transform = new TranslateTransform(24, 24);
-        surface.Freeze();
-        Shell.Data = Sheen.Data = surface;
-        Sheen.Opacity = Math.Min(1, Math.Abs(tension) * 0.8);
-        Presentation.Opacity = motion.Opacity;
+        Presentation.Opacity = motion.Opacity * reveal;
         if (!motion.IsVisible)
         {
             var wasVisible = Visibility == Visibility.Visible;

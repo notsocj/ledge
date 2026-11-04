@@ -52,10 +52,11 @@ enum Motion {
 struct NotchShape: Shape {
     var topRadius: CGFloat
     var bottomRadius: CGFloat
+    var bend: CGFloat = 0
 
-    var animatableData: AnimatablePair<CGFloat, CGFloat> {
-        get { AnimatablePair(topRadius, bottomRadius) }
-        set { (topRadius, bottomRadius) = (newValue.first, newValue.second) }
+    var animatableData: AnimatablePair<AnimatablePair<CGFloat, CGFloat>, CGFloat> {
+        get { AnimatablePair(AnimatablePair(topRadius, bottomRadius), bend) }
+        set { (topRadius, bottomRadius, bend) = (newValue.first.first, newValue.first.second, newValue.second) }
     }
 
     func path(in rect: CGRect) -> Path {
@@ -65,7 +66,9 @@ struct NotchShape: Shape {
         path.addQuadCurve(to: CGPoint(x: rect.minX + t, y: rect.minY + t), control: CGPoint(x: rect.minX + t, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX + t, y: rect.maxY - b))
         path.addQuadCurve(to: CGPoint(x: rect.minX + t + b, y: rect.maxY), control: CGPoint(x: rect.minX + t, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX - t - b, y: rect.maxY))
+        path.addCurve(to: CGPoint(x: rect.maxX - t - b, y: rect.maxY),
+                      control1: CGPoint(x: rect.midX - b, y: rect.maxY + bend),
+                      control2: CGPoint(x: rect.midX + b, y: rect.maxY + bend))
         path.addQuadCurve(to: CGPoint(x: rect.maxX - t, y: rect.maxY - b), control: CGPoint(x: rect.maxX - t, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.maxX - t, y: rect.minY + t))
         path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY), control: CGPoint(x: rect.maxX - t, y: rect.minY))

@@ -4,26 +4,8 @@
              Width="364" Height="64" Focusable="False" IsHitTestVisible="False"
              FontFamily="{StaticResource Poppins}" Foreground="White"
              AutomationProperties.LiveSetting="Polite">
-  <!-- Only the surface deforms. The badge and text retain their natural proportions. -->
+  <!-- The live island owns the only shell. This content keeps its natural proportions while it morphs. -->
   <Grid x:Name="Presentation" Opacity="0">
-    <Grid.RenderTransform><TranslateTransform x:Name="Travel"/></Grid.RenderTransform>
-    <!-- Reserve real drawing bounds around the path: WPF otherwise clips its deforming edge and
-         shadow to the capsule's 64-point content slot. Negative margins keep layout unchanged. -->
-    <Grid x:Name="Surface" Width="412" Height="112" Margin="-24,-24,-24,-24">
-      <Grid.RenderTransform><ScaleTransform x:Name="Stretch" CenterX="206" CenterY="24"/></Grid.RenderTransform>
-      <Path x:Name="Shell" Fill="Black" Stroke="#1AFFFFFF" StrokeThickness="0.5">
-        <Path.Effect><DropShadowEffect Color="Black" Opacity="0.22" BlurRadius="20" ShadowDepth="6" Direction="270"/></Path.Effect>
-      </Path>
-      <Path x:Name="Sheen" StrokeThickness="1" Opacity="0">
-        <Path.Stroke>
-          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#8CFFFFFF" Offset="0"/>
-            <GradientStop Color="#00FFFFFF" Offset="0.5"/>
-            <GradientStop Color="#1FFFFFFF" Offset="1"/>
-          </LinearGradientBrush>
-        </Path.Stroke>
-      </Path>
-    </Grid>
     <Grid Margin="12,0,20,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="40"/><ColumnDefinition Width="12"/>

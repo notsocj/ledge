@@ -43,15 +43,17 @@ enum NotificationPreview {
     private static func render(into folder: URL, motion: Bool) async throws {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let samples = samples(at: .now)
-        let sheetSize = NSSize(width: 880, height: 470)
+        let sheetSize = NSSize(width: 880, height: 580)
         let sheet = makeWindow(PreviewSheet(banners: samples.map(\.1)), size: sheetSize)
         defer { sheet.close() }
-        try await Task.sleep(for: .milliseconds(250))
+        try await Task.sleep(for: .milliseconds(650))
         try capture(sheet, to: folder.appending(path: "notifications.png"))
 
         let state = PreviewState()
         let window = makeWindow(PreviewDesktop(state: state), size: NSSize(width: 640, height: 260))
         defer { window.close() }
+        try await Task.sleep(for: .milliseconds(250))
+        try capture(window, to: folder.appending(path: "closed.png"))
         for (name, banner) in samples {
             state.banner = banner
             try await Task.sleep(for: .milliseconds(650))
@@ -60,13 +62,13 @@ enum NotificationPreview {
 
         guard motion else { return }
         // Two full entrance/exit cycles, with enough rest between them to judge the easing.
-        // The replacement stays in the same capsule, as it does in the running app.
+        // The same island grows, replaces its content, then returns to its compact silhouette.
         try await captureMotion(window, state: state, into: folder.appending(path: "frames"), count: 216,
                                 updates: [(12, samples[1].1), (60, samples[0].1), (108, nil),
                                           (138, samples[3].1), (192, nil)])
 
         // Dismiss and re-show within the exit, then interrupt an entrance. This catches duplicated
-        // capsules, jumps back to the start, or a stale exit removing the new notification.
+        // islands, jumps back to the start, or a stale exit removing the new notification.
         try await captureMotion(window, state: state, into: folder.appending(path: "interruption-frames"), count: 120,
                                 updates: [(9, samples[1].1), (39, nil), (42, samples[0].1),
                                           (72, nil), (87, samples[3].1), (90, nil)])
@@ -148,10 +150,12 @@ private struct PreviewDesktop: View {
     var body: some View {
         ZStack(alignment: .top) {
             PreviewBackdrop()
-            NotchShape(topRadius: 6, bottomRadius: 12)
-                .fill(.black)
-                .frame(width: 185, height: 32)
-            NotificationOverlay(banner: state.banner, topInset: 42, forceReducedMotion: reduceMotion)
+            NotificationIsland(banner: state.banner,
+                               notchSize: CGSize(width: 185, height: 32),
+                               restingSize: CGSize(width: 185, height: 32),
+                               expandedSize: nil, forceReducedMotion: reduceMotion) {
+                EmptyView()
+            }
         }
     }
 }
@@ -173,7 +177,13 @@ private struct PreviewSheet: View {
                 }
                 LazyVGrid(columns: [GridItem(.fixed(364), spacing: 44), GridItem(.fixed(364))], spacing: 28) {
                     ForEach(banners.indices, id: \.self) { index in
-                        NotificationCapsule(banner: banners[index])
+                        NotificationIsland(banner: banners[index],
+                                           notchSize: CGSize(width: 185, height: 32),
+                                           restingSize: CGSize(width: 185, height: 32),
+                                           expandedSize: nil, forceReducedMotion: true) {
+                            EmptyView()
+                        }
+                        .frame(width: 364, height: 96, alignment: .top)
                     }
                 }
                 .frame(width: 772)

@@ -10,15 +10,11 @@ namespace Ledge;
 
 public partial class IslandWindow : Window
 {
-    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), OpenSize = new(560, 220),
+    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), NotificationSize = new(364, 64), OpenSize = new(560, 220),
         SetupSize = new(560, 320); // taller than the open island: setup's persona cards hold three lines of Poppins
-    /// <summary>The open island's corner. Closed, the corner is half the height, which makes it a pill.</summary>
-    const double OpenCorner = 28;
-
     readonly Tools tools;
-    readonly NotificationWindow notification;
     Settings settings = Settings.Load(Settings.DefaultPath);
-    readonly Spring width = new(ClosedSize.Width), height = new(ClosedSize.Height);
+    readonly IslandMotion motion = new(ClosedSize);
     readonly HoverIntent hover = new();
     readonly Stopwatch clock = Stopwatch.StartNew();
     readonly DispatcherTimer pointerTimer = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(100) };
@@ -32,7 +28,7 @@ public partial class IslandWindow : Window
     readonly HashSet<string> announcedMeetings = [];
     readonly Dictionary<UIElement, bool> shown = [];
     TimeSpan lastFrame;
-    bool animating, expanded, hasWings, settingUp;
+    bool animating, expanded, hasWings, settingUp, immediateBanner;
     /// <summary>Top of the usable screen, in screen pixels; below a taskbar docked at the top.</summary>
     double screenTop;
 
@@ -41,7 +37,6 @@ public partial class IslandWindow : Window
     public IslandWindow()
     {
         InitializeComponent();
-        notification = new NotificationWindow(this);
         tools = new Tools(Dispatcher);
         OpenView.Attach(tools, settings);
         Setup.Finished += FinishSetup;
@@ -87,7 +82,7 @@ public partial class IslandWindow : Window
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             CompositionTarget.Rendering -= OnFrame;
             bannerTimer.Stop();
-            notification.CloseOverlay();
+            Notification.Clear();
         };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
 
@@ -161,11 +156,12 @@ public partial class IslandWindow : Window
     public void ShowBanner(string title, string detail, double seconds = 2.5) =>
         ShowBanner(NotificationContent.Message(title, detail), seconds);
 
-    /// <summary>Retargets one capsule below the closed island; opening the island dismisses it.</summary>
+    /// <summary>The compact island itself grows to hold the alert; opening it dismisses the content.</summary>
     public void ShowBanner(NotificationContent content, double seconds = 2.5)
     {
         if (expanded || !IsVisible || Native.FullScreenAppRunning()) return;
-        notification.Present(content);
+        immediateBanner = content.Immediate;
+        Notification.Show(content);
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
@@ -175,8 +171,9 @@ public partial class IslandWindow : Window
     void EndBanner()
     {
         bannerTimer.Stop();
-        notification.Dismiss();
+        Notification.Dismiss();
         UpdateShape();
+        immediateBanner = false;
     }
 
     /// <summary>Opens the island on setup, and keeps it open until you finish.</summary>
@@ -231,9 +228,10 @@ public partial class IslandWindow : Window
         expanded = open;
         hover.Reset();
         bannerTimer.Stop();
-        notification.Dismiss();
+        Notification.Dismiss();
         OpenView.SetOpen(open);
         UpdateShape();
+        immediateBanner = false;
     }
 
     /// <summary>The one place that decides the island's shape and which content shows.</summary>
@@ -241,7 +239,8 @@ public partial class IslandWindow : Window
     {
         var banner = bannerTimer.IsEnabled && !expanded;
         var wings = hasWings && !expanded && !banner;
-        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : wings ? WingsSize : ClosedSize);
+        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : banner ? NotificationSize : hasWings ? WingsSize : ClosedSize,
+               banner, !expanded && immediateBanner);
         Fade(OpenView, expanded && !settingUp);
         OpenView.IsHitTestVisible = expanded && !settingUp;
         Fade(Setup, expanded && settingUp);
@@ -302,20 +301,11 @@ public partial class IslandWindow : Window
     // Motion
 
     /// <summary>Opening and alerts get a spring with a little bounce; shrinking is quicker and doesn't bounce.</summary>
-    void MoveTo(Size size)
+    void MoveTo(Size size, bool notification = false, bool immediate = false)
     {
-        if (size.Width == width.Target && size.Height == height.Target) return;
-        if (!SystemParameters.ClientAreaAnimation) // Windows' "Animation effects" setting is off
-        {
-            width.Snap(size.Width);
-            height.Snap(size.Height);
-            Apply();
-            return;
-        }
-        var growing = size.Width > width.Target || size.Height > height.Target;
-        var (duration, bounce) = growing ? (0.5, 0.2) : (0.3, 0.0);
-        width.Retarget(size.Width, duration, bounce);
-        height.Retarget(size.Height, duration, bounce);
+        motion.Retarget(size, notification, !SystemParameters.ClientAreaAnimation, immediate);
+        Apply();
+        if (!motion.IsMoving) return;
         if (animating) return;
         animating = true;
         lastFrame = TimeSpan.Zero;
@@ -328,7 +318,7 @@ public partial class IslandWindow : Window
         if (now == lastFrame) return; // Rendering can fire more than once per frame
         var seconds = lastFrame == TimeSpan.Zero ? 1.0 / 60 : (now - lastFrame).TotalSeconds;
         lastFrame = now;
-        var moving = width.Step(seconds) | height.Step(seconds);
+        var moving = motion.Step(seconds);
         Apply();
         if (moving) return;
         CompositionTarget.Rendering -= OnFrame;
@@ -337,9 +327,14 @@ public partial class IslandWindow : Window
 
     void Apply()
     {
-        Island.Width = Math.Max(0, width.Value);
-        Island.Height = Math.Max(0, height.Value);
-        Island.CornerRadius = new CornerRadius(Math.Clamp(height.Value / 2, 0, OpenCorner));
+        var size = new Size(motion.Width, motion.Height);
+        Island.Width = size.Width;
+        Island.Height = size.Height;
+        IslandContent.Width = size.Width;
+        IslandContent.Height = size.Height;
+        Shell.Update(size, motion.CornerRadius, motion.Bend, Math.Abs(motion.Bend) / 16);
+        IslandContent.Clip = Shell.Geometry;
+        Notification.Reveal = motion.NotificationReveal;
     }
 
     /// <summary>Content fades in just after the island starts to grow, and out quickly as it shrinks.</summary>
@@ -360,7 +355,7 @@ public partial class IslandWindow : Window
     {
         if (!IsVisible || !Native.GetCursorPos(out var cursor)) return;
         var pointer = new Point(cursor.X, cursor.Y);
-        var island = IslandRect();
+        var island = expanded ? IslandRect() : RestingIslandRect();
         // The pointer is usually nowhere near the island: look less often until it comes close.
         var interval = TimeSpan.FromMilliseconds(expanded || pointer.Y < island.Bottom + 200 * hover.Scale ? 16 : 100);
         if (pointerTimer.Interval != interval) pointerTimer.Interval = interval;
@@ -377,6 +372,15 @@ public partial class IslandWindow : Window
     {
         var topLeft = Island.PointToScreen(new Point(0, 0));
         return new Rect(topLeft, new Size(Island.ActualWidth * hover.Scale, Island.ActualHeight * hover.Scale));
+    }
+
+    /// <summary>An alert growing under a resting pointer must not count as an intentional hover.
+    /// The compact island stays the trigger while notification content appears below and beside it.</summary>
+    Rect RestingIslandRect()
+    {
+        var size = hasWings ? WingsSize : ClosedSize;
+        var topLeft = PointToScreen(new Point((Width - size.Width) / 2, 8));
+        return new Rect(topLeft, new Size(size.Width * hover.Scale, size.Height * hover.Scale));
     }
 
     // Window
@@ -399,7 +403,6 @@ public partial class IslandWindow : Window
         var pixelWidth = (int)Math.Round(Width * scale);
         var x = work.Left + (work.Right - work.Left - pixelWidth) / 2;
         Native.SetWindowPos(Handle, Native.HWND_TOPMOST, x, work.Top, pixelWidth, (int)Math.Round(Height * scale), Native.SWP_NOACTIVATE);
-        notification.Place(work, scale);
     }
 
     void OnDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(new Action(Place));
@@ -413,8 +416,9 @@ public partial class IslandWindow : Window
         {
             SetExpanded(false);
             bannerTimer.Stop();
-            notification.Suppress();
+            Notification.Clear();
             UpdateShape();
+            immediateBanner = false;
             Hide();
         }
         else

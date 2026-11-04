@@ -34,8 +34,8 @@
 
 Ledge turns the MacBook notch into a small, quiet island of everyday tools. Hover the notch and it
 opens: what's playing, your week, quick actions, and a single status row for everything else. Brief
-alerts (volume, battery, a meeting starting, an AI agent waiting on you) appear in a compact capsule
-below the notch while it's closed. On Macs without a notch it sits at the top of the screen as a pill, and on Windows
+alerts (volume, battery, a meeting starting, an AI agent waiting on you) expand the same island in place,
+then it settles back to its compact shape. On Macs without a notch it sits at the top of the screen as a pill, and on Windows
 it floats as a pill at the top centre of the screen.
 
 ## Install
@@ -137,8 +137,9 @@ without changing your settings.
 For notifications alone, `open build/Ledge.app --args --notification-preview <folder>` renders a
 six-state contact sheet and individual native previews without starting tools or reading your settings.
 Add `--notification-motion` to capture 30 fps sequences in `<folder>/frames`, `interruption-frames`
-and `reduced-motion-frames`. The notification shell stretches and gently rebounds on arrival while
-text stays steady, then tucks back toward the notch with a faster ease-out. Reduce Motion uses a fade,
+and `reduced-motion-frames`. The existing island widens and deepens with a gentle jelly rebound while
+text stays steady below the physical camera cutout, then contracts with a faster ease-out. No separate
+notification pill is added. Reduce Motion uses a fade,
 and keyboard feedback (volume, brightness, microphone, screenshot and color picker) appears immediately.
 
 `open build/Ledge.app --args --home-music-preview <folder>` captures Home's music/calendar row,

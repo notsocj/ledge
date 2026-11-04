@@ -11,23 +11,16 @@ struct NotchView: View {
     private var nowPlaying: NowPlaying { app.nowPlaying }
 
     var body: some View {
-        let size = shapeSize
-        ZStack(alignment: .top) {
-            ZStack(alignment: .top) {
-                Color.black
-                if model.expanded {
-                    expanded.transition(.asymmetric(insertion: .reveal, removal: .opacity.animation(Motion.easeOut(0.12))))
-                } else {
-                    closed.transition(.opacity)
-                }
+        NotificationIsland(banner: !model.expanded && model.fileDrag == nil ? model.banner : nil,
+                           notchSize: model.notchSize, restingSize: shapeSize,
+                           expandedSize: model.expanded ? model.expandedSize : nil) {
+            if model.expanded {
+                expanded.transition(.asymmetric(insertion: .reveal, removal: .opacity.animation(Motion.easeOut(0.12))))
+            } else {
+                closed.transition(.opacity)
             }
-            .frame(width: size.width, height: size.height)
-            .clipShape(NotchShape(topRadius: model.expanded ? 14 : 6, bottomRadius: model.expanded ? 32 : 12))
-            .animation(reduceMotion || model.banner != nil ? nil : Motion.open, value: closedContent)
-
-            NotificationOverlay(banner: !model.expanded && model.fileDrag == nil ? model.banner : nil,
-                                topInset: model.notchSize.height + NotificationCapsule.gap)
         }
+        .animation(reduceMotion || model.banner != nil ? nil : Motion.open, value: closedContent)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .task(id: nowPlaying.trackKey) {
             lyrics = nil
@@ -40,12 +33,11 @@ struct NotchView: View {
 
     /// What the closed island shows beside the notch, most urgent first.
     private enum Closed: Equatable {
-        case drop, banner, micMuted, inUse, timer, media, nothing
+        case drop, micMuted, inUse, timer, media, nothing
     }
 
     private var closedContent: Closed {
         if model.fileDrag != nil { return .drop } // a file on its way: say where it can go
-        if model.banner != nil { return .banner }
         // A muted mic outranks everything: it's what you need to know before you speak.
         if app.preferences.isOn(.micMute), app.microphone.isMuted { return .micMuted }
         if app.preferences.isOn(.inUse), app.inUse.any { return .inUse }
@@ -60,14 +52,13 @@ struct NotchView: View {
     }
 
     private var shapeSize: CGSize {
-        if model.expanded { return model.expandedSize }
         let wing: CGFloat = switch closedContent {
         case .drop: 104
         case .inUse: 64
         case .micMuted: 64
         case .timer: 64
         case .media: 44
-        case .banner, .nothing: 0
+        case .nothing: 0
         }
         return CGSize(width: model.notchSize.width + wing * 2, height: model.notchSize.height)
     }
@@ -83,8 +74,6 @@ struct NotchView: View {
                 Text("Drop here")
             }
             .accessibilityLabel("Drop files on the notch to keep them on the shelf")
-        case .banner:
-            EmptyView() // the separate capsule stays clear of the physical camera cutout
         case .micMuted:
             Wings(height: model.notchSize.height) {
                 MicIcon(muted: true, size: 15).foregroundStyle(.red)

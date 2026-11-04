@@ -46,6 +46,14 @@ public class HoverIntentTests
         Assert.Equal(Decision.None, Run(new HoverIntent(), Closed, false, Still(new Point(200, 600), 10)));
 
     [Fact]
+    public void RestingBelowTheCompactIslandDoesNotOpenAnAlertUnderThePointer()
+    {
+        // A notification grows down to y=72, but the compact resting rectangle remains
+        // the hover trigger. Its new lower area must not open Home and dismiss the alert.
+        Assert.Equal(Decision.None, Run(new HoverIntent(), Closed, false, Still(new Point(960, 64), 30)));
+    }
+
+    [Fact]
     public void LeavingDecisivelyClosesAtOnce() =>
         Assert.Equal(Decision.Close, Run(new HoverIntent(), Open, true, new Point(960, 500)));
 

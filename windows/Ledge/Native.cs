@@ -6,7 +6,6 @@ namespace Ledge;
 static partial class Native
 {
     public const int GWL_EXSTYLE = -20;
-    public const int WS_EX_TRANSPARENT = 0x20; // a layered notification passes mouse input to underlying apps
     public const int WS_EX_TOOLWINDOW = 0x80; // keeps the island out of Alt+Tab
     public const int WS_EX_NOACTIVATE = 0x08000000; // clicking the island never takes focus from your app
 
@@ -43,10 +42,6 @@ static partial class Native
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetCursorPos(out POINT point);
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool GetWindowRect(nint hwnd, out RECT rect);
 
     [LibraryImport("user32.dll")]
     private static partial nint MonitorFromPoint(POINT point, uint flags);

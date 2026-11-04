@@ -14,6 +14,7 @@ public sealed class NotificationMotion
     public double Opacity { get; private set; }
     public bool IsPresented { get; private set; }
     public bool IsVisible => IsPresented || Opacity > 0;
+    public bool IsFading => fadeElapsed < fadeDuration;
     public bool IsMoving => !progress.IsSettled || fadeElapsed < fadeDuration;
 
     public void Show(bool reduceMotion = false, bool immediate = false)

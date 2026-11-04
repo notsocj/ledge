@@ -8,7 +8,7 @@ using System.Windows.Media.Imaging;
 
 namespace Ledge;
 
-/// <summary>Native, deterministic captures of the production capsule. No live tools, preferences or
+/// <summary>Native, deterministic captures of the production island morph. No live tools, preferences or
 /// clipboard are used. Motion advances through the same model as the on-screen control.</summary>
 static class NotificationSnapshots
 {
@@ -31,19 +31,19 @@ static class NotificationSnapshots
     /// page snapshots only need the static captures and contact sheets.</param>
     public static void Run(string folder, bool includeFrames = true)
     {
-        VerifyNativeHost();
+        VerifySingleSurface();
         Directory.CreateDirectory(folder);
         var cards = new List<(string Label, BitmapSource Image)>();
         foreach (var (name, content) in Samples)
         {
-            var (scene, capsule) = MakeScene();
-            capsule.Show(content, reduceMotion: false);
-            for (var frame = 0; frame < 90; frame++) capsule.Advance(1 / FramesPerSecond);
-            var image = Render(scene, SceneSize);
+            var scene = new PreviewScene();
+            scene.Show(content, reduced: false);
+            for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
+            var image = Render(scene.Canvas, SceneSize);
             Save(image, Path.Combine(folder, $"4-notification-{name}.png"));
             cards.Add((name.Replace('-', ' '), image));
         }
-        SaveSheet(cards, "Windows notification capsules", Path.Combine(folder, "4-notifications.png"));
+        SaveSheet(cards, "Windows island notifications", Path.Combine(folder, "4-notifications.png"));
 
         CaptureMotion(folder, "entry-exit", 90, false, includeFrames,
             [(3, Samples[1].Content), (30, Samples[0].Content), (54, null)],
@@ -57,56 +57,55 @@ static class NotificationSnapshots
             [3, 4, 6, 18, 30, 31, 33, 38]);
     }
 
-    /// <summary>Exercise the real native host as well as rendering the control. Everything stays
-    /// off-screen, and neither window constructs app services or reads personal settings.</summary>
-    static void VerifyNativeHost()
+    /// <summary>The same native window and surface stay mounted through entry, replacement and
+    /// dismissal. No app services or personal settings are involved.</summary>
+    static void VerifySingleSurface()
     {
         var app = Application.Current;
         var previousShutdown = app.ShutdownMode;
         var previousMain = app.MainWindow;
-        Window? owner = null;
-        NotificationWindow? host = null;
+        var previousWindowCount = app.Windows.Count;
+        var scene = new PreviewScene();
+        var surface = scene.Surface;
+        var window = new Window
+        {
+            Content = scene.Canvas, Width = SceneSize.Width, Height = SceneSize.Height,
+            Left = -10000, Top = -10000, WindowStyle = WindowStyle.None,
+            ShowActivated = false, ShowInTaskbar = false,
+        };
         app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         try
         {
-            owner = new Window
-            {
-                Width = 600, Height = 380, Left = -10000, Top = -10000,
-                WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false,
-            };
-            owner.Show();
-            host = new NotificationWindow(owner);
-            var scale = Native.PrimaryMonitor().Scale;
-            host.Place(new Native.RECT { Left = -10000, Top = -10000, Right = -9400, Bottom = -9620 }, scale);
-            host.Present(Samples[0].Content);
-            var handle = new WindowInteropHelper(host).Handle;
-            var style = Native.GetWindowLongPtr(handle, Native.GWL_EXSTYLE);
-            var required = Native.WS_EX_TRANSPARENT | Native.WS_EX_NOACTIVATE | Native.WS_EX_TOOLWINDOW;
-            if ((style & required) != required || !host.IsVisible || host.Owner != owner)
-                throw new InvalidOperationException("The notification host must be visible, owned, nonactivating and native mouse-transparent.");
-            var pixelWidth = (int)Math.Round(428 * scale);
-            var pixelHeight = (int)Math.Round(128 * scale);
-            if (!Native.GetWindowRect(handle, out var rect) || rect.Left != -10000 + (600 - pixelWidth) / 2
-                || rect.Top != -10000 + (int)Math.Round(18 * scale)
-                || rect.Right - rect.Left != pixelWidth || rect.Bottom - rect.Top != pixelHeight)
-                throw new InvalidOperationException("The notification host does not match the shared work-area placement.");
-
-            host.Present(Samples[1].Content); // replacement keeps the same native window
-            if (new WindowInteropHelper(host).Handle != handle || !host.IsVisible)
-                throw new InvalidOperationException("Replacing a notification must retain its host.");
-            host.Suppress();
-            if (host.IsVisible) throw new InvalidOperationException("A suppressed notification host must be hidden.");
-            host.Present(Samples[0].Content);
-            if (!host.IsVisible || new WindowInteropHelper(host).Handle != handle)
-                throw new InvalidOperationException("The notification host must reopen after suppression.");
-            host.CloseOverlay();
-            host.CloseOverlay(); // owner shutdown may reach a host that WPF already closed
-            Console.WriteLine("Native notification host: styles, placement, replacement, suppression and reopen passed.");
+            window.Show();
+            var handle = new WindowInteropHelper(window).Handle;
+            Render(scene.Canvas, SceneSize);
+            if (scene.Frame.Children.OfType<IslandSurface>().Count() != 1 || surface.Geometry.Bounds.Width != 180)
+                throw new InvalidOperationException("The compact island must have one surface.");
+            scene.Show(Samples[0].Content, reduced: false);
+            for (var frame = 0; frame < 5; frame++) scene.Advance(1 / FramesPerSecond);
+            scene.Dismiss(reduced: false);
+            scene.Advance(1 / FramesPerSecond);
+            scene.Show(Samples[1].Content, reduced: false);
+            for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
+            Render(scene.Canvas, SceneSize);
+            if (!ReferenceEquals(scene.Surface, surface) || surface.Geometry.Bounds.Width != 364
+                || scene.Capsule.Visibility != Visibility.Visible || scene.ContentClip.Clip != surface.Geometry)
+                throw new InvalidOperationException("A replacement alert must use the same growing surface and content clip.");
+            if (app.Windows.Count != previousWindowCount + 1 || window.OwnedWindows.Count != 0
+                || new WindowInteropHelper(window).Handle != handle)
+                throw new InvalidOperationException("Notification presentation must keep one native window.");
+            scene.Dismiss(reduced: false);
+            for (var frame = 0; frame < 90; frame++) scene.Advance(1 / FramesPerSecond);
+            Render(scene.Canvas, SceneSize);
+            if (!ReferenceEquals(scene.Surface, surface) || surface.Geometry.Bounds.Width != 180
+                || scene.Motion.Height != 32 || scene.Capsule.Visibility != Visibility.Collapsed
+                || new WindowInteropHelper(window).Handle != handle)
+                throw new InvalidOperationException("Dismissal must restore the same compact island, not remove it.");
+            Console.WriteLine("Single island: one native window, retained surface, replacement, clipping and compact restoration passed.");
         }
         finally
         {
-            host?.CloseOverlay();
-            owner?.Close();
+            window.Close();
             app.MainWindow = previousMain;
             app.ShutdownMode = previousShutdown;
         }
@@ -115,7 +114,7 @@ static class NotificationSnapshots
     static void CaptureMotion(string folder, string name, int count, bool reduced, bool includeFrames,
                               (int Frame, NotificationContent? Content)[] updates, int[] keyframes)
     {
-        var (scene, capsule) = MakeScene();
+        var scene = new PreviewScene();
         var frames = Path.Combine(folder, name + "-frames");
         if (includeFrames)
         {
@@ -132,35 +131,80 @@ static class NotificationSnapshots
         {
             foreach (var update in updates.Where(update => update.Frame == frame))
             {
-                if (update.Content is { } content) capsule.Show(content, reduceMotion: reduced);
-                else capsule.Dismiss(reduceMotion: reduced);
+                if (update.Content is { } content) scene.Show(content, reduced);
+                else scene.Dismiss(reduced);
             }
-            capsule.Advance(1 / FramesPerSecond);
+            scene.Advance(1 / FramesPerSecond);
             if (!includeFrames && !keyframes.Contains(frame)) continue;
-            var image = Render(scene, SceneSize);
+            var image = Render(scene.Canvas, SceneSize);
             if (includeFrames) Save(image, Path.Combine(frames, $"{frame:0000}.png"));
             if (keyframes.Contains(frame)) cards.Add(($"{(frame + 1) / FramesPerSecond:0.00}s", image));
         }
         SaveSheet(cards, name.Replace('-', ' '), Path.Combine(folder, $"4-notification-{name}.png"));
     }
 
-    static (Canvas Scene, NotificationCapsule Capsule) MakeScene()
+    /// <summary>The same surface, geometry clipping and reveal as IslandWindow, driven explicitly
+    /// at 30 fps so a preview can be rendered without starting live services.</summary>
+    sealed class PreviewScene
     {
-        var canvas = new Canvas { Width = SceneSize.Width, Height = SceneSize.Height, Background = Backdrop() };
-        ApplyType(canvas);
-        var closed = new Border
+        static readonly Size CompactSize = new(180, 32), NotificationSize = new(364, 64);
+        public Canvas Canvas { get; } = new() { Width = SceneSize.Width, Height = SceneSize.Height, Background = Backdrop() };
+        public Grid Frame { get; } = new();
+        public Grid ContentClip { get; } = new();
+        public IslandSurface Surface { get; } = new();
+        public NotificationCapsule Capsule { get; } = new()
         {
-            Width = 180, Height = 32, CornerRadius = new CornerRadius(16), Background = Brushes.Black,
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)), BorderThickness = new Thickness(1),
+            AnimateAutomatically = false, HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top,
         };
-        Canvas.SetLeft(closed, (SceneSize.Width - closed.Width) / 2);
-        Canvas.SetTop(closed, 8);
-        canvas.Children.Add(closed);
-        var capsule = new NotificationCapsule { AnimateAutomatically = false };
-        Canvas.SetLeft(capsule, (SceneSize.Width - 364) / 2);
-        Canvas.SetTop(capsule, 50);
-        canvas.Children.Add(capsule);
-        return (canvas, capsule);
+        public IslandMotion Motion { get; } = new(CompactSize);
+        bool immediate;
+
+        public PreviewScene()
+        {
+            ApplyType(Canvas);
+            ContentClip.Children.Add(Capsule);
+            Frame.Children.Add(Surface);
+            Frame.Children.Add(ContentClip);
+            System.Windows.Controls.Canvas.SetTop(Frame, 8);
+            Canvas.Children.Add(Frame);
+            Apply();
+        }
+
+        public void Show(NotificationContent content, bool reduced)
+        {
+            immediate = content.Immediate;
+            Capsule.Show(content, reduceMotion: reduced);
+            Motion.Retarget(NotificationSize, notification: true, reduceMotion: reduced, immediate: immediate);
+            Apply();
+        }
+
+        public void Dismiss(bool reduced)
+        {
+            Capsule.Dismiss(reduceMotion: reduced);
+            Motion.Retarget(CompactSize, reduceMotion: reduced, immediate: immediate);
+            Apply();
+        }
+
+        public void Advance(double seconds)
+        {
+            Capsule.Advance(seconds);
+            Motion.Step(seconds);
+            Apply();
+        }
+
+        void Apply()
+        {
+            var size = new Size(Motion.Width, Motion.Height);
+            Frame.Width = size.Width;
+            Frame.Height = size.Height;
+            ContentClip.Width = size.Width;
+            ContentClip.Height = size.Height;
+            System.Windows.Controls.Canvas.SetLeft(Frame, (SceneSize.Width - size.Width) / 2);
+            Surface.Update(size, Motion.CornerRadius, Motion.Bend, Math.Abs(Motion.Bend) / 16);
+            ContentClip.Clip = Surface.Geometry;
+            Capsule.Reveal = Motion.NotificationReveal;
+        }
     }
 
     static void SaveSheet(IReadOnlyList<(string Label, BitmapSource Image)> cards, string title, string path)
