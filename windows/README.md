@@ -36,6 +36,8 @@ icon and name; the others are icons (point at one for its name). Switching slide
 to the new tab and opens its name. With Windows' **Animation effects** off, it moves without sliding.
 
 - **Home**: what's playing (previous, play/pause, next), your next meeting, the battery and Keep awake.
+  Music has larger artwork, a two-line title and controls aligned to the artwork's bottom edge, with
+  a 24-point gap before the status cards. When those cards are hidden, the player uses the full row.
 - **Calendar**: today's and tomorrow's meetings with Join buttons for Teams, Zoom, Meet and Webex links.
   Windows has no calendar API like the Mac's, so Ledge reads your calendar's private ICS link: copy it
   from Outlook (Publish a calendar) or Google Calendar (Secret address in iCal format) and press
@@ -49,9 +51,12 @@ to the new tab and opens its name. With Windows' **Animation effects** off, it m
 
 ## Alerts
 
-Alerts slide out of the closed island when you plug in, when the battery drops to 20% and 10%, when a
+Alerts appear in a capsule below the closed island when you plug in, when the battery drops to 20% and 10%, when a
 timer ends, two minutes before a meeting, when an app turns on the microphone or camera, and when Claude
-Code or Codex finishes or needs you.
+Code or Codex finishes or needs you. A circular badge, two lines of context and a colored status keep
+each alert readable. The black surface gently stretches and settles on entry, then retracts on exit;
+the text stays steady. Replacing an alert reuses the same capsule, even during dismissal. With Windows'
+**Animation effects** off, alerts only fade. Color-picker feedback is immediate.
 
 **Coding agent alerts** are connected from the notification-area icon (**Coding agent alerts**). Ledge
 adds two hooks to `~/.claude/settings.json` and a `notify` line to `~/.codex/config.toml`, each running
@@ -82,6 +87,16 @@ dotnet run --project windows/Ledge -- --snapshot snapshots
 
 renders the open island on every tab and each setup step to PNGs at 200%, with made-up music, meetings,
 servers, clipboard and files, and quits. It never reads or changes your settings.
+
+It also captures long-title, empty and solo Home layouts, notification samples and motion contact sheets.
+For native 30 fps notification frames, including interrupted dismissal and reduced motion:
+
+```powershell
+dotnet run --project windows/Ledge -- --notification-preview notifications
+```
+
+This isolated notification preview uses the production component without starting services or reading
+personal data. CI includes the numbered frames in its `Ledge-snapshots` artifact.
 
 Every push that touches `windows/` is built on GitHub Actions for x64 and Arm64 (the
 [Windows workflow](../.github/workflows/windows.yml)): it runs the tests, attaches the builds and the
@@ -128,6 +143,7 @@ windows/
     TabularText.cs         text with fixed-width digits
     Snapshots.cs           --snapshot
     Spring.cs, HoverIntent.cs, Native.cs, Tray.cs, Updates.cs, StartAtLogin.cs
+    NotificationCapsule, NotificationContent, NotificationMotion   capsule presentation and motion
     Tools/                 one file per tool
     Assets/                the app icon and the Poppins font files
   Ledge.Tests/

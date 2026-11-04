@@ -9,6 +9,7 @@
         FontFamily="{StaticResource Poppins}" FontSize="12.5" Foreground="White">
   <!-- The window is a fixed transparent frame; clicks pass through everywhere except the island. Windows
        has no notch, so the island is a pill floating at the top centre that grows into the open panel. -->
+  <Grid>
   <Border x:Name="Island" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0"
           Background="Black" BorderBrush="#14FFFFFF" BorderThickness="1">
     <Grid ClipToBounds="True">
@@ -21,23 +22,14 @@
         <TextBlock x:Name="WingRightGlyph" Style="{StaticResource Glyph}" FontSize="13" HorizontalAlignment="Right"
                    Foreground="{StaticResource Graphite}" Text="&#xE8D6;"/>
       </Grid>
-      <!-- An alert: what it's about on the left, in the heavier weight; the detail on the right, lighter. -->
-      <Grid x:Name="BannerContent" Opacity="0" Margin="16,0" VerticalAlignment="Center">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock x:Name="BannerTitle" Style="{StaticResource HeadlineText}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-        <StackPanel Grid.Column="1" Orientation="Horizontal">
-          <Ellipse x:Name="BannerSwatch" Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"
-                   Stroke="#40FFFFFF" StrokeThickness="1"/>
-          <TextBlock x:Name="BannerDetail" FontSize="12.5" FontWeight="Medium" Foreground="{StaticResource Graphite}" VerticalAlignment="Center"/>
-        </StackPanel>
-      </Grid>
       <local:OpenPanel x:Name="OpenView" Opacity="0" IsHitTestVisible="False" Width="560" Height="220"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
       <local:SetupView x:Name="Setup" Opacity="0" IsHitTestVisible="False" Width="560" Height="320"
                        HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
   </Border>
+  <!-- Ten points below the resting island, with room for the deforming shell and its shadow.
+       This layer never steals clicks or alters the island's hover region. -->
+  <local:NotificationCapsule x:Name="Notification" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0"/>
+  </Grid>
 </Window>

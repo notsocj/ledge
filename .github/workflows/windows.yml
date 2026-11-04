@@ -31,12 +31,16 @@ jobs:
       - if: matrix.rid == 'win-x64'
         shell: pwsh
         timeout-minutes: 3
-        run: Start-Process out/Ledge.exe -ArgumentList '--snapshot', "$PWD\snapshots" -Wait
+        run: |
+          $pages = Start-Process out/Ledge.exe -ArgumentList '--snapshot', "$PWD\snapshots" -Wait -PassThru
+          if ($pages.ExitCode -ne 0) { throw "Page snapshots failed: $($pages.ExitCode)" }
+          $motion = Start-Process out/Ledge.exe -ArgumentList '--notification-preview', "$PWD\snapshots\notifications" -Wait -PassThru
+          if ($motion.ExitCode -ne 0) { throw "Notification previews failed: $($motion.ExitCode)" }
       - if: matrix.rid == 'win-x64'
         uses: actions/upload-artifact@v4
         with:
           name: Ledge-snapshots
-          path: snapshots/*.png
+          path: snapshots/**/*.png
           if-no-files-found: error
       # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
       - if: matrix.rid == 'win-x64' && github.event_name == 'push'
@@ -55,7 +59,8 @@ jobs:
         shell: bash
         run: |
           dotnet tool install -g vpk --version 1.2.161
-          vpk pack --packId Ledge --packVersion 0.1.0 --packDir out --mainExe Ledge.exe --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico --shortcuts StartMenuRoot --outputDir releases
+          version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' windows/Ledge/Ledge.csproj)
+          vpk pack --packId Ledge --packVersion "$version" --packDir out --mainExe Ledge.exe --packTitle Ledge --packAuthors notsocj --icon windows/Ledge/Assets/Ledge.ico --shortcuts StartMenuRoot --outputDir releases
       - if: matrix.rid == 'win-x64'
         uses: actions/upload-artifact@v4
         with:

@@ -10,7 +10,7 @@ namespace Ledge;
 
 public partial class IslandWindow : Window
 {
-    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), BannerSize = new(380, 32), OpenSize = new(560, 220),
+    static readonly Size ClosedSize = new(180, 32), WingsSize = new(250, 32), OpenSize = new(560, 220),
         SetupSize = new(560, 320); // taller than the open island: setup's persona cards hold three lines of Poppins
     /// <summary>The open island's corner. Closed, the corner is half the height, which makes it a pill.</summary>
     const double OpenCorner = 28;
@@ -83,6 +83,8 @@ public partial class IslandWindow : Window
         {
             SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            CompositionTarget.Rendering -= OnFrame;
+            bannerTimer.Stop();
         };
         Island.MouseLeftButtonUp += (_, _) => SetExpanded(true); // touch screens have no hover: a tap opens it
 
@@ -100,7 +102,11 @@ public partial class IslandWindow : Window
         _ = tools.NowPlaying.StartAsync();
 
         tools.Battery.Changed += OpenView.RefreshBattery;
-        tools.Battery.Alert += (title, detail) => ShowBanner(title, detail);
+        tools.Battery.Alert += (title, detail) =>
+        {
+            if (int.TryParse(detail.TrimEnd('%'), out var percent))
+                ShowBanner(NotificationContent.Battery(percent, title == "Charging"));
+        };
         batteryTimer.Tick += (_, _) => tools.Battery.Check();
         batteryTimer.Start();
         tools.Battery.Check();
@@ -110,8 +116,7 @@ public partial class IslandWindow : Window
         {
             if (!settings.IsOn(Tool.AgentAlerts)) return;
             var name = agent == AgentAlerts.Agent.Claude ? "Claude" : "Codex";
-            ShowBanner(project.Length > 0 ? $"{name} · {project}" : name, waiting ? "Needs you" : "Done", waiting ? 10 : 6,
-                waiting ? (Brush)FindResource("Warning") : Brushes.White);
+            ShowBanner(NotificationContent.Agent(name, waiting, project), waiting ? 10 : 6);
         };
         _ = tools.Agents.ListenAsync(Dispatcher);
 
@@ -120,11 +125,10 @@ public partial class IslandWindow : Window
             SetExpanded(false); // out of the way of what you're picking from
             tools.ColorPicker.Start();
         };
-        tools.ColorPicker.Picked += color => ShowBanner("Copied", ColorPicker.Hex(color), swatch: color);
+        tools.ColorPicker.Picked += color => ShowBanner(NotificationContent.ColorPicked(color));
 
         // Microphone orange and camera green, the colors phones use for the same thing.
-        tools.InUse.Started += (device, app) => ShowBanner(device == InUse.Device.Microphone ? "Microphone on" : "Camera on", app, 4,
-            (Brush)FindResource(device == InUse.Device.Microphone ? "Warning" : "Live"));
+        tools.InUse.Started += (device, app) => ShowBanner(NotificationContent.Device(device == InUse.Device.Microphone, app), 4);
         inUseTimer.Tick += (_, _) => tools.InUse.Check();
 
         OpenView.CalendarTabPage.LinkChanged += link =>
@@ -140,7 +144,7 @@ public partial class IslandWindow : Window
             OpenView.RefreshNextMeeting();
             if (CalendarFeed.DueForAlert(tools.Calendar.Meetings, DateTime.Now, announcedMeetings) is not { } meeting) return;
             announcedMeetings.Add(meeting.Key);
-            ShowBanner(meeting.Title, $"at {meeting.Start:t}", 8, (Brush)FindResource("Warning"));
+            ShowBanner(NotificationContent.Meeting(meeting.Title, meeting.Start, DateTime.Now), 8);
         };
 
         countdownTimer.Tick += (_, _) => TickCountdown();
@@ -151,15 +155,14 @@ public partial class IslandWindow : Window
         };
     }
 
-    /// <summary>Slides an alert out of the closed island for a few seconds.</summary>
-    public void ShowBanner(string title, string detail, double seconds = 2.5, Brush? detailColor = null, Color? swatch = null)
+    public void ShowBanner(string title, string detail, double seconds = 2.5) =>
+        ShowBanner(NotificationContent.Message(title, detail), seconds);
+
+    /// <summary>Retargets one capsule below the closed island; opening the island dismisses it.</summary>
+    public void ShowBanner(NotificationContent content, double seconds = 2.5)
     {
         if (expanded) return; // the open island already has the user's attention
-        BannerTitle.Text = title;
-        BannerDetail.Text = detail;
-        BannerDetail.Foreground = detailColor ?? (Brush)FindResource("Graphite");
-        BannerSwatch.Fill = swatch is { } color ? new SolidColorBrush(color) : null;
-        BannerSwatch.Visibility = swatch is null ? Visibility.Collapsed : Visibility.Visible;
+        Notification.Show(content);
         bannerTimer.Stop();
         bannerTimer.Interval = TimeSpan.FromSeconds(seconds);
         bannerTimer.Start();
@@ -169,6 +172,7 @@ public partial class IslandWindow : Window
     void EndBanner()
     {
         bannerTimer.Stop();
+        Notification.Dismiss();
         UpdateShape();
     }
 
@@ -224,6 +228,7 @@ public partial class IslandWindow : Window
         expanded = open;
         hover.Reset();
         bannerTimer.Stop();
+        Notification.Dismiss();
         OpenView.SetOpen(open);
         UpdateShape();
     }
@@ -233,12 +238,11 @@ public partial class IslandWindow : Window
     {
         var banner = bannerTimer.IsEnabled && !expanded;
         var wings = hasWings && !expanded && !banner;
-        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : banner ? BannerSize : wings ? WingsSize : ClosedSize);
+        MoveTo(expanded ? (settingUp ? SetupSize : OpenSize) : wings ? WingsSize : ClosedSize);
         Fade(OpenView, expanded && !settingUp);
         OpenView.IsHitTestVisible = expanded && !settingUp;
         Fade(Setup, expanded && settingUp);
         Setup.IsHitTestVisible = expanded && settingUp;
-        Fade(BannerContent, banner);
         Fade(Wings, wings);
     }
 
@@ -247,7 +251,7 @@ public partial class IslandWindow : Window
     void TickCountdown()
     {
         var countdown = tools.Countdown;
-        if (countdown.Tick()) ShowBanner("Timer done", $"{(int)countdown.Total.TotalMinutes} min");
+        if (countdown.Tick()) ShowBanner(NotificationContent.Timer(countdown.Total.TotalMinutes));
         if (!countdown.IsRunning) countdownTimer.Stop(); // paused, cancelled or done: nothing to count
         OpenView.RefreshTimer();
         RefreshWings();

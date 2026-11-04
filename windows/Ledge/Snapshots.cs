@@ -30,6 +30,7 @@ static class Snapshots
 
         panel.HomeTab.IsChecked = true;
         Save(panel, OpenSize, Path.Combine(folder, "1-home.png"));
+        HomeVariants(folder);
         foreach (var (tool, name) in new[] { (Tool.Calendar, "calendar"), (Tool.Timer, "timer"), (Tool.Ports, "ports"),
                      (Tool.Clipboard, "clipboard"), (Tool.Shelf, "shelf"), (Tool.ColorPicker, "color") })
         {
@@ -43,6 +44,36 @@ static class Snapshots
         {
             setup.Show(step);
             Save(setup, SetupSize, Path.Combine(folder, $"3-setup-{(int)step + 1}-{step.ToString().ToLowerInvariant()}.png"));
+        }
+        NotificationSnapshots.Run(folder, includeFrames: false);
+    }
+
+    /// <summary>Real Home layouts with long and missing content. Separate tools keep every variant
+    /// independent; none is started, and no real media session or calendar is read.</summary>
+    static void HomeVariants(string folder)
+    {
+        var artwork = DemoArtwork();
+        foreach (var variant in new[] { "long-title", "empty", "media-only", "calendar-only" })
+        {
+            var tools = new Tools(Dispatcher.CurrentDispatcher);
+            var settings = new Settings { SetupDone = true, Personas = [Persona.Essentials], CalendarLink = "https://example.com/demo.ics" };
+            if (variant != "empty")
+                tools.NowPlaying.ShowDemo("Hold On, We're Going Home Before the Morning", "Northbound and the Afterglow Orchestra", artwork);
+            if (variant == "media-only")
+            {
+                settings.Off = [Tool.Calendar, Tool.KeepAwake];
+                settings.CalendarLink = null;
+            }
+            else
+            {
+                var now = DateTime.Now;
+                tools.Battery.ShowDemo(76, onPower: false);
+                tools.Calendar.ShowDemo([new("Design review", now.AddMinutes(-5), now.AddMinutes(35), false, null)]);
+            }
+            if (variant == "calendar-only") settings.Off = [Tool.Media];
+            var panel = new OpenPanel { Width = OpenSize.Width, Height = OpenSize.Height, AnimateTabs = false };
+            panel.Attach(tools, settings);
+            Save(panel, OpenSize, Path.Combine(folder, $"1-home-{variant}.png"));
         }
     }
 

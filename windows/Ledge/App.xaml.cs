@@ -46,6 +46,13 @@ public partial class App : Application
             Shutdown();
             return;
         }
+        // Uses only the production notification view and invented content, before live services start.
+        if (e.Args is ["--notification-preview", var notificationFolder])
+        {
+            NotificationSnapshots.Run(notificationFolder);
+            Shutdown();
+            return;
+        }
         // One Ledge at a time: starting it again (say, from the Start menu while it's already running) just exits.
         running = new Mutex(true, @"Local\Ledge", out var first);
         if (!first)

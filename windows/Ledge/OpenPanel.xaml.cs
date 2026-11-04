@@ -245,14 +245,30 @@ public partial class OpenPanel : UserControl
     {
         var media = tools.NowPlaying;
         var on = settings.IsOn(Tool.Media);
-        Playing.Visibility = on && media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
-        NothingPlaying.Visibility = on && !media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
+        Playing.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        PlaybackControls.Visibility = media.HasMedia ? Visibility.Visible : Visibility.Collapsed;
+        MediaDetails.VerticalAlignment = media.HasMedia ? VerticalAlignment.Stretch : VerticalAlignment.Center;
         ToolsAbove.Visibility = on || shownTabs.Count < 2 ? Visibility.Collapsed : Visibility.Visible;
-        SongTitle.Text = media.Title;
-        SongArtist.Text = media.Artist;
+        SongTitle.Text = media.HasMedia ? media.Title : "Nothing playing";
+        SongArtist.Text = media.HasMedia ? media.Artist : "Play music in any app";
         PlayPauseGlyph.Text = media.IsPlaying ? "" : "";
+        PlayPauseButton.ToolTip = media.IsPlaying ? "Pause" : "Play";
+        System.Windows.Automation.AutomationProperties.SetName(PlayPauseButton, media.IsPlaying ? "Pause" : "Play");
         Artwork.Background = media.Artwork is { } art ? new ImageBrush(art) { Stretch = Stretch.UniformToFill } : (Brush)FindResource("Well");
         ArtworkGlyph.Visibility = media.Artwork is null ? Visibility.Visible : Visibility.Collapsed;
+        RefreshHomeLayout();
+    }
+
+    /// <summary>Use the spare room for music when Home has no status cards, instead of leaving an empty column.</summary>
+    void RefreshHomeLayout()
+    {
+        var sidebar = NextMeetingCard.Visibility == Visibility.Visible || BatteryCard.Visibility == Visibility.Visible
+            || KeepAwakeToggle.Visibility == Visibility.Visible;
+        HomeSidebar.Visibility = sidebar ? Visibility.Visible : Visibility.Collapsed;
+        HomeSidebarColumn.Width = new GridLength(sidebar ? 150 : 0);
+        HomeGutter.Width = new GridLength(sidebar ? 24 : 0);
+        var artworkSize = sidebar ? 112 : 120;
+        Artwork.Width = Artwork.Height = Playing.Height = artworkSize;
     }
 
     void PlayPause_Click(object sender, RoutedEventArgs e) => _ = tools.NowPlaying.PlayPause();
@@ -269,6 +285,7 @@ public partial class OpenPanel : UserControl
             ? tools.Calendar.Meetings.FirstOrDefault(meeting => !meeting.AllDay && meeting.End > now && meeting.Start.Date == now.Date)
             : null;
         NextMeetingCard.Visibility = next is null ? Visibility.Collapsed : Visibility.Visible;
+        RefreshHomeLayout();
         if (next is null) return;
         NextMeetingWhen.Text = next.Start <= now ? "Now" : $"Next at {next.Start:t}";
         NextMeetingTitle.Text = next.Title;
@@ -281,6 +298,7 @@ public partial class OpenPanel : UserControl
         var battery = tools.Battery;
         BatteryCard.Visibility = battery.Percent is null ? Visibility.Collapsed : Visibility.Visible;
         BatteryText.Text = battery.Percent is { } percent ? (battery.OnPower ? $"{percent}%, plugged in" : $"{percent}%") : "";
+        RefreshHomeLayout();
     }
 
     void KeepAwake_Click(object sender, RoutedEventArgs e)
