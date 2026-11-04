@@ -1,0 +1,36 @@
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Ledge</title>
+        <item>
+            <title>0.1.4</title>
+            <pubDate>Wed, 04 Nov 2026 23:36:04 +0800</pubDate>
+            <link>https://keepledge.vercel.app</link>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>0.1.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[## Notifications that stay useful
+
+- Important alerts take priority, repeated alerts are grouped, and pending alerts expire.
+- Fresh alerts wait while Home is open. Immediate volume, microphone and color feedback stays responsive.
+- Use **Preview notification** from Ledge's menu or Settings to see the island's jelly animation.
+- Turn notification sounds on or off in Settings.
+
+## Easier updates
+
+Ledge now checks for updates in the background. Use **Check for Updates…** in its menu for a manual check,
+or change automatic checks in **Settings → Updates**. You choose when to install and relaunch.
+
+Updates and the update feed are signed. Your notes, calendar and clipboard are not sent with update checks.
+
+Requires macOS 14 or later on Apple Silicon.
+]]></description>
+            <enclosure url="https://github.com/notsocj/ledge/releases/download/v0.1.4/Ledge.dmg" length="2357344" type="application/octet-stream" sparkle:edSignature="G/4Euwl9qTj7iZwqVm/mIardSUp9164UETNR5Qs1YhygBWt4A2ifHAu/jInnQZiQtmHEXOmCPlznEnSAIlWEDQ=="></enclosure>
+        </item>
+    </channel>
+</rss><!-- sparkle-signatures:
+edSignature: cu5O9Z7ZuSd4zhEt56+sg/x/fia3vgJfhV6wCwMV5b1Usez1u6wCtaa8hk9+SRguXrg8qdhWXk1CYbGEhcodCA==
+length: 1996
+-->
