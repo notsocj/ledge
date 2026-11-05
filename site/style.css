@@ -214,7 +214,7 @@ section { width: var(--page); margin: 0 auto; padding: 120px 0 0; }
 .row.is-in .row-copy { opacity: 1; translate: 0 0; }
 .row-copy { display: grid; gap: 12px; }
 .row-copy p { color: var(--mist); max-width: 38ch; }
-.row-copy .f1-closed { width: 100%; max-width: 269px; height: auto; margin: 6px 0; } /* the countdown beside the closed notch */
+.row-copy .f1-closed { width: 100%; max-width: 311px; height: auto; margin: 6px 0; } /* the countdown beside the closed notch */
 
 /* Agents */
 .agents {
