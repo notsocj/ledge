@@ -1,48 +1,51 @@
 <UserControl x:Class="Ledge.F1Page"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Ledge" Foreground="White">
+             xmlns:local="clr-namespace:Ledge" Foreground="White" FontSize="12.5">
+  <!-- The weekend at a glance. Weight carries the order you read it in: the race and the countdown,
+       then the session that's next (highlighted), then the rest of the schedule and the last podium. -->
   <DockPanel>
+    <!-- Header: what and where on the left, how long until lights out on the right. -->
     <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
       <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <StackPanel Margin="0,0,14,0">
-        <TextBlock x:Name="RaceName" Style="{StaticResource TitleText}" TextTrimming="CharacterEllipsis"/>
-        <TextBlock x:Name="CircuitName" FontSize="10" Foreground="{StaticResource Ash}" TextTrimming="CharacterEllipsis"/>
+      <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+        <TextBlock x:Name="RaceName" Style="{StaticResource TitleText}" FontSize="16" FontWeight="Bold"/>
+        <TextBlock x:Name="CircuitName" Style="{StaticResource CaptionText}" Margin="0,1,0,0"/>
       </StackPanel>
-      <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-        <TextBlock x:Name="CountdownLabel" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Ash}" HorizontalAlignment="Right"/>
-        <local:TabularText x:Name="RaceCountdown" FontSize="18" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right"/>
+      <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <local:TabularText x:Name="RaceCountdown" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Right"/>
+        <TextBlock x:Name="CountdownLabel" Style="{StaticResource CaptionText}" HorizontalAlignment="Right" Margin="0,-2,0,0"/>
       </StackPanel>
     </Grid>
-    <Grid DockPanel.Dock="Bottom" Margin="0,6,0,0">
-      <TextBlock x:Name="Freshness" FontSize="9" Foreground="{StaticResource Ash}"/>
-      <TextBlock FontSize="9" Foreground="{StaticResource Ash}" HorizontalAlignment="Right" ToolTip="Schedule and post-race results from Jolpica">
-        <Hyperlink NavigateUri="https://jolpi.ca/" RequestNavigate="Source_Click" Foreground="{StaticResource Ash}">Jolpica</Hyperlink>
+
+    <!-- Footer: how fresh this is, and where it comes from. -->
+    <Grid DockPanel.Dock="Bottom" Margin="0,4,0,0">
+      <TextBlock x:Name="Freshness" Style="{StaticResource CaptionText}" Foreground="{StaticResource Ash}"/>
+      <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right" ToolTip="Schedule and post-race results from Jolpica · CC BY-NC-SA 4.0">
+        <Hyperlink NavigateUri="https://jolpi.ca/" RequestNavigate="Source_Click" Foreground="{StaticResource Ash}" TextDecorations="{x:Null}">Jolpica ↗</Hyperlink>
       </TextBlock>
     </Grid>
+
     <Grid>
-      <Grid.ColumnDefinitions><ColumnDefinition Width="285"/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions>
-      <DockPanel>
-        <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
-          <TextBlock Text="Weekend schedule" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ash}"/>
-          <TextBlock x:Name="TimeZoneLabel" FontSize="9" Foreground="{StaticResource Ash}" HorizontalAlignment="Right"/>
-        </Grid>
-        <Grid>
-          <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel x:Name="SessionRows"/>
-          </ScrollViewer>
-          <TextBlock x:Name="ScheduleEmpty" Style="{StaticResource BodyText}" Text="Schedule not published yet." FontSize="11"/>
-        </Grid>
-      </DockPanel>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="176"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- The weekend as a timeline: done sessions fade, the next one is highlighted, the race has a flag. -->
+      <Grid Margin="-8,0,0,0">
+        <StackPanel x:Name="SessionRows"/>
+        <TextBlock x:Name="ScheduleEmpty" Style="{StaticResource BodyText}" Margin="8,2,0,0" Text="The next schedule isn't published yet."/>
+      </Grid>
+
+      <Border Grid.Column="1" Width="1" Background="{StaticResource Rail}" Margin="14,2,16,2"/>
+
+      <!-- The last podium: position badges in gold, silver and bronze; surnames, since that's what you scan for. -->
       <StackPanel Grid.Column="2">
-        <Grid Margin="0,0,0,4">
-          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-          <TextBlock Text="Latest podium" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Ash}"/>
-          <TextBlock x:Name="PodiumRace" Grid.Column="1" FontSize="9" Foreground="{StaticResource Ash}" TextTrimming="CharacterEllipsis"
-                     Margin="8,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-        </Grid>
+        <TextBlock x:Name="PodiumRace" Style="{StaticResource LabelText}" TextTrimming="CharacterEllipsis" Margin="0,2,0,8"/>
         <StackPanel x:Name="PodiumRows"/>
-        <TextBlock x:Name="PodiumEmpty" Style="{StaticResource BodyText}" Text="Awaiting published results." FontSize="11"/>
+        <TextBlock x:Name="PodiumEmpty" Style="{StaticResource BodyText}" Text="The podium appears once results are published."/>
       </StackPanel>
     </Grid>
   </DockPanel>

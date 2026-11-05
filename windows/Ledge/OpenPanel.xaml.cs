@@ -57,6 +57,10 @@ public partial class OpenPanel : UserControl
             [Tool.F1] = (F1Tab, F1View),
         };
         foreach (var (tool, (tab, _)) in pages) tab.Tag = tool.Glyph(); // the same icons as setup's tool chips
+        // F1 shows Ledge's own F1 mark, which already says what the tab is, so it needs no name beside it.
+        F1Tab.Tag = FindResource("F1Mark");
+        F1Tab.Content = null;
+        F1Tab.ToolTip = "F1 weekend";
         // The first layout, when the pill can first be placed: until then the tabs have no size.
         Header.SizeChanged += (_, _) =>
         {
@@ -137,7 +141,7 @@ public partial class OpenPanel : UserControl
         {
             tab.ApplyTemplate();
             if (tab.Template.FindName("LabelHost", tab) is not FrameworkElement host || tab.Template.FindName("Label", tab) is not FrameworkElement label) continue;
-            var open = tab.IsChecked == true;
+            var open = tab.IsChecked == true && tab.Content is not null; // a tab with no name never opens one
             label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity)); // the name's natural width, with its gap
             var width = open ? label.DesiredSize.Width : 0;
             if (animate)

@@ -1,0 +1,40 @@
+name: Mac
+
+# Builds and tests the Mac app, then renders the F1 tab's preview images with the app's own
+# --f1-preview mode, so its design can be reviewed without a Mac to hand.
+on:
+  push:
+    branches: ['**']
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', 'Package.resolved', '.github/workflows/mac.yml']
+  pull_request:
+    paths: ['Sources/**', 'Tests/**', 'Package.swift', 'Package.resolved', '.github/workflows/mac.yml']
+
+jobs:
+  build:
+    runs-on: macos-15
+    permissions:
+      contents: write # only for pushing the previews branch
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift build
+      - run: swift test
+      # Fixed preview data only: it never starts the feed, makes requests or touches preferences.
+      - name: F1 previews
+        timeout-minutes: 3
+        run: .build/debug/Ledge --f1-preview "$PWD/previews"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ledge-mac-previews
+          path: previews/*.png
+          if-no-files-found: error
+      # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
+      - if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd previews
+          git init -q -b mac-snapshots
+          git add *.png
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Mac previews of ${GITHUB_REF_NAME} at ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:mac-snapshots

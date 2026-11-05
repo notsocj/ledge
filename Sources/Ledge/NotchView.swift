@@ -241,8 +241,13 @@ private struct TabPill: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 5) {
-                Icon(name: tab.symbol, size: 13)
-                if selected {
+                if tab == .f1 {
+                    // Ledge's own F1 mark is the tab's icon and its name at once.
+                    F1Mark().frame(width: 26, height: 10)
+                } else {
+                    Icon(name: tab.symbol, size: 13)
+                }
+                if selected && tab != .f1 {
                     Text(tab.shortTitle)
                         .font(Typeface.label)
                         .fixedSize()
