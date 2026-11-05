@@ -112,7 +112,7 @@ public partial class F1Page : UserControl
     UIElement SessionRow(F1Session session, bool done, bool isNext, DateTimeOffset now)
     {
         var isRace = session.Name == "Race";
-        var row = new Grid { Height = 24, Margin = new Thickness(0, 0, 0, 1) };
+        var row = new Grid { Height = 22, Margin = new Thickness(0, 0, 0, 1) };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(22) });
         row.ColumnDefinitions.Add(new ColumnDefinition());
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -190,11 +190,12 @@ public partial class F1Page : UserControl
             : minutes >= 60 ? $"in {minutes / 60}h {minutes % 60}m" : $"in {minutes}m";
     }
 
-    /// <summary>A podium place: a medal-colored badge, the driver's surname, and the team beneath.</summary>
+    /// <summary>A podium place on one line: a medal-colored badge, the driver's surname, and the team, quieter, on the right.</summary>
     UIElement PodiumRow(F1Driver driver)
     {
-        var row = new Grid { Margin = new Thickness(0, 0, 0, 7), ToolTip = $"{driver.Position}. {driver.Name}, {driver.Team}" };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        var row = new Grid { Height = 22, Margin = new Thickness(0, 0, 0, 6), ToolTip = $"{driver.Position}. {driver.Name}, {driver.Team}" };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition());
         var badge = new Border
         {
@@ -203,12 +204,13 @@ public partial class F1Page : UserControl
             Child = new TextBlock { Text = $"{driver.Position}", FontSize = 10.5, FontWeight = FontWeights.Bold, Foreground = Brushes.Black,
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 0, 0) },
         };
-        var details = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        details.Children.Add(new TextBlock { Text = Surname(driver.Name), Style = (Style)FindResource("HeadlineText"), Foreground = Brushes.White });
-        details.Children.Add(new TextBlock { Text = driver.Team, Style = (Style)FindResource("CaptionText"), Margin = new Thickness(0, -1, 0, 0) });
-        Grid.SetColumn(details, 1);
+        var surname = new TextBlock { Text = Surname(driver.Name), Style = (Style)FindResource("HeadlineText"), Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center };
+        var team = new TextBlock { Text = driver.Team, Style = (Style)FindResource("CaptionText"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(8, 0, 0, 0) };
+        Grid.SetColumn(surname, 1);
+        Grid.SetColumn(team, 2);
         row.Children.Add(badge);
-        row.Children.Add(details);
+        row.Children.Add(surname);
+        row.Children.Add(team);
         return row;
     }
 

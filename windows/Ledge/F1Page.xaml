@@ -6,7 +6,7 @@
        then the session that's next (highlighted), then the rest of the schedule and the last podium. -->
   <DockPanel>
     <!-- Header: what and where on the left, how long until lights out on the right. -->
-    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+    <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
       <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
         <TextBlock x:Name="RaceName" Style="{StaticResource TitleText}" FontSize="16" FontWeight="Bold"/>
@@ -19,7 +19,7 @@
     </Grid>
 
     <!-- Footer: how fresh this is, and where it comes from. -->
-    <Grid DockPanel.Dock="Bottom" Margin="0,8,0,0">
+    <Grid DockPanel.Dock="Bottom" Margin="0,4,0,0">
       <TextBlock x:Name="Freshness" Style="{StaticResource CaptionText}" Foreground="{StaticResource Ash}"/>
       <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right" ToolTip="Schedule and post-race results from Jolpica · CC BY-NC-SA 4.0">
         <Hyperlink NavigateUri="https://jolpi.ca/" RequestNavigate="Source_Click" Foreground="{StaticResource Ash}" TextDecorations="{x:Null}">Jolpica ↗</Hyperlink>
@@ -43,7 +43,7 @@
 
       <!-- The last podium: position badges in gold, silver and bronze; surnames, since that's what you scan for. -->
       <StackPanel Grid.Column="2">
-        <TextBlock x:Name="PodiumRace" Style="{StaticResource LabelText}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
+        <TextBlock x:Name="PodiumRace" Style="{StaticResource LabelText}" TextTrimming="CharacterEllipsis" Margin="0,2,0,8"/>
         <StackPanel x:Name="PodiumRows"/>
         <TextBlock x:Name="PodiumEmpty" Style="{StaticResource BodyText}" Text="The podium appears once results are published."/>
       </StackPanel>

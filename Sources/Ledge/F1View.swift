@@ -161,18 +161,19 @@ struct F1View: View {
                 .help(companion.latestPodium.map { "\($0.race.name), \($0.race.season)" } ?? "")
             if let podium = companion.latestPodium {
                 ForEach(podium.drivers, id: \.position) { driver in
+                    // One line per place: badge, surname (as on timing screens: "Andrea Kimi Antonelli" reads as
+                    // "Antonelli"), then the team, quieter, on the right.
                     HStack(spacing: 9) {
                         Text("\(driver.position)")
                             .font(.system(size: 10, weight: .bold)).foregroundStyle(.black)
                             .frame(width: 18, height: 18)
                             .background(Circle().fill(driver.position >= 1 && driver.position <= 3 ? Self.medals[driver.position - 1] : Palette.rail))
-                        VStack(alignment: .leading, spacing: 0) {
-                            // Surnames, as on timing screens: "Andrea Kimi Antonelli" reads as "Antonelli".
-                            Text(Self.surname(driver.name)).font(Typeface.headline).foregroundStyle(Palette.paper)
-                            Text(driver.team).font(Typeface.caption).foregroundStyle(Palette.graphite)
-                        }
-                        .lineLimit(1)
+                        Text(Self.surname(driver.name)).font(Typeface.headline).foregroundStyle(Palette.paper)
+                        Spacer(minLength: 6)
+                        Text(driver.team).font(Typeface.caption).foregroundStyle(Palette.graphite)
                     }
+                    .lineLimit(1)
+                    .frame(height: 20)
                     .help("\(driver.position). \(driver.name), \(driver.team)")
                     .accessibilityElement(children: .combine)
                 }
