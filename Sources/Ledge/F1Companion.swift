@@ -43,6 +43,12 @@ final class F1Companion {
         self.load = load
     }
 
+    /// For snapshots: fixed preview data at a fixed time. Nothing is fetched, cached or scheduled.
+    func showDemo(_ snapshot: F1Snapshot, now: Date) {
+        self.snapshot = snapshot
+        self.now = now
+    }
+
     func start() {
         guard !isRunning else { return }
         isRunning = true

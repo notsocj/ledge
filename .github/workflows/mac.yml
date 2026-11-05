@@ -22,10 +22,16 @@ jobs:
       - name: F1 previews
         timeout-minutes: 3
         run: .build/debug/Ledge --f1-preview "$PWD/previews"
+      # Every persona, tab, setup step and banner, as the website's pictures are made. Demo data only;
+      # it never changes preferences. Allowed to fail without blocking the build.
+      - name: Snapshots
+        timeout-minutes: 8
+        continue-on-error: true
+        run: .build/debug/Ledge --snapshot "$PWD/previews/site"
       - uses: actions/upload-artifact@v4
         with:
           name: Ledge-mac-previews
-          path: previews/*.png
+          path: previews/**/*.png
           if-no-files-found: error
       # The same pictures on a branch of their own, replaced each run, for viewing them where artifacts can't be downloaded.
       - if: github.event_name == 'push'
@@ -35,6 +41,6 @@ jobs:
         run: |
           cd previews
           git init -q -b mac-snapshots
-          git add *.png
+          git add -A .
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Mac previews of ${GITHUB_REF_NAME} at ${GITHUB_SHA::7}"
           git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:mac-snapshots

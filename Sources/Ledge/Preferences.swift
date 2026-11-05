@@ -164,6 +164,8 @@ final class Preferences {
 
     /// A layout to show without saving anything (the snapshot renderer). Overrides personas and switches.
     var preview: [Persona]?
+    /// Whether F1 is on in that preview layout. F1 is opt-in, so no persona turns it on by itself.
+    var previewF1 = false
 
     var layout: Layout { Layout.merging(preview ?? personas) }
 
@@ -194,7 +196,7 @@ final class Preferences {
     }
 
     func isOn(_ tool: Tool) -> Bool {
-        if let preview { return Layout.merging(preview).tools.contains(tool) }
+        if let preview { return tool == .f1 ? previewF1 : Layout.merging(preview).tools.contains(tool) }
         if tool == .f1 { return f1Enabled }
         return !disabled.contains(tool)
     }

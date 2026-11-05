@@ -72,6 +72,19 @@ enum Snapshots {
             }
         }
 
+        // F1, opt-in, with fixed preview data: open on its tab, then its countdown beside the closed notch.
+        app.f1.showDemo(.preview, now: F1Snapshot.previewNow)
+        app.preferences.preview = [.essentials]
+        app.preferences.previewF1 = true
+        app.model.tab = .f1
+        try? await Task.sleep(for: .milliseconds(900))
+        capture(host, "f1-open", in: folder)
+        app.model.expanded = false
+        try? await Task.sleep(for: .milliseconds(900))
+        capture(host, "closed-f1", in: folder)
+        app.preferences.previewF1 = false
+        app.model.expanded = true
+
         // Setup, as a developer would see it.
         app.preferences.preview = [.developer]
         let flow = Onboarding()
