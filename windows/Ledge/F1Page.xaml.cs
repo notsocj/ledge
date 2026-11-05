@@ -120,7 +120,7 @@ public partial class F1Page : UserControl
 
         // Done: a small filled dot. Next: green. Later: a hollow ring. The race: a flag.
         FrameworkElement mark = isRace && !done
-            ? new TextBlock { Text = "", Style = (Style)FindResource("Glyph"), FontSize = 11, Foreground = isNext ? (Brush)FindResource("Live") : Brushes.White }
+            ? CheckeredFlag(isNext ? (Brush)FindResource("Live") : Brushes.White)
             : new Ellipse
             {
                 Width = 6, Height = 6,
@@ -216,6 +216,21 @@ public partial class F1Page : UserControl
         row.Children.Add(surname);
         row.Children.Add(team);
         return row;
+    }
+
+    /// <summary>A small checkered flag in the soft style of the F1 mark: a rounded pole and a rounded cloth
+    /// with three checks, all in one color so it follows the row (white, or green when the race is next).
+    /// Drawn on a 14 × 14 grid.</summary>
+    static FrameworkElement CheckeredFlag(Brush brush)
+    {
+        var cloth = new RectangleGeometry(new Rect(2.4, 1.6, 10.2, 7), 1.4, 1.4);
+        var checks = new GeometryGroup();
+        foreach (var (x, y) in new[] { (2.4, 1.6), (9.2, 1.6), (5.8, 5.1) }) checks.Children.Add(new RectangleGeometry(new Rect(x, y, 3.4, 3.5)));
+        var canvas = new Canvas { Width = 14, Height = 14 };
+        canvas.Children.Add(new Path { Data = new RectangleGeometry(new Rect(1.2, 1, 1.2, 12), 0.6, 0.6), Fill = brush }); // pole
+        canvas.Children.Add(new Path { Data = checks, Fill = brush, Clip = cloth }); // checks, clipped to the cloth's rounded corners
+        canvas.Children.Add(new Path { Data = new RectangleGeometry(new Rect(2.9, 2.1, 9.2, 6), 0.9, 0.9), Stroke = brush, StrokeThickness = 1 }); // its edge
+        return new Viewbox { Child = canvas, Width = 13, Height = 13 };
     }
 
     /// <summary>"Andrea Kimi Antonelli" reads as "Antonelli", as on timing screens.</summary>

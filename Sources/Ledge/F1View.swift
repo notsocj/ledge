@@ -92,7 +92,7 @@ struct F1View: View {
         return HStack(spacing: 0) {
             Group {
                 if isRace && !done {
-                    Image(systemName: "flag.checkered").font(.system(size: 9, weight: .bold))
+                    CheckeredFlag().frame(width: 11, height: 11)
                         .foregroundStyle(isNext ? Palette.live : Palette.paper)
                 } else if done {
                     Circle().fill(Palette.rail).frame(width: 5, height: 5)
@@ -310,5 +310,24 @@ struct ChampagneBottle: View {
             path.closeSubpath()
             return path
         }
+    }
+}
+
+/// A small checkered flag in the soft style of the F1 mark: a rounded pole and a rounded cloth with three
+/// checks, in the foreground style so it follows the row. Drawn on a 14 × 14 grid.
+struct CheckeredFlag: View {
+    var body: some View {
+        Canvas { context, size in
+            let scale = min(size.width, size.height) / 14
+            context.scaleBy(x: scale, y: scale)
+            context.fill(Path(roundedRect: CGRect(x: 1.2, y: 1, width: 1.2, height: 12), cornerRadius: 0.6), with: .foreground)
+            var cloth = context
+            cloth.clip(to: Path(roundedRect: CGRect(x: 2.4, y: 1.6, width: 10.2, height: 7), cornerRadius: 1.4))
+            for (x, y) in [(2.4, 1.6), (9.2, 1.6), (5.8, 5.1)] as [(CGFloat, CGFloat)] {
+                cloth.fill(Path(CGRect(x: x, y: y, width: 3.4, height: 3.5)), with: .foreground)
+            }
+            context.stroke(Path(roundedRect: CGRect(x: 2.9, y: 2.1, width: 9.2, height: 6), cornerRadius: 0.9), with: .foreground, lineWidth: 1)
+        }
+        .accessibilityHidden(true)
     }
 }
