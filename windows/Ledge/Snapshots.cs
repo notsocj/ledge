@@ -94,10 +94,16 @@ static class Snapshots
         ]);
         var previous = weekend with { Round = 19, Name = "Mexico City Grand Prix", Start = start.AddDays(-7), Date = day.AddDays(-7) };
         var podium = new F1Podium(previous, [new(1, "Lando Norris", "McLaren"), new(2, "Charles Leclerc", "Ferrari"), new(3, "Max Verstappen", "Red Bull")]);
-        foreach (var variant in new[] { "weekend", "results-pending", "saved", "empty" })
+        // Mid-weekend: practice and sprint qualifying done, the sprint next.
+        var underway = weekend with
+        {
+            Start = now.AddDays(1).AddHours(5),
+            Sessions = weekend.Sessions.Select(session => session with { Start = session.Start?.AddDays(-2).AddHours(1) }).ToList(),
+        };
+        foreach (var variant in new[] { "weekend", "underway", "results-pending", "saved", "empty" })
         {
             var tools = new Tools(Dispatcher.CurrentDispatcher);
-            var race = variant == "results-pending" ? weekend with { Start = now.AddHours(-2) } : weekend;
+            var race = variant switch { "results-pending" => weekend with { Start = now.AddHours(-2) }, "underway" => underway, _ => weekend };
             if (variant != "empty") tools.F1.ShowDemo(new([race], podium, now.AddMinutes(-12)), variant == "saved" ? "Couldn't update" : null);
             var panel = new OpenPanel { Width = 560, Height = 260, AnimateTabs = false };
             panel.Attach(tools, new Settings { SetupDone = true, Personas = [Persona.Essentials], F1Enabled = true });
