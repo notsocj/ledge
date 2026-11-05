@@ -64,8 +64,7 @@ import SwiftUI
                 if expanded {
                     VStack(spacing: 0) {
                         HStack(spacing: 6) {
-                            Image(systemName: "flag.checkered")
-                            Text("F1").font(Typeface.headline)
+                            F1Mark().frame(width: 26, height: 10)
                             Spacer()
                         }
                         .foregroundStyle(Palette.paper).padding(.horizontal, 24).frame(height: 32)

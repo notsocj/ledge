@@ -312,7 +312,7 @@ public partial class IslandWindow : Window
         f1Wings = settings.F1Enabled && !timerOn && !mediaOn;
         var art = !timerOn && mediaOn ? media.Artwork : null;
         WingArt.Background = art is null ? null : new ImageBrush(art) { Stretch = Stretch.UniformToFill };
-        WingGlyph.Text = timerOn ? "" : f1Wings ? Tool.F1.Glyph() : art is null ? "" : "";
+        WingGlyph.Text = timerOn ? "" : f1Wings ? "" /* the F1 mark (WingLabel) stands alone */ : art is null ? "" : "";
         WingLabel.Visibility = f1Wings ? Visibility.Visible : Visibility.Collapsed;
         WingText.Text = timerOn ? Countdown.Format(countdown.Remaining) : f1Wings
             ? tools.F1.Data is null ? (tools.F1.Updating ? "Updating…" : "Unavailable")

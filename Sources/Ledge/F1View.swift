@@ -147,13 +147,12 @@ struct F1View: View {
 
     // MARK: Podium
 
-    /// Champagne for the winner (a soft metallic gradient, so first place reads first), then silver and
-    /// bronze, muted so they sit quietly on black.
-    private static let medals: [AnyShapeStyle] = [
-        AnyShapeStyle(LinearGradient(colors: [Color(red: 0.97, green: 0.93, blue: 0.81), Color(red: 0.85, green: 0.74, blue: 0.53)],
-                                     startPoint: .topLeading, endPoint: .bottomTrailing)),
-        AnyShapeStyle(Color(red: 0.80, green: 0.82, blue: 0.85)),
-        AnyShapeStyle(Color(red: 0.82, green: 0.58, blue: 0.39)),
+    /// Silver and bronze for second and third (index 1 and 2), muted so they sit quietly on black.
+    /// The winner gets the champagne bottle instead.
+    private static let medals: [Color] = [
+        Color(red: 0.91, green: 0.77, blue: 0.42),
+        Color(red: 0.80, green: 0.82, blue: 0.85),
+        Color(red: 0.82, green: 0.58, blue: 0.39),
     ]
 
     private var podium: some View {
@@ -166,10 +165,15 @@ struct F1View: View {
                     // One line per place: badge, surname (as on timing screens: "Andrea Kimi Antonelli" reads as
                     // "Antonelli"), then the team, quieter, on the right.
                     HStack(spacing: 9) {
-                        Text("\(driver.position)")
-                            .font(.system(size: 10, weight: .bold)).foregroundStyle(.black)
-                            .frame(width: 18, height: 18)
-                            .background(Circle().fill(driver.position >= 1 && driver.position <= 3 ? Self.medals[driver.position - 1] : AnyShapeStyle(Palette.rail)))
+                        // The winner gets the champagne; second and third keep numbered silver and bronze badges.
+                        if driver.position == 1 {
+                            ChampagneBottle().frame(width: 20, height: 20).padding(-1)
+                        } else {
+                            Text("\(driver.position)")
+                                .font(.system(size: 10, weight: .bold)).foregroundStyle(.black)
+                                .frame(width: 18, height: 18)
+                                .background(Circle().fill(driver.position <= 3 ? Self.medals[driver.position - 1] : Palette.rail))
+                        }
                         Text(Self.surname(driver.name)).font(Typeface.headline).foregroundStyle(Palette.paper)
                         Spacer(minLength: 6)
                         Text(driver.team).font(Typeface.caption).foregroundStyle(Palette.graphite)
@@ -207,10 +211,7 @@ struct F1CompactView: View {
 
     var body: some View {
         Wings(height: height) {
-            HStack(spacing: 6) {
-                Image(systemName: "flag.checkered").font(.system(size: 12, weight: .semibold))
-                Text("F1").font(Typeface.wing)
-            }
+            F1Mark().frame(width: 28, height: 11)
         } trailing: {
             Text(companion.countdown)
                 .font(companion.isResultsPending ? Typeface.caption : Typeface.wing)
@@ -218,5 +219,78 @@ struct F1CompactView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Formula 1, \(companion.weekend?.name ?? "next race"), \(companion.countdown)")
+    }
+}
+
+/// Ledge's own F1 mark, not Formula 1's trademarked logo: a blocky "F1" with speed lines, slanted forward.
+/// Drawn on a 52 × 20 grid and scaled to fit; it fills with the foreground style, like an icon.
+struct F1Mark: Shape {
+    private static let pieces: [[(CGFloat, CGFloat)]] = [
+        [(6.64, 4.2), (15.14, 4.2), (14.13, 6.6), (5.63, 6.6)], // speed lines
+        [(7.7, 8.8), (13.2, 8.8), (12.2, 11.2), (6.7, 11.2)],
+        [(8.77, 13.4), (11.27, 13.4), (10.26, 15.8), (7.76, 15.8)],
+        [(19.4, 0), (24.9, 0), (16.5, 20), (11.0, 20)], // F
+        [(19.4, 0), (40.4, 0), (38.22, 5.2), (17.22, 5.2)],
+        [(15.96, 8.2), (31.46, 8.2), (29.61, 12.6), (14.11, 12.6)],
+        [(46.4, 0), (51.9, 0), (43.5, 20), (38.0, 20)], // 1
+        [(42.9, 0), (46.4, 0), (44.47, 4.6), (40.97, 4.6)],
+    ]
+
+    func path(in rect: CGRect) -> Path {
+        let scale = min(rect.width / 52, rect.height / 20)
+        let origin = CGPoint(x: rect.midX - 26 * scale, y: rect.midY - 10 * scale)
+        var path = Path()
+        for piece in Self.pieces {
+            path.addLines(piece.map { CGPoint(x: origin.x + $0.0 * scale, y: origin.y + $0.1 * scale) })
+            path.closeSubpath()
+        }
+        return path
+    }
+}
+
+/// The winner's champagne: a bottle tipped to spray, with a few bubbles. Drawn on a 20 × 20 grid.
+struct ChampagneBottle: View {
+    private static let foam = Color(red: 0.97, green: 0.91, blue: 0.72)
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .topLeading) {
+                ZStack(alignment: .topLeading) {
+                    BottleShape().fill(LinearGradient(colors: [Color(red: 0.96, green: 0.86, blue: 0.60), Color(red: 0.83, green: 0.68, blue: 0.38)],
+                                                      startPoint: .leading, endPoint: .trailing))
+                    Path(roundedRect: CGRect(x: 8.2, y: 1.2, width: 3.6, height: 2.4), cornerRadius: 0.4).fill(Self.foam)
+                    Path(CGRect(x: 5.8, y: 12.5, width: 8.4, height: 3.1)).fill(Color(red: 0.29, green: 0.23, blue: 0.11))
+                }
+                .frame(width: 20, height: 20)
+                .rotationEffect(.degrees(28))
+                Path { path in
+                    for (x, y, r) in [(16.6, 2.6, 1.0), (18.6, 5.0, 0.8), (15.2, 0.7, 0.7)] as [(CGFloat, CGFloat, CGFloat)] {
+                        path.addEllipse(in: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r))
+                    }
+                }
+                .fill(Self.foam)
+            }
+            .frame(width: 20, height: 20, alignment: .topLeading)
+            .scaleEffect(min(proxy.size.width, proxy.size.height) / 20, anchor: .topLeading)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private struct BottleShape: Shape {
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+            path.move(to: CGPoint(x: 8.6, y: 3.5))
+            path.addLine(to: CGPoint(x: 11.4, y: 3.5))
+            path.addLine(to: CGPoint(x: 11.4, y: 7))
+            path.addCurve(to: CGPoint(x: 14.2, y: 11), control1: CGPoint(x: 11.4, y: 8.3), control2: CGPoint(x: 14.2, y: 8.6))
+            path.addLine(to: CGPoint(x: 14.2, y: 18))
+            path.addQuadCurve(to: CGPoint(x: 13.4, y: 19), control: CGPoint(x: 14.2, y: 19))
+            path.addLine(to: CGPoint(x: 6.6, y: 19))
+            path.addQuadCurve(to: CGPoint(x: 5.8, y: 18), control: CGPoint(x: 5.8, y: 19))
+            path.addLine(to: CGPoint(x: 5.8, y: 11))
+            path.addCurve(to: CGPoint(x: 8.6, y: 7), control1: CGPoint(x: 5.8, y: 8.6), control2: CGPoint(x: 8.6, y: 8.3))
+            path.closeSubpath()
+            return path
+        }
     }
 }

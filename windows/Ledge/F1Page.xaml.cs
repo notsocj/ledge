@@ -16,11 +16,10 @@ public partial class F1Page : UserControl
     string? displayedZone;
     int renderedNext = -2;
 
-    /// <summary>Champagne for the winner (a soft metallic gradient, so first place reads first), then silver
-    /// and bronze, muted so they sit quietly on black.</summary>
+    /// <summary>Silver and bronze for second and third, muted so they sit quietly on black. (The winner gets champagne.)</summary>
     static readonly Brush[] Medals =
     [
-        Champagne(),
+        Frozen(Color.FromRgb(0xE8, 0xC5, 0x6A)),
         Frozen(Color.FromRgb(0xCB, 0xD0, 0xD8)),
         Frozen(Color.FromRgb(0xD0, 0x93, 0x63)),
     ];
@@ -198,7 +197,11 @@ public partial class F1Page : UserControl
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition());
-        var badge = new Border
+        // The winner gets the champagne; second and third keep numbered silver and bronze badges.
+        FrameworkElement badge = driver.Position == 1
+            ? new Image { Source = (ImageSource)FindResource("Champagne"), Width = 22, Height = 22, Margin = new Thickness(-1, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left }
+            : new Border
         {
             Width = 20, Height = 20, CornerRadius = new CornerRadius(10), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left,
             Background = driver.Position is >= 1 and <= 3 ? Medals[driver.Position - 1] : (Brush)FindResource("Rail"),
@@ -217,13 +220,6 @@ public partial class F1Page : UserControl
 
     /// <summary>"Andrea Kimi Antonelli" reads as "Antonelli", as on timing screens.</summary>
     internal static string Surname(string name) => name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries) is { Length: > 0 } parts ? parts[^1] : name;
-
-    static LinearGradientBrush Champagne()
-    {
-        var brush = new LinearGradientBrush(Color.FromRgb(0xF8, 0xEC, 0xCF), Color.FromRgb(0xD8, 0xBC, 0x86), new Point(0, 0), new Point(1, 1));
-        brush.Freeze();
-        return brush;
-    }
 
     static SolidColorBrush Frozen(Color color)
     {
