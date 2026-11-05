@@ -80,8 +80,10 @@ enum Snapshots {
         try? await Task.sleep(for: .milliseconds(900))
         capture(host, "f1-open", in: folder)
         app.model.expanded = false
+        app.preferences.previewOff = [.media] // music would take the closed notch's sides first
         try? await Task.sleep(for: .milliseconds(900))
         capture(host, "closed-f1", in: folder)
+        app.preferences.previewOff = []
         app.preferences.previewF1 = false
         app.model.expanded = true
 

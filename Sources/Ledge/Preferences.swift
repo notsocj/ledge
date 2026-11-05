@@ -166,6 +166,8 @@ final class Preferences {
     var preview: [Persona]?
     /// Whether F1 is on in that preview layout. F1 is opt-in, so no persona turns it on by itself.
     var previewF1 = false
+    /// Tools switched off in that preview layout, such as music, so the closed notch shows what's behind it.
+    var previewOff: Set<Tool> = []
 
     var layout: Layout { Layout.merging(preview ?? personas) }
 
@@ -196,7 +198,7 @@ final class Preferences {
     }
 
     func isOn(_ tool: Tool) -> Bool {
-        if let preview { return tool == .f1 ? previewF1 : Layout.merging(preview).tools.contains(tool) }
+        if let preview { return tool == .f1 ? previewF1 : !previewOff.contains(tool) && Layout.merging(preview).tools.contains(tool) }
         if tool == .f1 { return f1Enabled }
         return !disabled.contains(tool)
     }
