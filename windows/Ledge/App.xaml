@@ -16,9 +16,10 @@
     <FontFamily x:Key="Poppins">pack://application:,,,/Ledge;component/Assets/Fonts/#Poppins</FontFamily>
     <FontFamily x:Key="Glyphs">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
-    <!-- Ledge's own F1 mark (not Formula 1's trademarked logo): blocky "F1" with speed lines, slanted
-         forward. 52 × 20; tinted like any icon, so it follows the text color it sits in. -->
-    <PathGeometry x:Key="F1Mark" Figures="M6.64,4.2 L15.14,4.2 L14.13,6.6 L5.63,6.6 Z M7.7,8.8 L13.2,8.8 L12.2,11.2 L6.7,11.2 Z M8.77,13.4 L11.27,13.4 L10.26,15.8 L7.76,15.8 Z M19.4,0 L24.9,0 L16.5,20 L11.0,20 Z M19.4,0 L40.4,0 L38.22,5.2 L17.22,5.2 Z M15.96,8.2 L31.46,8.2 L29.61,12.6 L14.11,12.6 Z M46.4,0 L51.9,0 L43.5,20 L38.0,20 Z M42.9,0 L46.4,0 L44.47,4.6 L40.97,4.6 Z"/>
+    <!-- Ledge's own F1 mark (not Formula 1's trademarked logo): a soft, rounded "F1" with speed lines,
+         slanted forward. 52 × 20; tinted like any icon, so it follows the text color it sits in. Generated:
+         each letter is one outline with every corner rounded (radius 1.7). -->
+    <PathGeometry x:Key="F1Mark" Figures="M8.34,4.2 L13.44,4.2 Q15.14,4.2 14.64,5.4 L14.64,5.4 Q14.13,6.6 12.43,6.6 L7.33,6.6 Q5.63,6.6 6.13,5.4 L6.13,5.4 Q6.64,4.2 8.34,4.2 Z M9.4,8.8 L11.5,8.8 Q13.2,8.8 12.7,10.0 L12.7,10.0 Q12.2,11.2 10.5,11.2 L8.4,11.2 Q6.7,11.2 7.2,10.0 L7.2,10.0 Q7.7,8.8 9.4,8.8 Z M10.02,13.4 L10.02,13.4 Q11.27,13.4 10.77,14.6 L10.77,14.6 Q10.26,15.8 9.01,15.8 L9.01,15.8 Q7.76,15.8 8.27,14.6 L8.27,14.6 Q8.77,13.4 10.02,13.4 Z M21.1,0.0 L38.7,0.0 Q40.4,0 39.74,1.57 L38.88,3.63 Q38.22,5.2 36.52,5.2 L24.42,5.2 Q22.72,5.2 22.09,6.7 L22.09,6.7 Q21.46,8.2 23.16,8.2 L29.76,8.2 Q31.46,8.2 30.8,9.77 L30.27,11.03 Q29.61,12.6 27.91,12.6 L21.31,12.6 Q19.61,12.6 18.95,14.17 L17.16,18.43 Q16.5,20 14.8,20.0 L12.7,20.0 Q11.0,20 11.66,18.43 L18.74,1.57 Q19.4,0 21.1,0.0 Z M44.6,0.0 L50.2,0.0 Q51.9,0 51.24,1.57 L44.16,18.43 Q43.5,20 41.8,20.0 L39.7,20.0 Q38.0,20 38.66,18.43 L43.81,6.17 Q44.47,4.6 42.77,4.6 L42.67,4.6 Q40.97,4.6 41.63,3.03 L42.24,1.57 Q42.9,0 44.6,0.0 Z"/>
 
     <!-- The winner's champagne: a bottle tipped to spray, with a few bubbles, in a 20 × 20 box. -->
     <DrawingImage x:Key="Champagne">

@@ -222,26 +222,44 @@ struct F1CompactView: View {
     }
 }
 
-/// Ledge's own F1 mark, not Formula 1's trademarked logo: a blocky "F1" with speed lines, slanted forward.
-/// Drawn on a 52 × 20 grid and scaled to fit; it fills with the foreground style, like an icon.
+/// Ledge's own F1 mark, not Formula 1's trademarked logo: a soft, rounded "F1" with speed lines, slanted
+/// forward. Drawn on a 52 × 20 grid and scaled to fit; it fills with the foreground style, like an icon.
 struct F1Mark: Shape {
-    private static let pieces: [[(CGFloat, CGFloat)]] = [
-        [(6.64, 4.2), (15.14, 4.2), (14.13, 6.6), (5.63, 6.6)], // speed lines
+    /// One outline per piece (three speed lines, the F, the 1), already slanted; every corner is rounded.
+    private static let pieces: [[CGPoint]] = outlines.map { $0.map { CGPoint(x: $0.0, y: $0.1) } }
+    private static let outlines: [[(CGFloat, CGFloat)]] = [
+        [(6.64, 4.2), (15.14, 4.2), (14.13, 6.6), (5.63, 6.6)],
         [(7.7, 8.8), (13.2, 8.8), (12.2, 11.2), (6.7, 11.2)],
         [(8.77, 13.4), (11.27, 13.4), (10.26, 15.8), (7.76, 15.8)],
-        [(19.4, 0), (24.9, 0), (16.5, 20), (11.0, 20)], // F
-        [(19.4, 0), (40.4, 0), (38.22, 5.2), (17.22, 5.2)],
-        [(15.96, 8.2), (31.46, 8.2), (29.61, 12.6), (14.11, 12.6)],
-        [(46.4, 0), (51.9, 0), (43.5, 20), (38.0, 20)], // 1
-        [(42.9, 0), (46.4, 0), (44.47, 4.6), (40.97, 4.6)],
+        [(19.4, 0), (40.4, 0), (38.22, 5.2), (22.72, 5.2), (21.46, 8.2), (31.46, 8.2), (29.61, 12.6), (19.61, 12.6), (16.5, 20), (11.0, 20)],
+        [(42.9, 0), (51.9, 0), (43.5, 20), (38.0, 20), (44.47, 4.6), (40.97, 4.6)],
     ]
+    private static let radius: CGFloat = 1.7
 
     func path(in rect: CGRect) -> Path {
         let scale = min(rect.width / 52, rect.height / 20)
         let origin = CGPoint(x: rect.midX - 26 * scale, y: rect.midY - 10 * scale)
+        func place(_ point: CGPoint) -> CGPoint { CGPoint(x: origin.x + point.x * scale, y: origin.y + point.y * scale) }
+        /// A point `radius` along the edge from `corner` toward `other` (at most halfway, so thin pieces become pills).
+        func toward(_ corner: CGPoint, _ other: CGPoint) -> CGPoint {
+            let dx = other.x - corner.x, dy = other.y - corner.y, length = hypot(dx, dy)
+            let t = min(Self.radius, length / 2) / length
+            return CGPoint(x: corner.x + dx * t, y: corner.y + dy * t)
+        }
         var path = Path()
         for piece in Self.pieces {
-            path.addLines(piece.map { CGPoint(x: origin.x + $0.0 * scale, y: origin.y + $0.1 * scale) })
+            let count = piece.count
+            for index in 0...count {
+                let corner = piece[index % count]
+                let before = toward(corner, piece[(index + count - 1) % count])
+                let after = toward(corner, piece[(index + 1) % count])
+                if index == 0 {
+                    path.move(to: place(after))
+                } else {
+                    path.addLine(to: place(before))
+                    path.addQuadCurve(to: place(after), control: place(corner))
+                }
+            }
             path.closeSubpath()
         }
         return path
