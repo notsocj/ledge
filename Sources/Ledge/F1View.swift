@@ -147,11 +147,13 @@ struct F1View: View {
 
     // MARK: Podium
 
-    /// Gold, silver and bronze, muted so they sit quietly on black.
-    private static let medals: [Color] = [
-        Color(red: 0.91, green: 0.77, blue: 0.42),
-        Color(red: 0.80, green: 0.82, blue: 0.85),
-        Color(red: 0.82, green: 0.58, blue: 0.39),
+    /// Champagne for the winner (a soft metallic gradient, so first place reads first), then silver and
+    /// bronze, muted so they sit quietly on black.
+    private static let medals: [AnyShapeStyle] = [
+        AnyShapeStyle(LinearGradient(colors: [Color(red: 0.97, green: 0.93, blue: 0.81), Color(red: 0.85, green: 0.74, blue: 0.53)],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing)),
+        AnyShapeStyle(Color(red: 0.80, green: 0.82, blue: 0.85)),
+        AnyShapeStyle(Color(red: 0.82, green: 0.58, blue: 0.39)),
     ]
 
     private var podium: some View {
@@ -167,7 +169,7 @@ struct F1View: View {
                         Text("\(driver.position)")
                             .font(.system(size: 10, weight: .bold)).foregroundStyle(.black)
                             .frame(width: 18, height: 18)
-                            .background(Circle().fill(driver.position >= 1 && driver.position <= 3 ? Self.medals[driver.position - 1] : Palette.rail))
+                            .background(Circle().fill(driver.position >= 1 && driver.position <= 3 ? Self.medals[driver.position - 1] : AnyShapeStyle(Palette.rail)))
                         Text(Self.surname(driver.name)).font(Typeface.headline).foregroundStyle(Palette.paper)
                         Spacer(minLength: 6)
                         Text(driver.team).font(Typeface.caption).foregroundStyle(Palette.graphite)

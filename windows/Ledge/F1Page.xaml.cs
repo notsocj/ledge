@@ -16,10 +16,11 @@ public partial class F1Page : UserControl
     string? displayedZone;
     int renderedNext = -2;
 
-    /// <summary>Gold, silver and bronze, muted so they sit quietly on black.</summary>
+    /// <summary>Champagne for the winner (a soft metallic gradient, so first place reads first), then silver
+    /// and bronze, muted so they sit quietly on black.</summary>
     static readonly Brush[] Medals =
     [
-        Frozen(Color.FromRgb(0xE8, 0xC5, 0x6A)),
+        Champagne(),
         Frozen(Color.FromRgb(0xCB, 0xD0, 0xD8)),
         Frozen(Color.FromRgb(0xD0, 0x93, 0x63)),
     ];
@@ -216,6 +217,13 @@ public partial class F1Page : UserControl
 
     /// <summary>"Andrea Kimi Antonelli" reads as "Antonelli", as on timing screens.</summary>
     internal static string Surname(string name) => name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries) is { Length: > 0 } parts ? parts[^1] : name;
+
+    static LinearGradientBrush Champagne()
+    {
+        var brush = new LinearGradientBrush(Color.FromRgb(0xF8, 0xEC, 0xCF), Color.FromRgb(0xD8, 0xBC, 0x86), new Point(0, 0), new Point(1, 1));
+        brush.Freeze();
+        return brush;
+    }
 
     static SolidColorBrush Frozen(Color color)
     {
