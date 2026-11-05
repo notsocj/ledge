@@ -133,7 +133,12 @@ enum Snapshots {
     /// The island at 2x on a transparent background, so it can sit on any backdrop (review sheets, the website).
     private static func capture(_ view: NSView, _ name: String, in folder: URL) {
         view.layoutSubtreeIfNeeded()
-        guard let island = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        // Always 2x, whatever screen this runs on (a build machine's display may be 1x), so pictures for the
+        // website stay sharp: the bitmap has twice the pixels of the view's size, and the view draws into it.
+        guard let island = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(view.bounds.width * 2), pixelsHigh: Int(view.bounds.height * 2),
+                                            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return }
+        island.size = view.bounds.size
         view.cacheDisplay(in: view.bounds, to: island)
         try? island.representation(using: .png, properties: [:])?.write(to: folder.appending(path: "\(name).png"))
     }

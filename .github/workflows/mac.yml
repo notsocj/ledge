@@ -24,10 +24,13 @@ jobs:
         run: .build/debug/Ledge --f1-preview "$PWD/previews"
       # Every persona, tab, setup step and banner, as the website's pictures are made. Demo data only;
       # it never changes preferences. Allowed to fail without blocking the build.
+      # The real app bundle (signed ad hoc), so its icons load; then the snapshots run from it.
       - name: Snapshots
-        timeout-minutes: 8
+        timeout-minutes: 15
         continue-on-error: true
-        run: .build/debug/Ledge --snapshot "$PWD/previews/site"
+        run: |
+          ./build.sh
+          build/Ledge.app/Contents/MacOS/Ledge --snapshot "$PWD/previews/site"
       - uses: actions/upload-artifact@v4
         with:
           name: Ledge-mac-previews
