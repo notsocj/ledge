@@ -48,7 +48,7 @@ struct NotchView: View {
             default: continue
             }
         }
-        if app.preferences.isOn(.f1) { return .f1 }
+        if app.showsF1Compact { return .f1 }
         return .nothing
     }
 

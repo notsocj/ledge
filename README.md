@@ -100,7 +100,8 @@ history · Timer and focus sessions · Notes · System stats · Localhost ports 
 
 **F1 companion** is off by default. Enable it in Settings → In the island on Mac, or the Windows
 tool settings. It shows a next-race countdown, the weekend schedule in your local time and the
-latest published podium. Hover the compact F1 countdown to open the weekend; active timers, music
+latest published podium. While F1 is your selected tab, the closed island shows its countdown; hover it
+to open the weekend. Choose another tab, like Home, and the closed island goes quiet. Active timers, music
 and ordinary notifications keep priority. Countdown ticks are quiet and opening uses the existing
 island animation. Data comes from [Jolpica](https://jolpi.ca/): this is a schedule/results companion,
 not live timing. After the scheduled start it shows “Results pending” while publication catches up.
