@@ -147,8 +147,9 @@ final class NotchController {
     var leftTabs: [Tool] { Array(tabs.prefix(Tool.leftTabCount)) }
     var rightTabs: [Tool] { Array(tabs.dropFirst(Tool.leftTabCount)) }
 
+    /// The closed island's F1 countdown follows the tab you chose: pick Home and the notch goes quiet.
     var showsF1Compact: Bool {
-        preferences.isOn(.f1) && model.fileDrag == nil
+        preferences.isOn(.f1) && model.tab == .f1 && model.fileDrag == nil
             && !(preferences.isOn(.micMute) && microphone.isMuted)
             && !(preferences.isOn(.inUse) && inUse.any)
             && !(preferences.isOn(.timer) && countdown.isActive)
@@ -548,7 +549,6 @@ final class NotchController {
     private func setExpanded(_ expanded: Bool) {
         if expanded { pendingClose?.cancel(); pendingClose = nil } else { pendingOpen?.cancel(); pendingOpen = nil }
         panel.ignoresMouseEvents = !expanded
-        if expanded, !model.expanded, model.onboarding == nil, model.banner == nil, showsF1Compact { model.tab = .f1 }
         if expanded, !preferences.isOn(model.tab) { model.tab = tabs.first ?? .media }
         // Reduce Motion: the island snaps between states instead of morphing.
         let animation = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : expanded ? Motion.open : Motion.close
